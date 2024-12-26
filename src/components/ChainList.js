@@ -2,11 +2,9 @@ import React from 'react';
 import Card from './Card';
 
 const ChainList = ({ chains }) => {
-  const enabledChains = chains.filter(chain => chain.enabled);
-  
   return (
     <div className="chain-list">
-      {enabledChains.map(chain => (
+      {chains.map(chain => (
         <Card key={chain.id} chain={chain} />
       ))}
     </div>

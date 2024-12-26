@@ -15,11 +15,13 @@ function Nodes() {
     try {
       const config = await window.electronAPI.getConfig();
       const chainsWithStatus = await Promise.all(
-        config.chains.map(async chain => ({
-          ...chain,
-          status: await window.electronAPI.getChainStatus(chain.id),
-          progress: 0,
-        }))
+        config.chains
+          .filter(chain => chain.enabled)
+          .map(async chain => ({
+            ...chain,
+            status: await window.electronAPI.getChainStatus(chain.id),
+            progress: 0,
+          }))
       );
       setChains(chainsWithStatus);
     } catch (error) {
