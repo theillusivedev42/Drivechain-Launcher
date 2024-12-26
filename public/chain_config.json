@@ -3,6 +3,7 @@
   "chains": [
       {
           "id": "drivechain",
+          "enabled": true,
           "version": "",
           "display_name": "Bitcoin + BIPs 300/301",
           "description": "BIP 300 & 301 enabled bitcoin.",
@@ -46,6 +47,7 @@
       },
       {
           "id": "testchain",
+          "enabled": false,
           "version": "",
           "display_name": "Testchain",
           "description": "A blank sidechain w/ GUI. The easiest way to learn BIPs 300/301.",
@@ -89,6 +91,7 @@
       },
       {
           "id": "bitnames",
+          "enabled": false,
           "version": "",
           "display_name": "Bitnames",
           "description": "Own one username that you use everywhere — replaces DNS, logging in, and email",
@@ -132,6 +135,7 @@
       },
       {
           "id": "bitassets",
+          "enabled": false,
           "version": "",
           "display_name": "BitAssets",
           "description": "A sidechain for issuing Bit-Art (NFTs) and digital assets (ICOs, tokens).",
@@ -175,6 +179,7 @@
       },
       {
           "id": "zsail",
+          "enabled": false,
           "version": "",
           "display_name": "zSide",
           "description": "A zCash clone, for privacy.",
@@ -222,6 +227,7 @@
       },
       {
           "id": "ethsail",
+          "enabled": false,
           "version": "",
           "display_name": "Bit-Ethereum",
           "description": "A clone of Ethereum, the #2 coin.",
@@ -269,6 +275,7 @@
       },
       {
           "id": "thunder",
+          "enabled": false,
           "version": "",
           "display_name": "Thunder",
           "description": "A high performance largeblock sidechain",
@@ -312,6 +319,7 @@
       },
       {
           "id": "latestcore",
+          "enabled": false,
           "version": "",
           "display_name": "Latest Core Plus",
           "description": "Bitcoin Core v25 + BIPS 118, 119, & 345",
