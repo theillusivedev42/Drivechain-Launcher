@@ -91,6 +91,7 @@ body {
 .card-header {
   padding: 20px 20px 10px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: left;
 }
 
 .card-header h2 {
@@ -102,6 +103,7 @@ body {
 .card-content {
   padding: 15px 20px;
   flex-grow: 1;
+  text-align: left;
 }
 
 .card-content p {
@@ -116,13 +118,13 @@ body {
   padding: 15px 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .btn {
   width: 120px;
-  margin: 0 auto;
+  margin: 0;
   padding: 10px;
   border: none;
   border-radius: 4px;
