@@ -188,18 +188,44 @@ function Nodes() {
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
       <div className="chain-list">
-        {chains.map(chain => (
-          <Card
-            key={chain.id}
-            chain={chain}
-            onUpdateChain={handleUpdateChain}
-            onDownload={handleDownloadChain}
-            onStart={handleStartChain}
-            onStop={handleStopChain}
-            onReset={handleResetChain}
-            onOpenWalletDir={handleOpenWalletDir}
-          />
-        ))}
+        <div className="chain-section">
+          <h2 className="chain-heading">Layer 1</h2>
+          <div className="l1-chains">
+            {chains
+              .filter(chain => chain.chain_type === 0)
+              .map(chain => (
+                <Card
+                  key={chain.id}
+                  chain={chain}
+                  onUpdateChain={handleUpdateChain}
+                  onDownload={handleDownloadChain}
+                  onStart={handleStartChain}
+                  onStop={handleStopChain}
+                  onReset={handleResetChain}
+                  onOpenWalletDir={handleOpenWalletDir}
+                />
+              ))}
+          </div>
+        </div>
+        <div className="chain-section">
+          <h2 className="chain-heading">Layer 2</h2>
+          <div className="l2-chains">
+            {chains
+              .filter(chain => chain.chain_type === 2)
+              .map(chain => (
+                <Card
+                  key={chain.id}
+                  chain={chain}
+                  onUpdateChain={handleUpdateChain}
+                  onDownload={handleDownloadChain}
+                  onStart={handleStartChain}
+                  onStop={handleStopChain}
+                  onReset={handleResetChain}
+                  onOpenWalletDir={handleOpenWalletDir}
+                />
+              ))}
+          </div>
+        </div>
       </div>
       <DownloadModal />
       {walletMessage && (
