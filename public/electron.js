@@ -639,6 +639,24 @@ app.whenReady().then(async () => {
       const childProcess = spawn(fullBinaryPath, [], { cwd: baseDir });
       runningProcesses[chainId] = childProcess;
 
+      childProcess.stdout.on('data', (data) => {
+        console.log(`[${chainId}] stdout: ${data}`);
+        mainWindow.webContents.send("chain-output", {
+          chainId,
+          type: 'stdout',
+          data: data.toString()
+        });
+      });
+
+      childProcess.stderr.on('data', (data) => {
+        console.error(`[${chainId}] stderr: ${data}`);
+        mainWindow.webContents.send("chain-output", {
+          chainId,
+          type: 'stderr',
+          data: data.toString()
+        });
+      });
+
       childProcess.on("error", (error) => {
         console.error(`Process for ${chainId} encountered an error:`, error);
         mainWindow.webContents.send("chain-status-update", {
@@ -648,12 +666,14 @@ app.whenReady().then(async () => {
         });
       });
 
-      childProcess.on("exit", (code) => {
-        console.log(`Process for ${chainId} exited with code ${code}`);
+      childProcess.on("exit", (code, signal) => {
+        console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
         delete runningProcesses[chainId];
         mainWindow.webContents.send("chain-status-update", {
           chainId,
           status: "stopped",
+          exitCode: code,
+          exitSignal: signal
         });
       });
 
