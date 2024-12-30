@@ -1,9 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
 import SettingsIcon from './SettingsIcon';
-import { pauseDownload, resumeDownload } from '../store/downloadSlice';
 
 const Card = ({
   chain,
@@ -17,8 +15,6 @@ const Card = ({
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
-  const dispatch = useDispatch();
-
   const handleAction = async () => {
     switch (chain.status) {
       case 'not_downloaded':
