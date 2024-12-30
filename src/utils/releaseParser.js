@@ -1,6 +1,60 @@
+const axios = require('axios');
+
 /**
  * Utility functions for parsing releases.drivechain.info directory listing
  */
+
+// Cache the last fetch time and result to avoid hammering the server
+let lastFetchTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let cachedResult = null;
+
+/**
+ * Fetches and parses the releases directory
+ * @param {Object} chainConfig The chain configuration object
+ * @param {boolean} [force=false] Force fetch even if cache is valid
+ * @returns {Promise<Object>} Update information for each chain/platform
+ * @throws {Error} If the fetch fails or the response is invalid
+ */
+async function fetchReleases(chainConfig, force = false) {
+    try {
+        // Check cache unless force refresh is requested
+        const now = Date.now();
+        if (!force && cachedResult && (now - lastFetchTime) < CACHE_DURATION) {
+            return cachedResult;
+        }
+
+        // Fetch the directory listing
+        const response = await axios.get('https://releases.drivechain.info/', {
+            timeout: 10000, // 10 second timeout
+            headers: {
+                'Accept': 'text/html',
+                'User-Agent': 'Drivechain-Launcher'
+            }
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Parse the HTML and check for updates
+        const updates = checkForUpdates(response.data, chainConfig);
+
+        // Update cache
+        lastFetchTime = now;
+        cachedResult = updates;
+
+        return updates;
+    } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            throw new Error('Connection timed out while fetching releases');
+        }
+        if (error.response) {
+            throw new Error(`Failed to fetch releases: ${error.response.status} ${error.response.statusText}`);
+        }
+        throw new Error(`Failed to fetch releases: ${error.message}`);
+    }
+}
 
 /**
  * Parses the HTML directory listing and extracts file information
@@ -109,4 +163,9 @@ function checkForUpdates(html, chainConfig) {
     return updates;
 }
 
-export { parseDirectoryListing, getExpectedFiles, checkForUpdates };
+module.exports = {
+    parseDirectoryListing,
+    getExpectedFiles,
+    checkForUpdates,
+    fetchReleases
+};

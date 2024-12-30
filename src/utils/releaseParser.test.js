@@ -1,4 +1,25 @@
-import { parseDirectoryListing, getExpectedFiles, checkForUpdates } from './releaseParser';
+// Mock axios
+const mockAxiosGet = jest.fn();
+jest.mock('axios', () => ({
+    get: (...args) => mockAxiosGet(...args)
+}));
+
+// Reset and re-require before each test to get fresh module state
+let parseDirectoryListing, getExpectedFiles, checkForUpdates, fetchReleases;
+
+beforeEach(() => {
+    // Reset everything
+    jest.resetModules();
+    jest.clearAllMocks();
+    mockAxiosGet.mockReset();
+    
+    // Re-require to get fresh module with reset cache state
+    const releaseParser = require('./releaseParser');
+    parseDirectoryListing = releaseParser.parseDirectoryListing;
+    getExpectedFiles = releaseParser.getExpectedFiles;
+    checkForUpdates = releaseParser.checkForUpdates;
+    fetchReleases = releaseParser.fetchReleases;
+});
 
 // Sample HTML from releases.drivechain.info
 const sampleHtml = `
@@ -80,5 +101,100 @@ describe('releaseParser', () => {
         expect(updates.enforcer.darwin.found).toBe(true);
         expect(updates.enforcer.darwin.timestamp).toBe('2024-12-30 16:41');
         expect(updates.enforcer.darwin.size).toBe('11M');
+    });
+});
+
+describe('fetchReleases', () => {
+
+    test('successfully fetches and parses releases', async () => {
+        // Mock successful axios response
+        mockAxiosGet.mockResolvedValueOnce({
+            status: 200,
+            data: sampleHtml
+        });
+
+        const updates = await fetchReleases(sampleConfig);
+        
+        // Verify axios was called correctly
+        expect(mockAxiosGet).toHaveBeenCalledWith('https://releases.drivechain.info/', {
+            timeout: 10000,
+            headers: {
+                'Accept': 'text/html',
+                'User-Agent': 'Drivechain-Launcher'
+            }
+        });
+
+        // Verify the response structure
+        expect(updates.enforcer).toBeDefined();
+        expect(updates.enforcer.darwin.found).toBe(true);
+        expect(updates.enforcer.darwin.timestamp).toBe('2024-12-30 16:41');
+    });
+
+    test('uses cache for subsequent calls within cache duration', async () => {
+        // First call
+        mockAxiosGet.mockResolvedValueOnce({
+            status: 200,
+            data: sampleHtml
+        });
+
+        await fetchReleases(sampleConfig);
+        
+        // Second call should use cache
+        await fetchReleases(sampleConfig);
+        
+        // Axios should only have been called once
+        expect(mockAxiosGet).toHaveBeenCalledTimes(1);
+    });
+
+    test('force refresh bypasses cache', async () => {
+        // First call
+        mockAxiosGet.mockResolvedValueOnce({
+            status: 200,
+            data: sampleHtml
+        });
+
+        await fetchReleases(sampleConfig);
+        
+        // Force refresh should make a new call
+        mockAxiosGet.mockResolvedValueOnce({
+            status: 200,
+            data: sampleHtml
+        });
+
+        await fetchReleases(sampleConfig, true);
+        
+        // Axios should have been called twice
+        expect(mockAxiosGet).toHaveBeenCalledTimes(2);
+    });
+
+    test('handles network timeout', async () => {
+        const error = { code: 'ECONNABORTED', message: 'timeout of 10000ms exceeded' };
+        mockAxiosGet.mockRejectedValueOnce(error);
+
+        await expect(fetchReleases(sampleConfig))
+            .rejects
+            .toThrow('Connection timed out while fetching releases');
+    });
+
+    test('handles HTTP error response', async () => {
+        const error = { 
+            response: {
+                status: 404,
+                statusText: 'Not Found'
+            }
+        };
+        mockAxiosGet.mockRejectedValueOnce(error);
+
+        await expect(fetchReleases(sampleConfig))
+            .rejects
+            .toThrow('Failed to fetch releases: 404 Not Found');
+    });
+
+    test('handles network error', async () => {
+        mockAxiosGet.mockRejectedValueOnce(new Error('Network Error'));
+
+        await expect(fetchReleases(sampleConfig))
+            .rejects
+            .toThrow('Failed to fetch releases: Network Error');
     });
 });
