@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
+import SettingsIcon from './SettingsIcon';
 import { pauseDownload, resumeDownload } from '../store/downloadSlice';
 
 const Card = ({
@@ -109,7 +110,13 @@ const Card = ({
 
   return (
     <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-      <div className="card-left">
+      <div className="card-header">
+        <h2>{chain.display_name}</h2>
+      </div>
+      <div className="card-content">
+        <p>{chain.description}</p>
+      </div>
+      <div className="card-actions">
         <button
           className={`btn ${getButtonClass()}`}
           onClick={handleAction}
@@ -120,12 +127,8 @@ const Card = ({
         >
           {getButtonText()}
         </button>
-        <h2>{chain.display_name}</h2>
-        <p>{chain.description}</p>
-      </div>
-      <div className="card-right">
-        <button className="btn settings" onClick={handleOpenSettings}>
-          Settings
+        <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Settings">
+          <SettingsIcon />
         </button>
       </div>
       {showSettings && (
