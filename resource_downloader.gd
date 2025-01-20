@@ -1,6 +1,7 @@
 extends Control
 
 var DEBUG_REQUESTS : bool = false
+var DEBUG_UPDATES : bool = false
 
 const URL_GRPCURL_LIN : String = "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.1/grpcurl_1.9.1_linux_x86_64.tar.gz"
 const URL_GRPCURL_WIN : String = "https://github.com/fullstorydev/grpcurl/releases/download/v1.9.1/grpcurl_1.9.1_windows_x86_64.zip"
@@ -21,6 +22,25 @@ const URL_BITWINDOW_OSX : String = "https://releases.drivechain.info/BitWindow-l
 const URL_THUNDER_LIN : String = "https://releases.drivechain.info/L2-S9-Thunder-latest-x86_64-unknown-linux-gnu.zip"
 const URL_THUNDER_WIN : String = "https://releases.drivechain.info/L2-S9-Thunder-latest-x86_64-pc-windows-gnu.zip"
 const URL_THUNDER_OSX : String = "https://releases.drivechain.info/L2-S9-Thunder-latest-x86_64-apple-darwin.zip"
+
+# TODO Still a few places not using these const values that need updating
+const BIN_NAME_ENFORCER_LIN : String = "enforcer-linux"
+const BIN_NAME_ENFORCER_WIN : String = "enforcer-windows.exe"
+const BIN_NAME_ENFORCER_OSX : String = "enforcer-osx"
+
+const BIN_NAME_BITCOIN_LIN : String = "bitcoind"
+const BIN_NAME_BITCOIN_WIN : String = "bitcoind.exe"
+const BIN_NAME_BITCOIN_OSX : String = "bitcoind"
+
+const BIN_NAME_THUNDER_LIN : String = "thunder-latest-x86_64-unknown-linux-gnu"
+const BIN_NAME_THUNDER_WIN : String = "thunder-latest-x86_64-pc-windows-gnu.exe"
+const BIN_NAME_THUNDER_OSX : String = "thunder-latest-x86_64-apple-darwin"
+
+const BIN_NAME_BITWINDOW_LIN : String = "bitwindow"
+const BIN_NAME_BITWINDOW_WIN : String = "bitwindow.exe"
+const BIN_NAME_BITWINDOW_OSX : String = "bitwindow"
+
+const URL_RELEASE_INFO: String = "https://releases.drivechain.info/"
 
 # GRPCURL is released as a .zip for windows and .tar.gz for anything else:
 const DOWNLOAD_PATH_GRPCURL_LIN_OSX = "user://downloads/l1/grpcurl.tar.gz"
@@ -49,6 +69,11 @@ signal resource_bitcoin_download_progress(percent : int)
 signal resource_bitwindow_download_progress(percent : int)
 signal resource_enforcer_download_progress(percent : int)
 signal resource_thunder_download_progress(percent : int)
+
+signal update_available_l1
+signal update_available_launcher
+signal update_available_l2_thunder
+signal update_available_none
 
 # Check on L1 software download progress periodically
 func track_l1_download_progress() -> void:
@@ -181,15 +206,13 @@ func have_grpcurl() -> bool:
 func have_enforcer() -> bool:
 	match OS.get_name():
 		"Linux":
-			if !FileAccess.file_exists("user://downloads/l1/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/bip300301_enforcer-0.1.0-x86_64-unknown-linux-gnu"):
+			if !FileAccess.file_exists(str("user://downloads/l1/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/", BIN_NAME_ENFORCER_LIN)):
 				return false
 		"Windows":
-			# TODO the folder name has .exe which is probably an accident. 
-			# Maybe an issue with the github actions?
-			if !FileAccess.file_exists("user://downloads/l1/bip300301-enforcer-latest-x86_64-pc-windows-gnu.exe/bip300301_enforcer-0.1.0-x86_64-pc-windows-gnu.exe"):
+			if !FileAccess.file_exists(str("user://downloads/l1/bip300301-enforcer-latest-x86_64-pc-windows-gnu/", BIN_NAME_ENFORCER_WIN)):
 				return false
 		"macOS":
-			if !FileAccess.file_exists("user://downloads/l1/bip300301-enforcer-latest-x86_64-apple-darwin/bip300301_enforcer-0.1.0-x86_64-apple-darwin"):
+			if !FileAccess.file_exists(str("user://downloads/l1/bip300301-enforcer-latest-x86_64-apple-darwin/", BIN_NAME_ENFORCER_OSX)):
 				return false
 	
 	resource_enforcer_ready.emit()
@@ -200,13 +223,13 @@ func have_enforcer() -> bool:
 func have_bitcoin() -> bool:
 	match OS.get_name():
 		"Linux":
-			if !FileAccess.file_exists("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu/bitcoind"):
+			if !FileAccess.file_exists(str("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu/", BIN_NAME_BITCOIN_LIN)):
 				return false
 		"Windows":
-			if !FileAccess.file_exists("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-w64-msvc/Release/bitcoind.exe"):
+			if !FileAccess.file_exists(str("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-w64-msvc/Release/", BIN_NAME_BITCOIN_WIN)):
 				return false
 		"macOS":
-			if !FileAccess.file_exists("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-apple-darwin/bitcoind"):
+			if !FileAccess.file_exists(str("user://downloads/l1/L1-bitcoin-patched-latest-x86_64-apple-darwin/", BIN_NAME_BITCOIN_OSX)):
 				return false
 
 	resource_bitcoin_ready.emit()
@@ -217,13 +240,13 @@ func have_bitcoin() -> bool:
 func have_bitwindow() -> bool:
 	match OS.get_name():
 		"Linux":
-			if !FileAccess.file_exists("user://downloads/l1/bitwindow/bitwindow"):
+			if !FileAccess.file_exists(str("user://downloads/l1/bitwindow/", BIN_NAME_BITWINDOW_LIN)):
 				return false
 		"Windows":
-			if !FileAccess.file_exists("user://downloads/l1/bitwindow.exe"):
+			if !FileAccess.file_exists(str("user://downloads/l1/", BIN_NAME_BITWINDOW_WIN)):
 				return false
 		"macOS":
-			if !FileAccess.file_exists("user://downloads/l1/bitwindow/bitwindow.app/Contents/MacOS/bitwindow"):
+			if !FileAccess.file_exists(str("user://downloads/l1/bitwindow/bitwindow.app/Contents/MacOS/", BIN_NAME_BITWINDOW_OSX)):
 				return false
 
 	resource_bitwindow_ready.emit()
@@ -233,13 +256,13 @@ func have_bitwindow() -> bool:
 func have_thunder() -> bool:
 	match OS.get_name():
 		"Linux":
-			if !FileAccess.file_exists("user://downloads/l2/thunder-latest-x86_64-unknown-linux-gnu"):
+			if !FileAccess.file_exists(str("user://downloads/l2/", BIN_NAME_THUNDER_LIN)):
 				return false
 		"Windows":
-			if !FileAccess.file_exists("user://downloads/l2/thunder-latest-x86_64-pc-windows-gnu.exe"):
+			if !FileAccess.file_exists(str("user://downloads/l2/", BIN_NAME_THUNDER_WIN)):
 				return false
 		"macOS":
-			if !FileAccess.file_exists("user://downloads/l2/thunder-latest-x86_64-apple-darwin"):
+			if !FileAccess.file_exists(str("user://downloads/l2/", BIN_NAME_BITCOIN_OSX)):
 				return false
 
 	return true
@@ -373,20 +396,66 @@ func extract_enforcer() -> void:
 		printerr("Failed to extract enforcer")
 		return
 
-	# Make executable for linux
+	# Rename extracted bin to remove version number
 	if OS.get_name() == "Linux":
-		ret = OS.execute("chmod", ["+x", str(downloads_dir, "/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/bip300301_enforcer-0.1.0-x86_64-unknown-linux-gnu")])
+		var dir_files = DirAccess.get_files_at(str(downloads_dir, "/bip300301-enforcer-latest-x86_64-unknown-linux-gnu"))
+		
+		if dir_files.size() != 1:
+			printerr("Failed to locate enforcer binary")
+			return
+		
+		var rename_error = DirAccess.rename_absolute(str(downloads_dir, 
+			"/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/", 
+			dir_files[0]), str(downloads_dir, "/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/",
+			BIN_NAME_ENFORCER_LIN))
+			
+		if rename_error != OK:
+			printerr("Failed to rename enforcer")
+			return
+	elif OS.get_name() == "macOS":
+		var dir_files = DirAccess.get_files_at(str(downloads_dir, "/bip300301-enforcer-latest-x86_64-apple-darwin"))
+		
+		if dir_files.size() != 1:
+			printerr("Failed to locate enforcer binary")
+			return
+		
+		var rename_error = DirAccess.rename_absolute(str(downloads_dir, 
+			"/bip300301-enforcer-latest-x86_64-apple-darwin/", 
+			dir_files[0]), str(downloads_dir, "/bip300301-enforcer-latest-x86_64-apple-darwin/",
+			BIN_NAME_ENFORCER_OSX))
+			
+		if rename_error != OK:
+			printerr("Failed to rename enforcer")
+			return
+	elif OS.get_name() == "Windows":
+		var dir_files = DirAccess.get_files_at(str(downloads_dir, "/bip300301-enforcer-latest-x86_64-pc-windows-gnu"))
+		
+		if dir_files.size() != 1:
+			printerr("Failed to locate enforcer binary")
+			return
+		
+		var rename_error = DirAccess.rename_absolute(str(downloads_dir, 
+			"/bip300301-enforcer-latest-x86_64-pc-windows-gnu/", 
+			dir_files[0]), str(downloads_dir, "/bip300301-enforcer-latest-x86_64-pc-windows-gnu/",
+			BIN_NAME_ENFORCER_WIN))
+			
+		if rename_error != OK:
+			printerr("Failed to rename enforcer")
+			return
+
+	# Make executable for linux and mac
+	if OS.get_name() == "Linux":
+		ret = OS.execute("chmod", ["+x", str(downloads_dir, "/bip300301-enforcer-latest-x86_64-unknown-linux-gnu/", BIN_NAME_ENFORCER_LIN)])
+		if ret != OK:
+			printerr("Failed to mark enforcer executable")
+			return
+	elif OS.get_name() == "macOS":
+		ret = OS.execute("chmod", ["+x", str(downloads_dir, "/bip300301-enforcer-latest-x86_64-apple-darwin/", BIN_NAME_ENFORCER_OSX)])
 		if ret != OK:
 			printerr("Failed to mark enforcer executable")
 			return
 
 	resource_enforcer_ready.emit()
-	
-	if OS.get_name() == "macOS":
-		ret = OS.execute("chmod", ["+x", str(downloads_dir, "/bip300301-enforcer-latest-x86_64-apple-darwin/bip300301_enforcer-0.1.0-x86_64-apple-darwin")])
-		if ret != OK:
-			printerr("Failed to mark enforcer executable")
-			return
 
 
 func extract_bitcoin() -> void:
@@ -545,3 +614,96 @@ func _on_http_download_bit_window_request_completed(result: int, response_code: 
 	
 	# TODO extract in thread so window doesn't freeze
 	extract_bitwindow()
+
+
+func check_for_updates() -> void:
+	DirAccess.make_dir_absolute("user://downloads/")
+	$HTTPRequestDownloadReleasePage.request(URL_RELEASE_INFO)
+
+
+func _on_http_download_release_page_request_completed(result: int, response_code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+	if result != OK:
+		printerr("Failed to download release info")
+		return 
+	
+	if DEBUG_REQUESTS:
+		print("res ", result)
+		print("code ", response_code)
+		print("Downloaded release info")
+
+	var parser = XMLParser.new()
+	parser.open("user://downloads/releases.html")
+	
+	# TODO we are parsing but then ignoring the zip file download size. We 
+	# could use the download size to make the progress bars more accurate
+	
+	# Set true if the release server has a more recently modified version
+	var found_update_l1 : bool = false
+	var found_update_l2_thunder : bool = false
+	var found_update_launcher : bool = false
+	# Set true if this is the first time checking release versions on server
+	var first_version_check : bool = false
+	
+	# Loop through the parsed nodes of the release server's download page
+	# Look for the lines with the software title, modified date, file size
+	while parser.read() != ERR_FILE_EOF:
+		if parser.get_node_type() == XMLParser.NODE_TEXT:
+			var node_data : String = parser.get_node_data()
+
+			# Is this node the title of software we know? 
+			if $"/root/GlobalSettings".settings_installed_software_info.has(node_data):
+				var software_title : String = node_data
+				if DEBUG_UPDATES:
+					print("Found info for ", node_data, " from release page")
+				
+				# The next text node should be the modified date
+				while parser.read() != ERR_FILE_EOF && parser.get_node_type() != XMLParser.NODE_TEXT:
+					pass
+
+				var software_modified_date : String = ""
+				if parser.get_node_type() == XMLParser.NODE_TEXT:
+					software_modified_date = parser.get_node_data()
+					if DEBUG_UPDATES:
+						print("modified date: ", software_modified_date)
+
+				if $"/root/GlobalSettings".settings_installed_software_info[software_title] == "":
+					# If the modified date we have locally is empty then set it
+					$"/root/GlobalSettings".settings_installed_software_info[software_title] = software_modified_date
+					if DEBUG_UPDATES:
+						print("Set modified date of ", software_title, " to ", software_modified_date)
+					# If version info was empty, this is probably the first time checking
+					first_version_check = true
+				elif $"/root/GlobalSettings".settings_installed_software_info[software_title] != software_modified_date:
+					# If the modified date we have locally is different than
+					# on the server, send a signal that an update is ready
+					if DEBUG_UPDATES:
+						print("Found new version of ", software_title, " local: ", $"/root/GlobalSettings".settings_installed_software_info[software_title], " server: ", software_modified_date)
+					
+					# Emit signal depending on which software is outdated
+					if software_title.contains("BitWindow") || software_title.contains("L1") || software_title.contains("enforcer"):
+						found_update_l1 = true
+					if software_title.contains("Thunder"):
+						found_update_l2_thunder = true
+					if software_title.contains("launcher"):
+						found_update_launcher = true
+
+				# TODO not using file size yet
+				# The next text node should be the zip file size
+				while parser.read() != ERR_FILE_EOF && parser.get_node_type() != XMLParser.NODE_TEXT:
+					pass
+				if parser.get_node_type() == XMLParser.NODE_TEXT:
+					pass
+					#print("Download size: ", parser.get_node_data())
+	
+	# If there are no updates available and this isn't the initial version
+	# info sync, signal that
+	if !first_version_check && !found_update_l1 && !found_update_l2_thunder && !found_update_launcher:
+		update_available_none.emit()
+	
+	# If there are updates available signal them
+	if found_update_l1:
+		update_available_l1.emit()
+	if found_update_l2_thunder:
+		update_available_l2_thunder.emit()
+	if found_update_launcher:
+		update_available_launcher.emit()
