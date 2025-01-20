@@ -54,14 +54,6 @@ const ChainSettingsModal = ({
         </div>
         <div className={styles.infoGrid}>
           <div className={styles.infoRow}>
-            <span className={styles.label}>ID:</span>
-            <span>{chain.id}</span>
-          </div>
-          <div className={styles.infoRow}>
-            <span className={styles.label}>Version:</span>
-            <span>{chain.version}</span>
-          </div>
-          <div className={styles.infoRow}>
             <span className={styles.label}>Repository:</span>
             <a
               href={chain.repo_url}
@@ -73,19 +65,18 @@ const ChainSettingsModal = ({
             </a>
           </div>
           <div className={styles.infoRow}>
-            <span className={styles.label}>Network Port:</span>
-            <span>{chain.network.port}</span>
+            <span className={styles.label}>Wallet Directory:</span>
+            <span className={styles.dataDir}>
+              {chain.walletDir}
+              <button
+                className={styles.dirButton}
+                onClick={() => onOpenWalletDir(chain.id)}
+                title="Open wallet directory"
+              >
+                <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
+              </button>
+            </span>
           </div>
-          <div className={styles.infoRow}>
-            <span className={styles.label}>Chain Type:</span>
-            <span>{chain.chain_type === 0 ? 'Mainchain' : 'Sidechain'}</span>
-          </div>
-          {chain.chain_type !== 0 && (
-            <div className={styles.infoRow}>
-              <span className={styles.label}>Slot:</span>
-              <span>{chain.slot}</span>
-            </div>
-          )}
           <div className={styles.infoRow}>
             <span className={styles.label}>Data Directory:</span>
             <span className={styles.dataDir}>
@@ -94,19 +85,6 @@ const ChainSettingsModal = ({
                 className={styles.dirButton}
                 onClick={() => onOpenDataDir(chain.id)}
                 title="Open data directory"
-              >
-                <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
-              </button>
-            </span>
-          </div>
-          <div className={styles.infoRow}>
-            <span className={styles.label}>Wallet Directory:</span>
-            <span className={styles.dataDir}>
-              {chain.walletDir}
-              <button
-                className={styles.dirButton}
-                onClick={() => onOpenWalletDir(chain.id)}
-                title="Open wallet directory"
               >
                 <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
               </button>

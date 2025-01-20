@@ -5,7 +5,9 @@ const { promises: fsPromises } = fs;
 const isDev = require("electron-is-dev");
 const { spawn } = require("child_process");
 const AdmZip = require("adm-zip");
+const tar = require("tar");
 const axios = require("axios");
+const { pipeline } = require('stream/promises');
 
 const API_BASE_URL = "https://api.drivechain.live";
 
@@ -54,20 +56,32 @@ class DownloadManager {
     this.sendDownloadsUpdate();
   }
 
+  getFileExtension(url) {
+    const fileName = url.split('/').pop();
+    if (fileName.endsWith('.tar.gz')) return '.tar.gz';
+    if (fileName.endsWith('.zip')) return '.zip';
+    return '.zip'; // Default to .zip for backward compatibility
+  }
+
   async downloadAndExtract(chainId, url, basePath) {
-    const zipPath = path.join(basePath, `temp_${chainId}.zip`);
+    const fileExt = this.getFileExtension(url);
+    const tempPath = path.join(basePath, `temp_${chainId}${fileExt}`);
 
     try {
       console.log(`Starting download for ${chainId} from ${url}`);
-      await this.downloadFile(chainId, url, zipPath);
+      await this.downloadFile(chainId, url, tempPath);
       console.log(
-        `Download completed for ${chainId}. File saved at ${zipPath}`
+        `Download completed for ${chainId}. File saved at ${tempPath}`
       );
 
-      await this.extractZip(chainId, zipPath, basePath);
+      if (fileExt === '.tar.gz') {
+        await this.extractTarGz(chainId, tempPath, basePath);
+      } else {
+        await this.extractZip(chainId, tempPath, basePath);
+      }
       console.log(`Extraction completed for ${chainId}`);
 
-      await fs.promises.unlink(zipPath);
+      await fs.promises.unlink(tempPath);
 
       this.activeDownloads.delete(chainId);
       this.sendDownloadsUpdate();
@@ -85,7 +99,7 @@ class DownloadManager {
       });
 
       try {
-        await fs.promises.unlink(zipPath);
+        await fs.promises.unlink(tempPath);
         console.log(`Cleaned up partial download for ${chainId}`);
       } catch (unlinkError) {
         console.error(
@@ -93,6 +107,22 @@ class DownloadManager {
           unlinkError
         );
       }
+    }
+  }
+
+  async extractTarGz(chainId, tarPath, basePath) {
+    console.log(`Starting tar.gz extraction to ${basePath} for ${chainId}`);
+    try {
+      await pipeline(
+        fs.createReadStream(tarPath),
+        tar.x({
+          cwd: basePath,
+          strip: 0 // Preserve directory structure
+        })
+      );
+    } catch (error) {
+      console.error(`Error in extractTarGz for ${chainId}: ${error.message}`);
+      throw error;
     }
   }
 
@@ -609,6 +639,24 @@ app.whenReady().then(async () => {
       const childProcess = spawn(fullBinaryPath, [], { cwd: baseDir });
       runningProcesses[chainId] = childProcess;
 
+      childProcess.stdout.on('data', (data) => {
+        console.log(`[${chainId}] stdout: ${data}`);
+        mainWindow.webContents.send("chain-output", {
+          chainId,
+          type: 'stdout',
+          data: data.toString()
+        });
+      });
+
+      childProcess.stderr.on('data', (data) => {
+        console.error(`[${chainId}] stderr: ${data}`);
+        mainWindow.webContents.send("chain-output", {
+          chainId,
+          type: 'stderr',
+          data: data.toString()
+        });
+      });
+
       childProcess.on("error", (error) => {
         console.error(`Process for ${chainId} encountered an error:`, error);
         mainWindow.webContents.send("chain-status-update", {
@@ -618,12 +666,14 @@ app.whenReady().then(async () => {
         });
       });
 
-      childProcess.on("exit", (code) => {
-        console.log(`Process for ${chainId} exited with code ${code}`);
+      childProcess.on("exit", (code, signal) => {
+        console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
         delete runningProcesses[chainId];
         mainWindow.webContents.send("chain-status-update", {
           chainId,
           status: "stopped",
+          exitCode: code,
+          exitSignal: signal
         });
       });
 

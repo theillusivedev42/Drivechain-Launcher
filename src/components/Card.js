@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
-import { pauseDownload, resumeDownload } from '../store/downloadSlice';
+import SettingsIcon from './SettingsIcon';
 
 const Card = ({
   chain,
@@ -16,8 +15,6 @@ const Card = ({
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
-  const dispatch = useDispatch();
-
   const handleAction = async () => {
     switch (chain.status) {
       case 'not_downloaded':
@@ -109,7 +106,13 @@ const Card = ({
 
   return (
     <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-      <div className="card-left">
+      <div className="card-header">
+        <h2>{chain.display_name}</h2>
+      </div>
+      <div className="card-content">
+        <p>{chain.description}</p>
+      </div>
+      <div className="card-actions">
         <button
           className={`btn ${getButtonClass()}`}
           onClick={handleAction}
@@ -120,12 +123,8 @@ const Card = ({
         >
           {getButtonText()}
         </button>
-        <h2>{chain.display_name}</h2>
-        <p>{chain.description}</p>
-      </div>
-      <div className="card-right">
-        <button className="btn settings" onClick={handleOpenSettings}>
-          Settings
+        <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Settings">
+          <SettingsIcon />
         </button>
       </div>
       {showSettings && (

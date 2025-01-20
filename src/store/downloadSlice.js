@@ -15,21 +15,8 @@ const downloadSlice = createSlice({
         }
       });
     },
-    pauseDownload: (state, action) => {
-      const { chainId } = action.payload;
-      if (state[chainId]) {
-        state[chainId].status = 'paused';
-      }
-    },
-    resumeDownload: (state, action) => {
-      const { chainId } = action.payload;
-      if (state[chainId]) {
-        state[chainId].status = 'downloading';
-      }
-    },
   },
 });
 
-export const { updateDownloads, pauseDownload, resumeDownload } =
-  downloadSlice.actions;
+export const { updateDownloads } = downloadSlice.actions;
 export default downloadSlice.reducer;
