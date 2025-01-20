@@ -167,8 +167,8 @@
               }
           },
           "binary": {
-              "linux": "bitwindow/bitwindow",
-              "darwin": "bitwindow/bitwindow.app/Contents/MacOS/bitwindow",
+              "linux": "bitwindow",
+              "darwin": "bitwindow.app/Contents/MacOS/bitwindow",
               "win32": "bitwindow.exe"
           },
           "network": {
