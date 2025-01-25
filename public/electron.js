@@ -244,15 +244,17 @@ class DownloadManager {
       );
       const chain = config.chains.find((c) => c.id === chainId);
       if (chain) {
-        const url = chain.download.urls[process.platform];
-        if (!url) throw new Error(`No download URL found for platform ${process.platform}`);
+        const platform = process.platform;
+        const url = chain.download.urls[platform];
+        if (!url) throw new Error(`No download URL found for platform ${platform}`);
+
+        const extractDir = chain.extract_dir?.[platform];
+        if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
+
+        const downloadsDir = app.getPath("downloads");
+        const extractPath = path.join(downloadsDir, extractDir);
         
-        const homeDir = app.getPath("home");
-        const baseDir = path.join(
-          homeDir,
-          chain.directories.base[process.platform]
-        );
-        this.downloadAndExtract(chainId, url, baseDir);
+        this.downloadAndExtract(chainId, url, extractPath);
       }
       return true;
     }
@@ -541,16 +543,18 @@ app.whenReady().then(async () => {
     const chain = config.chains.find((c) => c.id === chainId);
     if (!chain) throw new Error("Chain not found");
 
-    const url = chain.download.urls[process.platform];
-    if (!url) throw new Error(`No download URL found for platform ${process.platform}`);
+    const platform = process.platform;
+    const url = chain.download.urls[platform];
+    if (!url) throw new Error(`No download URL found for platform ${platform}`);
 
-    const homeDir = app.getPath("home");
-    const baseDir = path.join(
-      homeDir,
-      chain.directories.base[process.platform]
-    );
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
 
-    downloadManager.startDownload(chainId, url, baseDir);
+    const downloadsDir = app.getPath("downloads");
+    const extractPath = path.join(downloadsDir, extractDir);
+
+    await fs.ensureDir(extractPath);
+    downloadManager.startDownload(chainId, url, extractPath);
     return { success: true };
   });
 
