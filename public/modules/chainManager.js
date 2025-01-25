@@ -18,10 +18,16 @@ class ChainManager {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
 
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
     const homeDir = app.getPath("home");
-    const baseDir = path.join(homeDir, chain.directories.base[process.platform]);
-    const binaryPath = chain.binary[process.platform];
-    const fullBinaryPath = path.join(baseDir, binaryPath);
+    const basePath = path.join(homeDir, baseDir);
+    const fullBinaryPath = path.join(basePath, binaryPath);
 
     try {
       await fs.promises.access(fullBinaryPath, fs.constants.F_OK);
@@ -30,10 +36,10 @@ class ChainManager {
         await fs.promises.chmod(fullBinaryPath, "755");
       }
 
-      const childProcess = spawn(fullBinaryPath, [], { cwd: baseDir });
+      const childProcess = spawn(fullBinaryPath, [], { cwd: basePath });
       this.runningProcesses[chainId] = childProcess;
 
-      this.setupProcessListeners(childProcess, chainId, baseDir);
+      this.setupProcessListeners(childProcess, chainId, basePath);
 
       return { success: true };
     } catch (error) {
@@ -42,7 +48,7 @@ class ChainManager {
     }
   }
 
-  setupProcessListeners(childProcess, chainId, baseDir) {
+  setupProcessListeners(childProcess, chainId, basePath) {
     childProcess.stdout.on('data', (data) => {
       console.log(`[${chainId}] stdout: ${data}`);
       this.mainWindow.webContents.send("chain-output", {
@@ -102,14 +108,19 @@ class ChainManager {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
 
-    const dir = path.join(
-      app.getPath("home"),
-      chain.directories.base[process.platform]
-    );
-    const executable = path.join(dir, chain.binary[process.platform]);
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
+    const homeDir = app.getPath("home");
+    const basePath = path.join(homeDir, baseDir);
+    const fullBinaryPath = path.join(basePath, binaryPath);
 
     try {
-      await fs.promises.access(executable);
+      await fs.promises.access(fullBinaryPath);
       return this.runningProcesses[chainId] ? "running" : "stopped";
     } catch (error) {
       return "not_downloaded";
@@ -121,21 +132,22 @@ class ChainManager {
       const chain = this.getChainConfig(chainId);
       if (!chain) throw new Error("Chain not found");
 
+      const platform = process.platform;
+      const baseDir = chain.directories.base[platform];
+      if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
       }
 
       const homeDir = app.getPath("home");
-      const baseDir = path.join(
-        homeDir,
-        chain.directories.base[process.platform]
-      );
+      const fullPath = path.join(homeDir, baseDir);
 
-      await fs.remove(baseDir);
-      console.log(`Reset chain ${chainId}: removed directory ${baseDir}`);
+      await fs.remove(fullPath);
+      console.log(`Reset chain ${chainId}: removed directory ${fullPath}`);
 
-      await fs.ensureDir(baseDir);
-      console.log(`Recreated empty directory for chain ${chainId}: ${baseDir}`);
+      await fs.ensureDir(fullPath);
+      console.log(`Recreated empty directory for chain ${chainId}: ${fullPath}`);
 
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
@@ -153,14 +165,15 @@ class ChainManager {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
 
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
     const homeDir = app.getPath("home");
-    const baseDir = path.join(
-      homeDir,
-      chain.directories.base[process.platform]
-    );
+    const fullPath = path.join(homeDir, baseDir);
 
     try {
-      await shell.openPath(baseDir);
+      await shell.openPath(fullPath);
       return { success: true };
     } catch (error) {
       console.error("Failed to open data directory:", error);
@@ -174,6 +187,8 @@ class ChainManager {
     
     const platform = process.platform;
     const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+    
     return path.join(app.getPath("home"), baseDir);
   }
 }

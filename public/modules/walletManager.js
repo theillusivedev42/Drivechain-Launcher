@@ -16,19 +16,13 @@ class WalletManager {
     if (!chain) throw new Error("Chain not found");
 
     const platform = process.platform;
-    const walletPath = chain.directories.wallet;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-    if (chainId === "zsail" || chainId === "ethsail") {
-      // Handle absolute paths for zsail and ethsail
-      if (typeof walletPath === "object") {
-        return walletPath[platform] || null;
-      }
-      return walletPath || null;
-    } else {
-      // Standard handling for other chains
-      const baseDir = chain.directories.base[platform];
-      return path.join(app.getPath("home"), baseDir, walletPath);
-    }
+    const walletPath = chain.directories.wallet;
+    if (!walletPath) return null;
+
+    return path.join(app.getPath("home"), baseDir, walletPath);
   }
 
   async analyzeWalletPath(fullPath) {
@@ -69,19 +63,13 @@ class WalletManager {
     if (!chain) throw new Error("Chain not found");
 
     const platform = process.platform;
-    const walletPath = chain.directories.wallet;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-    let fullPath;
-    if (chainId === "zsail" || chainId === "ethsail") {
-      if (typeof walletPath === "object") {
-        fullPath = path.join(app.getPath("home"), walletPath[platform] || "");
-      } else {
-        fullPath = path.join(app.getPath("home"), walletPath || "");
-      }
-    } else {
-      const baseDir = chain.directories.base[platform];
-      fullPath = path.join(app.getPath("home"), baseDir, walletPath);
-    }
+    const walletPath = chain.directories.wallet;
+    const fullPath = walletPath ? 
+      path.join(app.getPath("home"), baseDir, walletPath) :
+      path.join(app.getPath("home"), baseDir);
 
     const analysis = await this.analyzeWalletPath(fullPath);
 

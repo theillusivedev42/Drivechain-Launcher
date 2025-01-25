@@ -38,34 +38,70 @@ class ConfigManager {
   }
 
   async setupChainDirectories() {
+    if (!this.config) {
+      throw new Error("Config not loaded. Call loadConfig() first.");
+    }
+
     console.log("Checking chain base directories...");
     const platform = process.platform;
     const homeDir = app.getPath("home");
     let directoriesCreated = 0;
 
     for (const chain of this.config.chains) {
+      if (!chain.directories?.base) {
+        console.warn(`No directories configuration found for chain ${chain.id}`);
+        continue;
+      }
+
       const baseDir = chain.directories.base[platform];
-      if (baseDir && typeof baseDir === "string") {
-        const fullBasePath = path.join(homeDir, baseDir);
-        const created = await this.createDirectory(fullBasePath);
+      if (!baseDir) {
+        console.warn(`No base directory configured for chain ${chain.id} on platform ${platform}`);
+        continue;
+      }
+
+      if (typeof baseDir !== "string") {
+        console.warn(`Invalid base directory for chain ${chain.id}: expected string, got ${typeof baseDir}`);
+        continue;
+      }
+
+      try {
+        const fullPath = path.join(homeDir, baseDir);
+        const created = await this.createDirectory(fullPath);
         if (created) {
           directoriesCreated++;
-          console.log(`Created base directory for ${chain.id}: ${fullBasePath}`);
+          console.log(`Created base directory for ${chain.id}: ${fullPath}`);
         }
-      } else {
-        console.warn(
-          `No valid base directory specified for ${chain.id} on ${platform}`
-        );
+      } catch (error) {
+        console.error(`Failed to create directory for chain ${chain.id}:`, error);
       }
     }
 
     if (directoriesCreated === 0) {
-      console.log(
-        "All chain directories already exist. No new directories were created."
-      );
+      console.log("All chain directories already exist. No new directories were created.");
+    } else {
+      console.log(`Created ${directoriesCreated} new chain directories.`);
     }
 
     return directoriesCreated;
+  }
+
+  getChainBasePath(chainId) {
+    if (!this.config) {
+      throw new Error("Config not loaded. Call loadConfig() first.");
+    }
+
+    const chain = this.config.chains.find(c => c.id === chainId);
+    if (!chain) {
+      throw new Error(`Chain not found: ${chainId}`);
+    }
+
+    const platform = process.platform;
+    const baseDir = chain.directories?.base?.[platform];
+    if (!baseDir) {
+      throw new Error(`No base directory configured for chain ${chainId} on platform ${platform}`);
+    }
+
+    return path.join(app.getPath("home"), baseDir);
   }
 }
 

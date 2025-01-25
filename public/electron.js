@@ -22,18 +22,14 @@ function getWalletDir(chainId) {
 
   const platform = process.platform;
   const walletPath = chain.directories.wallet;
-
-  if (chainId === "zsail" || chainId === "ethsail") {
-    // Handle absolute paths for zsail and ethsail
-    if (typeof walletPath === "object") {
-      return walletPath[platform] || null;
-    }
-    return walletPath || null;
-  } else {
-    // Standard handling for other chains
-    const baseDir = chain.directories.base[platform];
-    return path.join(app.getPath("home"), baseDir, walletPath);
-  }
+  const baseDir = chain.directories.base[platform];
+  
+  if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+  
+  // If no wallet path is configured, return null
+  if (!walletPath) return null;
+  
+  return path.join(app.getPath("home"), baseDir, walletPath);
 }
 
 class DownloadManager {
@@ -248,8 +244,9 @@ class DownloadManager {
       );
       const chain = config.chains.find((c) => c.id === chainId);
       if (chain) {
-        const url =
-          chain.download.base_url + chain.download.files[process.platform];
+        const url = chain.download.urls[process.platform];
+        if (!url) throw new Error(`No download URL found for platform ${process.platform}`);
+        
         const homeDir = app.getPath("home");
         const baseDir = path.join(
           homeDir,
@@ -375,19 +372,13 @@ async function openWalletLocation(chainId) {
   if (!chain) throw new Error("Chain not found");
 
   const platform = process.platform;
-  const walletPath = chain.directories.wallet;
+  const baseDir = chain.directories.base[platform];
+  if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-  let fullPath;
-  if (chainId === "zsail" || chainId === "ethsail") {
-    if (typeof walletPath === "object") {
-      fullPath = path.join(app.getPath("home"), walletPath[platform] || "");
-    } else {
-      fullPath = path.join(app.getPath("home"), walletPath || "");
-    }
-  } else {
-    const baseDir = chain.directories.base[platform];
-    fullPath = path.join(app.getPath("home"), baseDir, walletPath);
-  }
+  const walletPath = chain.directories.wallet;
+  const fullPath = walletPath ? 
+    path.join(app.getPath("home"), baseDir, walletPath) :
+    path.join(app.getPath("home"), baseDir);
 
   const analysis = await analyzeWalletPath(fullPath);
 
@@ -550,8 +541,9 @@ app.whenReady().then(async () => {
     const chain = config.chains.find((c) => c.id === chainId);
     if (!chain) throw new Error("Chain not found");
 
-    const url =
-      chain.download.base_url + chain.download.files[process.platform];
+    const url = chain.download.urls[process.platform];
+    if (!url) throw new Error(`No download URL found for platform ${process.platform}`);
+
     const homeDir = app.getPath("home");
     const baseDir = path.join(
       homeDir,
@@ -618,14 +610,14 @@ app.whenReady().then(async () => {
     const chain = config.chains.find((c) => c.id === chainId);
     if (!chain) throw new Error("Chain not found");
 
-    const homeDir = app.getPath("home");
-    const baseDir = path.join(
-      homeDir,
-      chain.directories.base[process.platform]
-    );
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-    const binaryPath = chain.binary[process.platform];
-    const fullBinaryPath = path.join(baseDir, binaryPath);
+    const homeDir = app.getPath("home");
+    const basePath = path.join(homeDir, baseDir);
+    const binaryPath = chain.binary[platform];
+    const fullBinaryPath = path.join(basePath, binaryPath);
 
     console.log(`Attempting to start binary at: ${fullBinaryPath}`);
 
@@ -704,14 +696,17 @@ app.whenReady().then(async () => {
     const chain = config.chains.find((c) => c.id === chainId);
     if (!chain) throw new Error("Chain not found");
 
-    const dir = path.join(
-      app.getPath("home"),
-      chain.directories.base[process.platform]
-    );
-    const executable = path.join(dir, chain.binary[process.platform]);
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
+    const homeDir = app.getPath("home");
+    const basePath = path.join(homeDir, baseDir);
+    const binaryPath = chain.binary[platform];
+    const fullBinaryPath = path.join(basePath, binaryPath);
 
     try {
-      await fsPromises.access(executable);
+      await fsPromises.access(fullBinaryPath);
       return runningProcesses[chainId] ? "running" : "stopped";
     } catch (error) {
       return "not_downloaded";
@@ -732,14 +727,15 @@ app.whenReady().then(async () => {
     const chain = config.chains.find((c) => c.id === chainId);
     if (!chain) throw new Error("Chain not found");
 
+    const platform = process.platform;
+    const baseDir = chain.directories.base[platform];
+    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
     const homeDir = app.getPath("home");
-    const baseDir = path.join(
-      homeDir,
-      chain.directories.base[process.platform]
-    );
+    const fullPath = path.join(homeDir, baseDir);
 
     try {
-      await shell.openPath(baseDir);
+      await shell.openPath(fullPath);
       return { success: true };
     } catch (error) {
       console.error("Failed to open data directory:", error);
@@ -752,21 +748,22 @@ app.whenReady().then(async () => {
       const chain = config.chains.find((c) => c.id === chainId);
       if (!chain) throw new Error("Chain not found");
 
+      const platform = process.platform;
+      const baseDir = chain.directories.base[platform];
+      if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
       if (runningProcesses[chainId]) {
         await stopChain(chainId);
       }
 
       const homeDir = app.getPath("home");
-      const baseDir = path.join(
-        homeDir,
-        chain.directories.base[process.platform]
-      );
+      const fullPath = path.join(homeDir, baseDir);
 
-      await fs.remove(baseDir);
-      console.log(`Reset chain ${chainId}: removed directory ${baseDir}`);
+      await fs.remove(fullPath);
+      console.log(`Reset chain ${chainId}: removed directory ${fullPath}`);
 
-      await fs.ensureDir(baseDir);
-      console.log(`Recreated empty directory for chain ${chainId}: ${baseDir}`);
+      await fs.ensureDir(fullPath);
+      console.log(`Recreated empty directory for chain ${chainId}: ${fullPath}`);
 
       mainWindow.webContents.send("chain-status-update", {
         chainId,
