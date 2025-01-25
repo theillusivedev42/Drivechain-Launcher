@@ -9,13 +9,14 @@ const tar = require("tar");
 const axios = require("axios");
 const { pipeline } = require('stream/promises');
 const ConfigManager = require("./modules/configManager");
+const ChainManager = require("./modules/chainManager");
 
 const API_BASE_URL = "https://api.drivechain.live";
 
 const configPath = path.join(__dirname, "chain_config.json");
 let config;
 let mainWindow = null;
-let runningProcesses = {};
+let chainManager;
 
 function getWalletDir(chainId) {
   const chain = getChainConfig(chainId);
@@ -540,12 +541,10 @@ function getChainConfig(chainId) {
 }
 
 async function stopChain(chainId) {
-  const process = runningProcesses[chainId];
-  if (process) {
-    process.kill();
-    delete runningProcesses[chainId];
-    console.log(`Stopped chain ${chainId}`);
+  if (chainManager) {
+    return await chainManager.stopChain(chainId);
   }
+  return { success: false, error: "Chain manager not initialized" };
 }
 
 app.whenReady().then(async () => {
@@ -556,6 +555,9 @@ app.whenReady().then(async () => {
   await configManager.setupExtractDirectories();
   createWindow();
   setupIPCHandlers();
+  
+  // Initialize chain manager
+  chainManager = new ChainManager(mainWindow, config);
 
   ipcMain.handle("get-config", async () => {
     return config;
@@ -642,118 +644,8 @@ app.whenReady().then(async () => {
   }
 
   ipcMain.handle("start-chain", async (event, chainId) => {
-    const chain = config.chains.find((c) => c.id === chainId);
-    if (!chain) throw new Error("Chain not found");
-
-    const platform = process.platform;
-    const extractDir = chain.extract_dir?.[platform];
-    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
-
-    const binaryPath = chain.binary[platform];
-    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-
-    const downloadsDir = app.getPath("downloads");
-    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
-
-    let childProcess;
-
     try {
-      // Special handling for BitWindow on macOS
-      if (chainId === 'bitwindow' && platform === 'darwin') {
-        const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
-        console.log(`Attempting to start BitWindow app bundle at: ${appBundlePath}`);
-        await fsPromises.access(appBundlePath, fs.constants.F_OK);
-        console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
-        
-        // Launch the app
-        childProcess = spawn('open', [appBundlePath], { cwd: path.dirname(appBundlePath) });
-        
-        // Wait for the app to actually start
-        await new Promise((resolve, reject) => {
-          childProcess.on('exit', async (code) => {
-            if (code === 0) {
-              // Check if BitWindow is actually running
-              const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "BitWindow"']);
-              const isRunning = await new Promise((resolve) => {
-                checkProcess.stdout.on('data', (data) => {
-                  resolve(parseInt(data.toString().trim()) > 0);
-                });
-                checkProcess.on('error', () => resolve(false));
-              });
-              
-              if (isRunning) {
-                // Store a placeholder in runningProcesses so the UI knows BitWindow is running
-                runningProcesses[chainId] = {
-                  // Minimal process-like interface
-                  kill: () => {
-                    const quitProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
-                    return new Promise((resolve, reject) => {
-                      quitProcess.on('exit', (code) => {
-                        if (code === 0) resolve();
-                        else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
-                      });
-                    });
-                  }
-                };
-                resolve();
-              } else {
-                reject(new Error('BitWindow failed to start'));
-              }
-            } else {
-              reject(new Error(`Failed to start BitWindow, exit code: ${code}`));
-            }
-          });
-        });
-      } else {
-        // Standard binary execution for other chains
-        console.log(`Attempting to start binary at: ${fullBinaryPath}`);
-        await fsPromises.access(fullBinaryPath, fs.constants.F_OK);
-        if (process.platform !== "win32") {
-          await fsPromises.chmod(fullBinaryPath, "755");
-        }
-        childProcess = spawn(fullBinaryPath, [], { cwd: path.dirname(fullBinaryPath) });
-      }
-      runningProcesses[chainId] = childProcess;
-
-      childProcess.stdout.on('data', (data) => {
-        console.log(`[${chainId}] stdout: ${data}`);
-        mainWindow.webContents.send("chain-output", {
-          chainId,
-          type: 'stdout',
-          data: data.toString()
-        });
-      });
-
-      childProcess.stderr.on('data', (data) => {
-        console.error(`[${chainId}] stderr: ${data}`);
-        mainWindow.webContents.send("chain-output", {
-          chainId,
-          type: 'stderr',
-          data: data.toString()
-        });
-      });
-
-      childProcess.on("error", (error) => {
-        console.error(`Process for ${chainId} encountered an error:`, error);
-        mainWindow.webContents.send("chain-status-update", {
-          chainId,
-          status: "error",
-          error: error.message,
-        });
-      });
-
-      childProcess.on("exit", (code, signal) => {
-        console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
-        delete runningProcesses[chainId];
-        mainWindow.webContents.send("chain-status-update", {
-          chainId,
-          status: "stopped",
-          exitCode: code,
-          exitSignal: signal
-        });
-      });
-
-      return { success: true };
+      return await chainManager.startChain(chainId);
     } catch (error) {
       console.error("Failed to start chain:", error);
       return { success: false, error: error.message };
@@ -761,40 +653,8 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("stop-chain", async (event, chainId) => {
-    const chain = config.chains.find((c) => c.id === chainId);
-    if (!chain) throw new Error("Chain not found");
-
-    const platform = process.platform;
-    
-    // Special handling for BitWindow on macOS
-    if (chainId === 'bitwindow' && platform === 'darwin') {
-      try {
-        // Use applescript to quit BitWindow gracefully
-        const childProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
-        await new Promise((resolve, reject) => {
-          childProcess.on('exit', (code) => {
-            if (code === 0) resolve();
-            else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
-          });
-        });
-        delete runningProcesses[chainId];
-        return { success: true };
-      } catch (error) {
-        console.error("Failed to stop BitWindow:", error);
-        return { success: false, error: error.message };
-      }
-    }
-
-    // Standard process handling for other chains
-    const chainProcess = runningProcesses[chainId];
-    if (!chainProcess) {
-      return { success: false, error: "Process not found" };
-    }
-
     try {
-      chainProcess.kill();
-      delete runningProcesses[chainId];
-      return { success: true };
+      return await chainManager.stopChain(chainId);
     } catch (error) {
       console.error("Failed to stop chain:", error);
       return { success: false, error: error.message };
@@ -802,44 +662,11 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("get-chain-status", async (event, chainId) => {
-    const chain = config.chains.find((c) => c.id === chainId);
-    if (!chain) throw new Error("Chain not found");
-
-    const platform = process.platform;
-    const extractDir = chain.extract_dir?.[platform];
-    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
-
-    const binaryPath = chain.binary[platform];
-    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-
-    const downloadsDir = app.getPath("downloads");
-
-    // Special handling for BitWindow on macOS
-    if (chainId === 'bitwindow' && platform === 'darwin') {
-      const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
-      try {
-        await fsPromises.access(appBundlePath);
-        // For BitWindow, check if the app is running using AppleScript
-        const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "BitWindow"']);
-        const result = await new Promise((resolve) => {
-          checkProcess.stdout.on('data', (data) => {
-            resolve(parseInt(data.toString().trim()) > 0);
-          });
-          checkProcess.on('error', () => resolve(false));
-        });
-        return result ? "running" : "stopped";
-      } catch (error) {
-        return "not_downloaded";
-      }
-    }
-
-    // Standard handling for other chains
-    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
     try {
-      await fsPromises.access(fullBinaryPath);
-      return runningProcesses[chainId] ? "running" : "stopped";
+      return await chainManager.getChainStatus(chainId);
     } catch (error) {
-      return "not_downloaded";
+      console.error("Failed to get chain status:", error);
+      return "error";
     }
   });
 
@@ -875,32 +702,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle("reset-chain", async (event, chainId) => {
     try {
-      const chain = config.chains.find((c) => c.id === chainId);
-      if (!chain) throw new Error("Chain not found");
-
-      const platform = process.platform;
-      const baseDir = chain.directories.base[platform];
-      if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
-
-      if (runningProcesses[chainId]) {
-        await stopChain(chainId);
-      }
-
-      const homeDir = app.getPath("home");
-      const fullPath = path.join(homeDir, baseDir);
-
-      await fs.remove(fullPath);
-      console.log(`Reset chain ${chainId}: removed directory ${fullPath}`);
-
-      await fs.ensureDir(fullPath);
-      console.log(`Recreated empty directory for chain ${chainId}: ${fullPath}`);
-
-      mainWindow.webContents.send("chain-status-update", {
-        chainId,
-        status: "not_downloaded",
-      });
-
-      return { success: true };
+      return await chainManager.resetChain(chainId);
     } catch (error) {
       console.error("Failed to reset chain:", error);
       return { success: false, error: error.message };
