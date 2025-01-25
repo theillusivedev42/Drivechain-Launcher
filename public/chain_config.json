@@ -17,9 +17,9 @@
               "wallet": ""
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/grpcurl",
-              "darwin": "Drivechain Launcher Downloads/grpcurl",
-              "win32": "Drivechain Launcher Downloads/grpcurl"
+              "linux": "Drivechain-Launcher-Downloads/grpcurl",
+              "darwin": "Drivechain-Launcher-Downloads/grpcurl",
+              "win32": "Drivechain-Launcher-Downloads/grpcurl"
           },
           "download": {
               "urls": {
@@ -65,9 +65,9 @@
               "wallet": "wallet.db"
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/enforcer",
-              "darwin": "Drivechain Launcher Downloads/enforcer",
-              "win32": "Drivechain Launcher Downloads/enforcer"
+              "linux": "Drivechain-Launcher-Downloads/enforcer",
+              "darwin": "Drivechain-Launcher-Downloads/enforcer",
+              "win32": "Drivechain-Launcher-Downloads/enforcer"
           },
           "download": {
               "urls": {
@@ -113,9 +113,9 @@
               "wallet": "wallet.dat"
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/bitcoin",
-              "darwin": "Drivechain Launcher Downloads/bitcoin",
-              "win32": "Drivechain Launcher Downloads/bitcoin"
+              "linux": "Drivechain-Launcher-Downloads/bitcoin",
+              "darwin": "Drivechain-Launcher-Downloads/bitcoin",
+              "win32": "Drivechain-Launcher-Downloads/bitcoin"
           },
           "download": {
               "urls": {
@@ -161,9 +161,9 @@
               "wallet": ""
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/bitwindow",
-              "darwin": "Drivechain Launcher Downloads/bitwindow",
-              "win32": "Drivechain Launcher Downloads/bitwindow"
+              "linux": "Drivechain-Launcher-Downloads/bitwindow",
+              "darwin": "Drivechain-Launcher-Downloads/bitwindow",
+              "win32": "Drivechain-Launcher-Downloads/bitwindow"
           },
           "download": {
               "urls": {
@@ -209,9 +209,9 @@
               "wallet": "data/thunder/wallet.mdb"
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/thunder",
-              "darwin": "Drivechain Launcher Downloads/thunder",
-              "win32": "Drivechain Launcher Downloads/thunder"
+              "linux": "Drivechain-Launcher-Downloads/thunder",
+              "darwin": "Drivechain-Launcher-Downloads/thunder",
+              "win32": "Drivechain-Launcher-Downloads/thunder"
           },
           "download": {
               "urls": {
@@ -257,9 +257,9 @@
               "wallet": "wallet.mdb"
           },
           "extract_dir": {
-              "linux": "Drivechain Launcher Downloads/bitnames",
-              "darwin": "Drivechain Launcher Downloads/bitnames",
-              "win32": "Drivechain Launcher Downloads/bitnames"
+              "linux": "Drivechain-Launcher-Downloads/bitnames",
+              "darwin": "Drivechain-Launcher-Downloads/bitnames",
+              "win32": "Drivechain-Launcher-Downloads/bitnames"
           },
           "download": {
               "urls": {

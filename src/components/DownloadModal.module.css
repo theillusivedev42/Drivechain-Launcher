@@ -1,7 +1,7 @@
 .downloadModal {
   position: fixed;
   top: 60px;
-  right: 18px; /* Set to match the navbar's right padding */
+  right: 18px;
   width: 300px;
   max-height: 80vh;
   overflow-y: auto;
@@ -37,29 +37,50 @@
 }
 
 .downloadItem {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  padding: 12px;
   background-color: var(--download-item-bg);
-  padding: 15px;
-  border-radius: 5px;
+  border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.downloadItem p {
-  margin: 0 0 10px 0;
-  font-size: 14px;
+.downloadHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.displayName {
+  font-weight: 600;
   color: var(--download-item-text);
+}
+
+.status {
+  font-size: 0.9em;
+  color: var(--download-item-text);
+  opacity: 0.8;
 }
 
 .progressBarContainer {
   width: 100%;
-  height: 10px;
+  height: 4px;
   background-color: var(--progress-bar-bg);
-  border-radius: 5px;
+  border-radius: 2px;
   overflow: hidden;
+  margin-bottom: 6px;
 }
 
 .progressBar {
   height: 100%;
   background-color: var(--progress-bar-fill);
   transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 0.85em;
+  color: var(--download-item-text);
+  opacity: 0.7;
+  text-align: left;
+  padding-left: 2px;
 }

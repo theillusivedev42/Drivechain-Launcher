@@ -3,12 +3,13 @@ import { useDispatch } from 'react-redux';
 import Card from './Card';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
-import { updateDownloads } from '../store/downloadSlice';
+import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
 import { showDownloadModal } from '../store/downloadModalSlice';
 
 function Nodes() {
   const [chains, setChains] = useState([]);
   const [walletMessage, setWalletMessage] = useState(null);
+  const [bitcoinSync, setBitcoinSync] = useState(null);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
@@ -75,6 +76,13 @@ function Nodes() {
     const unsubscribeDownloadComplete = window.electronAPI.onDownloadComplete(
       downloadCompleteHandler
     );
+    const unsubscribeBitcoinSync = window.electronAPI.onBitcoinSyncStatus(
+      (status) => {
+        setBitcoinSync(status);
+        // Update IBD status in downloads slice
+        dispatch(updateIBDStatus({ chainId: 'bitcoin', status }));
+      }
+    );
 
     window.electronAPI.getDownloads().then(downloadsUpdateHandler);
 
@@ -84,6 +92,8 @@ function Nodes() {
       if (typeof unsubscribeStatus === 'function') unsubscribeStatus();
       if (typeof unsubscribeDownloadComplete === 'function')
         unsubscribeDownloadComplete();
+      if (typeof unsubscribeBitcoinSync === 'function')
+        unsubscribeBitcoinSync();
     };
   }, [
     fetchChains,

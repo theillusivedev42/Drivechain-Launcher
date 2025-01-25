@@ -2,6 +2,7 @@ const { app, shell } = require("electron");
 const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
+const BitcoinMonitor = require("./bitcoinMonitor");
 
 class ChainManager {
   constructor(mainWindow, config) {
@@ -9,6 +10,7 @@ class ChainManager {
     this.config = config;
     this.runningProcesses = {};
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
+    this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
   }
 
   getChainConfig(chainId) {
@@ -152,22 +154,64 @@ class ChainManager {
   setupProcessListeners(childProcess, chainId, basePath) {
     let buffer = '';
     let readyDetected = false;
+    let rpcCheckInterval = null;
+
+    // Function to check if Bitcoin Core is responding to RPC
+    const checkBitcoinRPC = async () => {
+      if (!readyDetected && chainId === 'bitcoin') {
+        try {
+          await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
+          // If RPC call succeeds, Bitcoin Core is ready
+          readyDetected = true;
+          this.chainStatuses.set(chainId, 'running');
+          this.mainWindow.webContents.send("chain-status-update", {
+            chainId,
+            status: "running"
+          });
+          // Start IBD monitoring
+          this.bitcoinMonitor.startMonitoring().catch(error => {
+            console.error('Failed to start IBD monitoring:', error);
+          });
+          // Clear the interval since we don't need to check anymore
+          if (rpcCheckInterval) {
+            clearInterval(rpcCheckInterval);
+            rpcCheckInterval = null;
+          }
+        } catch (error) {
+          // Ignore errors - we'll try again on next interval
+        }
+      }
+    };
+
+    // Start RPC check interval for Bitcoin
+    if (chainId === 'bitcoin') {
+      rpcCheckInterval = setInterval(checkBitcoinRPC, 1000);
+    }
 
     childProcess.stdout.on('data', (data) => {
       const output = data.toString();
       buffer += output;
       console.log(`[${chainId}] stdout: ${output}`);
       
-      // Bitcoin Core specific ready detection
+      // Bitcoin Core specific ready detection (keep existing method for backwards compatibility)
       if (chainId === 'bitcoin' && !readyDetected) {
         // Look for key initialization messages
         if (buffer.includes('Bound to')) {
           readyDetected = true;
-          this.chainStatuses.set(chainId, 'ready');
+          this.chainStatuses.set(chainId, 'running');
           this.mainWindow.webContents.send("chain-status-update", {
             chainId,
-            status: "ready"
+            status: "running"
           });
+          // Start IBD monitoring
+          this.bitcoinMonitor.startMonitoring().catch(error => {
+            console.error('Failed to start IBD monitoring:', error);
+          });
+          // Clear the interval since we detected ready state through stdout
+          if (rpcCheckInterval) {
+            clearInterval(rpcCheckInterval);
+            rpcCheckInterval = null;
+          }
         }
       }
 
@@ -202,6 +246,11 @@ class ChainManager {
 
     childProcess.on("exit", (code, signal) => {
       console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
+      // Clear RPC check interval if it's still running
+      if (rpcCheckInterval) {
+        clearInterval(rpcCheckInterval);
+        rpcCheckInterval = null;
+      }
       delete this.runningProcesses[chainId];
       this.chainStatuses.set(chainId, 'stopped');
       this.mainWindow.webContents.send("chain-status-update", {
@@ -214,26 +263,59 @@ class ChainManager {
   }
 
   async stopChain(chainId) {
-    const process = this.runningProcesses[chainId];
-    if (!process) {
+    const childProcess = this.runningProcesses[chainId];
+    if (!childProcess) {
       return { success: false, error: "Process not found" };
     }
 
     try {
       // For Bitcoin Core, try graceful shutdown first
       if (chainId === 'bitcoin') {
-        const platform = process.platform;
+        // Stop IBD monitoring first
+        this.bitcoinMonitor.stopMonitoring();
+
+        const platform = process.platform; // Global Node.js process
         const chain = this.getChainConfig(chainId);
+        if (!chain) throw new Error("Chain not found");
+        
         const extractDir = chain.extract_dir?.[platform];
         if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
         
         const downloadsDir = app.getPath("downloads");
         const basePath = path.join(downloadsDir, extractDir);
-        const bitcoinCliPath = path.join(basePath, platform === 'win32' ? 'bitcoin-cli.exe' : 'bitcoin-cli');
+        // bitcoin-cli is in same directory as bitcoind
+        const binaryDir = path.dirname(path.join(basePath, chain.binary[platform]));
+        const bitcoinCliPath = path.join(binaryDir, platform === 'win32' ? 'bitcoin-cli.exe' : 'bitcoin-cli');
         
         try {
+          // Make bitcoin-cli executable
+          if (process.platform !== "win32") {
+            await fs.promises.chmod(bitcoinCliPath, "755");
+          }
+
           // Try graceful shutdown first
-          const stopProcess = spawn(bitcoinCliPath, ['-signet', 'stop']);
+          console.log('Attempting graceful shutdown with:', bitcoinCliPath);
+          const stopProcess = spawn(bitcoinCliPath, [
+            '-signet',
+            '-rpcuser=user',
+            '-rpcpassword=password',
+            '-rpcport=38332',
+            'stop'
+          ], {
+            shell: true // Handle paths with spaces
+          });
+
+          // Capture any error output
+          stopProcess.stderr.on('data', (data) => {
+            console.error('bitcoin-cli error:', data.toString());
+          });
+          stopProcess.stdout.on('data', (data) => {
+            console.log('bitcoin-cli output:', data.toString());
+          });
+          stopProcess.on('error', (error) => {
+            console.error('bitcoin-cli spawn error:', error);
+          });
+
           await new Promise((resolve) => stopProcess.on('close', resolve));
           
           // Wait for the process to actually stop
@@ -253,7 +335,7 @@ class ChainManager {
       }
       
       // Fallback to force kill if graceful shutdown fails or for other chains
-      process.kill();
+      childProcess.kill();
       delete this.runningProcesses[chainId];
       this.chainStatuses.set(chainId, 'stopped');
       return { success: true };

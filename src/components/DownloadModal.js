@@ -21,7 +21,10 @@ const DownloadModal = () => {
 
   const activeDownloads = Object.entries(downloads).filter(
     ([_, download]) =>
-      download.status === 'downloading' || download.status === 'extracting'
+      download.status === 'downloading' || 
+      download.status === 'extracting' ||
+      download.status === 'syncing' ||
+      (download.type === 'ibd' && download.progress < 100)
   );
 
   const closeModal = useCallback(() => {
@@ -67,13 +70,7 @@ const DownloadModal = () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [
-    isVisible,
-    activeDownloads.length,
-    closeModal,
-    handleClickOutside,
-    resetTimer,
-  ]);
+  }, [isVisible, closeModal, handleClickOutside, resetTimer]);
 
   const handleMouseEnter = () => {
     if (timerRef.current) {
@@ -95,10 +92,12 @@ const DownloadModal = () => {
       resetTimer();
     };
 
-    const unsubscribe = electronAPI.onDownloadStarted(handleDownloadStarted);
+    const unsubscribeDownload = electronAPI.onDownloadStarted(handleDownloadStarted);
+    const unsubscribeSync = electronAPI.onBitcoinSyncStarted(handleDownloadStarted);
 
     return () => {
-      unsubscribe();
+      unsubscribeDownload();
+      unsubscribeSync();
     };
   }, [dispatch, resetTimer, isVisible]);
 
