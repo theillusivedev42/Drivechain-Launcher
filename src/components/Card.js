@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
+import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 
 const Card = ({
@@ -14,7 +15,11 @@ const Card = ({
 }) => {
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
+  const [showForceStop, setShowForceStop] = useState(false);
+  const [isStopAttempted, setIsStopAttempted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
+
   const handleAction = async () => {
     switch (chain.status) {
       case 'not_downloaded':
@@ -31,18 +36,39 @@ const Card = ({
         try {
           console.log(`Starting chain ${chain.id}`);
           await onStart(chain.id);
+          setIsStopAttempted(false); // Reset stop attempt state on start
         } catch (error) {
           console.error('Start failed:', error);
         }
         break;
       case 'running':
+      case 'starting':
+      case 'ready':
         try {
-          console.log(`Stopping chain ${chain.id}`);
-          await onStop(chain.id);
+          if (isStopAttempted) {
+            setShowForceStop(true);
+          } else {
+            console.log(`Stopping chain ${chain.id}`);
+            await onStop(chain.id);
+            setIsStopAttempted(true);
+          }
         } catch (error) {
           console.error('Stop failed:', error);
+          setIsStopAttempted(true);
         }
         break;
+    }
+  };
+
+  const handleForceStop = async () => {
+    try {
+      console.log(`Force stopping chain ${chain.id}`);
+      await onStop(chain.id);
+    } catch (error) {
+      console.error('Force stop failed:', error);
+    } finally {
+      setShowForceStop(false);
+      setIsStopAttempted(false);
     }
   };
 
@@ -80,6 +106,8 @@ const Card = ({
       case 'stopped':
         return 'run';
       case 'running':
+      case 'starting':
+      case 'ready':
         return 'stop';
       default:
         return '';
@@ -98,7 +126,10 @@ const Card = ({
       case 'stopped':
         return 'Start';
       case 'running':
-        return 'Stop';
+      case 'starting':
+      case 'ready':
+        if (!isHovered) return 'Running';
+        return isStopAttempted ? 'Force Stop' : 'Stop';
       default:
         return '';
     }
@@ -116,6 +147,8 @@ const Card = ({
         <button
           className={`btn ${getButtonClass()}`}
           onClick={handleAction}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           disabled={
             chain.status === 'downloading' || chain.status === 'extracting'
           }
@@ -134,6 +167,13 @@ const Card = ({
           onOpenDataDir={handleOpenDataDir}
           onOpenWalletDir={onOpenWalletDir}
           onReset={onReset}
+        />
+      )}
+      {showForceStop && (
+        <ForceStopModal
+          chainName={chain.display_name}
+          onConfirm={handleForceStop}
+          onClose={() => setShowForceStop(false)}
         />
       )}
     </div>
