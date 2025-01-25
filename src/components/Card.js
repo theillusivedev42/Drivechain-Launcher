@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
@@ -49,12 +49,12 @@ const Card = ({
             setShowForceStop(true);
           } else {
             console.log(`Stopping chain ${chain.id}`);
+            setIsStopAttempted(true);  // Set before stop
             await onStop(chain.id);
-            setIsStopAttempted(true);
           }
         } catch (error) {
           console.error('Stop failed:', error);
-          setIsStopAttempted(true);
+          setIsStopAttempted(false);  // Reset on error
         }
         break;
     }
@@ -114,6 +114,13 @@ const Card = ({
     }
   };
 
+  // Reset stop attempt when status changes
+  useEffect(() => {
+    if (chain.status === 'stopped') {
+      setIsStopAttempted(false);
+    }
+  }, [chain.status]);
+
   const getButtonText = () => {
     switch (chain.status) {
       case 'not_downloaded':
@@ -128,8 +135,9 @@ const Card = ({
       case 'running':
       case 'starting':
       case 'ready':
+        if (isStopAttempted) return 'Stopping...';
         if (!isHovered) return 'Running';
-        return isStopAttempted ? 'Force Stop' : 'Stop';
+        return 'Stop';
       default:
         return '';
     }
@@ -150,7 +158,9 @@ const Card = ({
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           disabled={
-            chain.status === 'downloading' || chain.status === 'extracting'
+            chain.status === 'downloading' || 
+            chain.status === 'extracting' ||
+            isStopAttempted
           }
           id={`download-button-${chain.id}`}
         >
