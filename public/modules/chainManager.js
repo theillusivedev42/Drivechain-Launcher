@@ -240,9 +240,16 @@ class ChainManager {
         
         const downloadsDir = app.getPath("downloads");
         const basePath = path.join(downloadsDir, extractDir);
-        const bitcoinCliPath = path.join(basePath, platform === 'win32' ? 'bitcoin-cli.exe' : 'bitcoin-cli');
+        // bitcoin-cli is in same directory as bitcoind
+        const binaryDir = path.dirname(path.join(basePath, chain.binary[platform]));
+        const bitcoinCliPath = path.join(binaryDir, platform === 'win32' ? 'bitcoin-cli.exe' : 'bitcoin-cli');
         
         try {
+          // Make bitcoin-cli executable
+          if (process.platform !== "win32") {
+            await fs.promises.chmod(bitcoinCliPath, "755");
+          }
+
           // Try graceful shutdown first
           console.log('Attempting graceful shutdown with:', bitcoinCliPath);
           const stopProcess = spawn(bitcoinCliPath, [
