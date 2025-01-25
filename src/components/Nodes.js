@@ -9,6 +9,7 @@ import { showDownloadModal } from '../store/downloadModalSlice';
 function Nodes() {
   const [chains, setChains] = useState([]);
   const [walletMessage, setWalletMessage] = useState(null);
+  const [bitcoinSync, setBitcoinSync] = useState(null);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
@@ -75,6 +76,25 @@ function Nodes() {
     const unsubscribeDownloadComplete = window.electronAPI.onDownloadComplete(
       downloadCompleteHandler
     );
+    const unsubscribeBitcoinSync = window.electronAPI.onBitcoinSyncStatus(
+      (status) => {
+        setBitcoinSync(status);
+        // Update chain status with sync progress
+        if (status) {
+          setChains(prevChains =>
+            prevChains.map(chain =>
+              chain.id === 'bitcoin'
+                ? {
+                    ...chain,
+                    syncStatus: status,
+                    syncProgress: status.percent
+                  }
+                : chain
+            )
+          );
+        }
+      }
+    );
 
     window.electronAPI.getDownloads().then(downloadsUpdateHandler);
 
@@ -84,6 +104,8 @@ function Nodes() {
       if (typeof unsubscribeStatus === 'function') unsubscribeStatus();
       if (typeof unsubscribeDownloadComplete === 'function')
         unsubscribeDownloadComplete();
+      if (typeof unsubscribeBitcoinSync === 'function')
+        unsubscribeBitcoinSync();
     };
   }, [
     fetchChains,

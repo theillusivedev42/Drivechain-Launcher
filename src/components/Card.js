@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
 import SettingsIcon from './SettingsIcon';
+import styles from './Card.module.css';
 
 const Card = ({
   chain,
@@ -104,6 +105,27 @@ const Card = ({
     }
   };
 
+  const renderSyncStatus = () => {
+    if (chain.id === 'bitcoin' && chain.syncStatus) {
+      const { percent, currentBlock, totalBlocks } = chain.syncStatus;
+      return (
+        <div className={styles['sync-status']}>
+          <div className={styles['sync-progress-bar']}>
+            <div 
+              className={styles['sync-progress-fill']}
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+          <div className={styles['sync-details']}>
+            {currentBlock.toLocaleString()} / {totalBlocks.toLocaleString()} blocks
+            ({percent.toFixed(2)}%)
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
       <div className="card-header">
@@ -111,6 +133,7 @@ const Card = ({
       </div>
       <div className="card-content">
         <p>{chain.description}</p>
+        {renderSyncStatus()}
       </div>
       <div className="card-actions">
         <button

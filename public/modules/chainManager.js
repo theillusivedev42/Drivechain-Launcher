@@ -2,6 +2,7 @@ const { app, shell } = require("electron");
 const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
+const BitcoinMonitor = require("./bitcoinMonitor");
 
 class ChainManager {
   constructor(mainWindow, config) {
@@ -9,6 +10,7 @@ class ChainManager {
     this.config = config;
     this.runningProcesses = {};
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
+    this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
   }
 
   getChainConfig(chainId) {
@@ -168,6 +170,10 @@ class ChainManager {
             chainId,
             status: "ready"
           });
+          // Start IBD monitoring
+          this.bitcoinMonitor.startMonitoring().catch(error => {
+            console.error('Failed to start IBD monitoring:', error);
+          });
         }
       }
 
@@ -222,6 +228,9 @@ class ChainManager {
     try {
       // For Bitcoin Core, try graceful shutdown first
       if (chainId === 'bitcoin') {
+        // Stop IBD monitoring first
+        this.bitcoinMonitor.stopMonitoring();
+
         const platform = process.platform;
         const chain = this.getChainConfig(chainId);
         const extractDir = chain.extract_dir?.[platform];
