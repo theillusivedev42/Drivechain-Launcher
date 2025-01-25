@@ -747,13 +747,13 @@ app.whenReady().then(async () => {
     }
 
     // Standard process handling for other chains
-    const process = runningProcesses[chainId];
-    if (!process) {
+    const chainProcess = runningProcesses[chainId];
+    if (!chainProcess) {
       return { success: false, error: "Process not found" };
     }
 
     try {
-      process.kill();
+      chainProcess.kill();
       delete runningProcesses[chainId];
       return { success: true };
     } catch (error) {
