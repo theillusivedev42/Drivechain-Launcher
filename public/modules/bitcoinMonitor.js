@@ -55,46 +55,54 @@ class BitcoinMonitor {
     this.monitoring = true;
     console.log('Starting Bitcoin Core IBD monitoring');
     
-    // Emit sync started event
-    this.mainWindow.webContents.send('bitcoin-sync-started');
-
-    while (this.monitoring) {
-      try {
-        const status = await this.checkIBDStatus();
-        
-        // Calculate progress based on blocks synced vs total blocks
-        const progressPercent = status.headers > 0 
-          ? (status.blocks / status.headers) * 100 
-          : 0;
-
-        // Log progress every 1000 blocks
-        if (status.blocks >= this.lastLoggedBlock + 1000) {
-          console.log(`Bitcoin Core synced ${status.blocks}/${status.headers} blocks (${progressPercent.toFixed(2)}%)`);
-          this.lastLoggedBlock = status.blocks;
-        }
-
-        // Send status update to renderer
-        this.mainWindow.webContents.send('bitcoin-sync-status', {
-          inProgress: status.inIBD,
-          percent: progressPercent,
-          currentBlock: status.blocks,
-          totalBlocks: status.headers
-        });
-
-        // If IBD is complete, stop monitoring
-        if (!status.inIBD) {
-          console.log('Bitcoin Core IBD complete');
-          this.monitoring = false;
-          break;
-        }
-
-        // Wait before next check
-        await new Promise(resolve => setTimeout(resolve, this.pollInterval));
-      } catch (error) {
-        console.error('Error monitoring Bitcoin Core:', error);
-        // Wait before retry on error
-        await new Promise(resolve => setTimeout(resolve, this.pollInterval * 2));
+    try {
+      // Check IBD status before showing modal
+      const initialStatus = await this.checkIBDStatus();
+      if (initialStatus.inIBD) {
+        console.log('Bitcoin Core is in IBD, showing progress modal');
+        this.mainWindow.webContents.send('bitcoin-sync-started');
       }
+
+      while (this.monitoring) {
+        try {
+          const status = await this.checkIBDStatus();
+          
+          // Calculate progress based on blocks synced vs total blocks
+          const progressPercent = status.headers > 0 
+            ? (status.blocks / status.headers) * 100 
+            : 0;
+
+          // Log progress every 1000 blocks
+          if (status.blocks >= this.lastLoggedBlock + 1000) {
+            console.log(`Bitcoin Core synced ${status.blocks}/${status.headers} blocks (${progressPercent.toFixed(2)}%)`);
+            this.lastLoggedBlock = status.blocks;
+          }
+
+          // Send status update to renderer
+          this.mainWindow.webContents.send('bitcoin-sync-status', {
+            inProgress: status.inIBD,
+            percent: progressPercent,
+            currentBlock: status.blocks,
+            totalBlocks: status.headers
+          });
+
+          // If IBD is complete, stop monitoring
+          if (!status.inIBD) {
+            console.log('Bitcoin Core IBD complete');
+            this.monitoring = false;
+            break;
+          }
+
+          // Wait before next check
+          await new Promise(resolve => setTimeout(resolve, this.pollInterval));
+        } catch (error) {
+          console.error('Error monitoring Bitcoin Core:', error);
+          // Wait before retry on error
+          await new Promise(resolve => setTimeout(resolve, this.pollInterval * 2));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to start monitoring:', error);
     }
 
     // Send final status update
