@@ -197,15 +197,42 @@ class DownloadManager {
     console.log(`Starting extraction to ${basePath} for ${chainId}`);
     return new Promise((resolve, reject) => {
       try {
-        const zip = new AdmZip(zipPath);
-        zip.extractAllToAsync(basePath, true, (error) => {
-          if (error) {
-            console.error(`Extraction error for ${chainId}: ${error.message}`);
+        // Special handling for BitWindow on macOS - use native unzip
+        if (chainId === 'bitwindow' && process.platform === 'darwin') {
+          console.log('Using native unzip for BitWindow on macOS');
+          const unzipProcess = spawn('unzip', ['-o', zipPath, '-d', basePath]);
+          
+          unzipProcess.stdout.on('data', (data) => {
+            console.log(`unzip stdout: ${data}`);
+          });
+          
+          unzipProcess.stderr.on('data', (data) => {
+            console.error(`unzip stderr: ${data}`);
+          });
+          
+          unzipProcess.on('close', (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`unzip process exited with code ${code}`));
+            }
+          });
+          
+          unzipProcess.on('error', (error) => {
             reject(error);
-          } else {
-            resolve();
-          }
-        });
+          });
+        } else {
+          // Use adm-zip for all other cases
+          const zip = new AdmZip(zipPath);
+          zip.extractAllToAsync(basePath, true, (error) => {
+            if (error) {
+              console.error(`Extraction error for ${chainId}: ${error.message}`);
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        }
       } catch (error) {
         console.error(`Error in extractZip for ${chainId}: ${error.message}`);
         reject(error);
@@ -628,16 +655,25 @@ app.whenReady().then(async () => {
     const downloadsDir = app.getPath("downloads");
     const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
 
-    console.log(`Attempting to start binary at: ${fullBinaryPath}`);
+    let childProcess;
 
     try {
-      await fsPromises.access(fullBinaryPath, fs.constants.F_OK);
-
-      if (process.platform !== "win32") {
-        await fsPromises.chmod(fullBinaryPath, "755");
+      // Special handling for BitWindow on macOS
+      if (chainId === 'bitwindow' && platform === 'darwin') {
+        const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
+        console.log(`Attempting to start BitWindow app bundle at: ${appBundlePath}`);
+        await fsPromises.access(appBundlePath, fs.constants.F_OK);
+        console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
+        childProcess = spawn('open', [appBundlePath], { cwd: path.dirname(appBundlePath) });
+      } else {
+        // Standard binary execution for other chains
+        console.log(`Attempting to start binary at: ${fullBinaryPath}`);
+        await fsPromises.access(fullBinaryPath, fs.constants.F_OK);
+        if (process.platform !== "win32") {
+          await fsPromises.chmod(fullBinaryPath, "755");
+        }
+        childProcess = spawn(fullBinaryPath, [], { cwd: path.dirname(fullBinaryPath) });
       }
-
-      const childProcess = spawn(fullBinaryPath, [], { cwd: path.dirname(fullBinaryPath) });
       runningProcesses[chainId] = childProcess;
 
       childProcess.stdout.on('data', (data) => {
@@ -686,6 +722,31 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("stop-chain", async (event, chainId) => {
+    const chain = config.chains.find((c) => c.id === chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    const platform = process.platform;
+    
+    // Special handling for BitWindow on macOS
+    if (chainId === 'bitwindow' && platform === 'darwin') {
+      try {
+        // Use applescript to quit BitWindow gracefully
+        const childProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
+        await new Promise((resolve, reject) => {
+          childProcess.on('exit', (code) => {
+            if (code === 0) resolve();
+            else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
+          });
+        });
+        delete runningProcesses[chainId];
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to stop BitWindow:", error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Standard process handling for other chains
     const process = runningProcesses[chainId];
     if (!process) {
       return { success: false, error: "Process not found" };
@@ -713,8 +774,28 @@ app.whenReady().then(async () => {
     if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
 
     const downloadsDir = app.getPath("downloads");
-    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
 
+    // Special handling for BitWindow on macOS
+    if (chainId === 'bitwindow' && platform === 'darwin') {
+      const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
+      try {
+        await fsPromises.access(appBundlePath);
+        // For BitWindow, check if the app is running using AppleScript
+        const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "BitWindow"']);
+        const result = await new Promise((resolve) => {
+          checkProcess.stdout.on('data', (data) => {
+            resolve(parseInt(data.toString().trim()) > 0);
+          });
+          checkProcess.on('error', () => resolve(false));
+        });
+        return result ? "running" : "stopped";
+      } catch (error) {
+        return "not_downloaded";
+      }
+    }
+
+    // Standard handling for other chains
+    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
     try {
       await fsPromises.access(fullBinaryPath);
       return runningProcesses[chainId] ? "running" : "stopped";
