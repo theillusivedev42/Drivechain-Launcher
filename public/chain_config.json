@@ -17,9 +17,9 @@
               "wallet": ""
           },
           "extract_dir": {
-              "linux": "drivechain/grpcurl",
-              "darwin": "drivechain/grpcurl",
-              "win32": "drivechain/grpcurl"
+              "linux": "Drivechain Launcher Downloads/grpcurl",
+              "darwin": "Drivechain Launcher Downloads/grpcurl",
+              "win32": "Drivechain Launcher Downloads/grpcurl"
           },
           "download": {
               "urls": {
@@ -39,9 +39,9 @@
               }
           },
           "binary": {
-              "linux": "assets/grpcurl",
-              "darwin": "assets/grpcurl",
-              "win32": "assets/grpcurl.exe"
+              "linux": "grpcurl",
+              "darwin": "grpcurl",
+              "win32": "grpcurl.exe"
           },
           "network": {
               "port": 0
@@ -65,9 +65,9 @@
               "wallet": "wallet.db"
           },
           "extract_dir": {
-              "linux": "drivechain/enforcer",
-              "darwin": "drivechain/enforcer",
-              "win32": "drivechain/enforcer"
+              "linux": "Drivechain Launcher Downloads/enforcer",
+              "darwin": "Drivechain Launcher Downloads/enforcer",
+              "win32": "Drivechain Launcher Downloads/enforcer"
           },
           "download": {
               "urls": {
@@ -87,9 +87,9 @@
               }
           },
           "binary": {
-              "linux": "assets/bip300301_enforcer",
-              "darwin": "assets/bip300301_enforcer",
-              "win32": "assets/bip300301_enforcer.exe"
+              "linux": "bip300301-enforcer-latest-x86_64-unknown-linux-gnu/bip300301_enforcer-0.2.0-x86_64-unknown-linux-gnu",
+              "darwin": "bip300301-enforcer-latest-x86_64-apple-darwin/bip300301_enforcer-0.2.0-x86_64-apple-darwin",
+              "win32": "bip300301-enforcer-latest-x86_64-pc-windows-gnu/bip300301_enforcer-0.2.0-x86_64-pc-windows-gnu.exe"
           },
           "network": {
               "port": 0
@@ -113,9 +113,9 @@
               "wallet": "wallet.dat"
           },
           "extract_dir": {
-              "linux": "drivechain/bitcoin",
-              "darwin": "drivechain/bitcoin",
-              "win32": "drivechain/bitcoin"
+              "linux": "Drivechain Launcher Downloads/bitcoin",
+              "darwin": "Drivechain Launcher Downloads/bitcoin",
+              "win32": "Drivechain Launcher Downloads/bitcoin"
           },
           "download": {
               "urls": {
@@ -135,9 +135,9 @@
               }
           },
           "binary": {
-              "linux": "assets/bitcoind",
-              "darwin": "assets/bitcoind",
-              "win32": "assets/bitcoind.exe"
+              "linux": "L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu/bitcoind",
+              "darwin": "L1-bitcoin-patched-latest-x86_64-apple-darwin/bitcoind",
+              "win32": "L1-bitcoin-patched-latest-x86_64-w64-msvc/bitcoind.exe"
           },
           "network": {
               "port": 8332
@@ -161,9 +161,9 @@
               "wallet": ""
           },
           "extract_dir": {
-              "linux": "drivechain/bitwindow",
-              "darwin": "drivechain/bitwindow",
-              "win32": "drivechain/bitwindow"
+              "linux": "Drivechain Launcher Downloads/bitwindow",
+              "darwin": "Drivechain Launcher Downloads/bitwindow",
+              "win32": "Drivechain Launcher Downloads/bitwindow"
           },
           "download": {
               "urls": {
@@ -183,9 +183,9 @@
               }
           },
           "binary": {
-              "linux": "assets/bitwindow",
-              "darwin": "assets/bitwindow",
-              "win32": "assets/bitwindow.exe"
+              "linux": "bitwindow",
+              "darwin": "bitwindow",
+              "win32": "bitwindow.exe"
           },
           "network": {
               "port": 0
@@ -209,9 +209,9 @@
               "wallet": "data/thunder/wallet.mdb"
           },
           "extract_dir": {
-              "linux": "drivechain/thunder",
-              "darwin": "drivechain/thunder",
-              "win32": "drivechain/thunder"
+              "linux": "Drivechain Launcher Downloads/thunder",
+              "darwin": "Drivechain Launcher Downloads/thunder",
+              "win32": "Drivechain Launcher Downloads/thunder"
           },
           "download": {
               "urls": {
@@ -231,9 +231,9 @@
               }
           },
           "binary": {
-              "linux": "assets/thunder",
-              "darwin": "assets/thunder",
-              "win32": "assets/thunder.exe"
+              "linux": "thunder-latest-x86_64-unknown-linux-gnu",
+              "darwin": "thunder-latest-x86_64-apple-darwin",
+              "win32": "thunder-latest-x86_64-pc-windows-gnu.exe"
           },
           "network": {
               "port": 6009
@@ -257,9 +257,9 @@
               "wallet": "wallet.mdb"
           },
           "extract_dir": {
-              "linux": "drivechain/bitnames",
-              "darwin": "drivechain/bitnames",
-              "win32": "drivechain/bitnames"
+              "linux": "Drivechain Launcher Downloads/bitnames",
+              "darwin": "Drivechain Launcher Downloads/bitnames",
+              "win32": "Drivechain Launcher Downloads/bitnames"
           },
           "download": {
               "urls": {
@@ -279,9 +279,9 @@
               }
           },
           "binary": {
-              "linux": "assets/bitnames",
-              "darwin": "assets/bitnames",
-              "win32": "assets/bitnames.exe"
+              "linux": "bitnames-latest-x86_64-unknown-linux-gnu",
+              "darwin": "bitnames-latest-x86_64-apple-darwin",
+              "win32": "bitnames-latest-x86_64-pc-windows-gnu.exe"
           },
           "network": {
               "port": 0

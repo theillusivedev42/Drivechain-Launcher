@@ -8,6 +8,7 @@ const AdmZip = require("adm-zip");
 const tar = require("tar");
 const axios = require("axios");
 const { pipeline } = require('stream/promises');
+const ConfigManager = require("./modules/configManager");
 
 const API_BASE_URL = "https://api.drivechain.live";
 
@@ -523,6 +524,9 @@ async function stopChain(chainId) {
 app.whenReady().then(async () => {
   await loadConfig();
   await setupChainDirectories();
+  const configManager = new ConfigManager(configPath);
+  await configManager.loadConfig();
+  await configManager.setupExtractDirectories();
   createWindow();
   setupIPCHandlers();
 
@@ -615,13 +619,14 @@ app.whenReady().then(async () => {
     if (!chain) throw new Error("Chain not found");
 
     const platform = process.platform;
-    const baseDir = chain.directories.base[platform];
-    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
 
-    const homeDir = app.getPath("home");
-    const basePath = path.join(homeDir, baseDir);
     const binaryPath = chain.binary[platform];
-    const fullBinaryPath = path.join(basePath, binaryPath);
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
+    const downloadsDir = app.getPath("downloads");
+    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
 
     console.log(`Attempting to start binary at: ${fullBinaryPath}`);
 
@@ -632,7 +637,7 @@ app.whenReady().then(async () => {
         await fsPromises.chmod(fullBinaryPath, "755");
       }
 
-      const childProcess = spawn(fullBinaryPath, [], { cwd: baseDir });
+      const childProcess = spawn(fullBinaryPath, [], { cwd: path.dirname(fullBinaryPath) });
       runningProcesses[chainId] = childProcess;
 
       childProcess.stdout.on('data', (data) => {
@@ -701,13 +706,14 @@ app.whenReady().then(async () => {
     if (!chain) throw new Error("Chain not found");
 
     const platform = process.platform;
-    const baseDir = chain.directories.base[platform];
-    if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
 
-    const homeDir = app.getPath("home");
-    const basePath = path.join(homeDir, baseDir);
     const binaryPath = chain.binary[platform];
-    const fullBinaryPath = path.join(basePath, binaryPath);
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
+    const downloadsDir = app.getPath("downloads");
+    const fullBinaryPath = path.join(downloadsDir, extractDir, binaryPath);
 
     try {
       await fsPromises.access(fullBinaryPath);
