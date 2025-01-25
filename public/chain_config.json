@@ -3,7 +3,7 @@
   "chains": [
       {
           "id": "grpcurl",
-          "enabled": true,
+          "enabled": false,
           "version": "",
           "display_name": "gRPCurl",
           "description": "Command-line tool for interacting with gRPC servers",
