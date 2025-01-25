@@ -66,6 +66,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("bitcoin-sync-status", subscription);
     };
   },
+  onBitcoinSyncStarted: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on("bitcoin-sync-started", subscription);
+    return () => {
+      ipcRenderer.removeListener("bitcoin-sync-started", subscription);
+    };
+  },
 });
 
 console.log("Preload script has run");

@@ -3,7 +3,7 @@ const axios = require('axios');
 class BitcoinMonitor {
   constructor(mainWindow) {
     this.mainWindow = mainWindow;
-    this.pollInterval = 1000; // 1 second
+    this.pollInterval = 100; // 100ms for smoother updates
     this.lastLoggedBlock = 0;
     this.monitoring = false;
     this.rpcConfig = {
@@ -54,6 +54,9 @@ class BitcoinMonitor {
     
     this.monitoring = true;
     console.log('Starting Bitcoin Core IBD monitoring');
+    
+    // Emit sync started event
+    this.mainWindow.webContents.send('bitcoin-sync-started');
 
     while (this.monitoring) {
       try {

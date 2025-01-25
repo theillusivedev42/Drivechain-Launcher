@@ -231,49 +231,57 @@ body {
 
 /* L1 Chain Layout */
 .l1-chains {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(calc(25% - 0.75rem), 1fr));
+  display: flex;
   gap: 1rem;
   margin: 0;
   padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.l1-chains::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .l1-chains > .card {
+  flex: 1;
+  min-width: 300px;
   margin: 0;
   box-sizing: border-box;
-  width: 100%;
-}
-
-@media (max-width: 1100px) {
-  .l1-chains {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* L2 Chain Layout */
 .l2-chains {
   display: flex;
-  flex-direction: column;
   gap: 1rem;
   margin: 0;
   padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.l2-chains::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .l2-chains > .card {
-  width: 100%;
+  flex: 1;
+  min-width: 300px;
   margin: 0;
   box-sizing: border-box;
 }
 
 /* Responsive Layout */
 @media (max-width: 768px) {
-  .l1-chains {
-    flex-direction: column;
+  .chain-list {
+    padding: 0 1rem;
   }
-
-  .l1-chains > .card {
-    flex: 0 0 100%;
-    max-width: 100%;
+  
+  .l1-chains > .card,
+  .l2-chains > .card {
+    min-width: 250px; /* Slightly smaller minimum width on mobile */
   }
 }
 

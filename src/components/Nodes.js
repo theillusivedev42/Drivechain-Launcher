@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import Card from './Card';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
-import { updateDownloads } from '../store/downloadSlice';
+import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
 import { showDownloadModal } from '../store/downloadModalSlice';
 
 function Nodes() {
@@ -79,20 +79,8 @@ function Nodes() {
     const unsubscribeBitcoinSync = window.electronAPI.onBitcoinSyncStatus(
       (status) => {
         setBitcoinSync(status);
-        // Update chain status with sync progress
-        if (status) {
-          setChains(prevChains =>
-            prevChains.map(chain =>
-              chain.id === 'bitcoin'
-                ? {
-                    ...chain,
-                    syncStatus: status,
-                    syncProgress: status.percent
-                  }
-                : chain
-            )
-          );
-        }
+        // Update IBD status in downloads slice
+        dispatch(updateIBDStatus({ chainId: 'bitcoin', status }));
       }
     );
 
