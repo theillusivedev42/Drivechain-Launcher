@@ -664,7 +664,46 @@ app.whenReady().then(async () => {
         console.log(`Attempting to start BitWindow app bundle at: ${appBundlePath}`);
         await fsPromises.access(appBundlePath, fs.constants.F_OK);
         console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
+        
+        // Launch the app
         childProcess = spawn('open', [appBundlePath], { cwd: path.dirname(appBundlePath) });
+        
+        // Wait for the app to actually start
+        await new Promise((resolve, reject) => {
+          childProcess.on('exit', async (code) => {
+            if (code === 0) {
+              // Check if BitWindow is actually running
+              const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "BitWindow"']);
+              const isRunning = await new Promise((resolve) => {
+                checkProcess.stdout.on('data', (data) => {
+                  resolve(parseInt(data.toString().trim()) > 0);
+                });
+                checkProcess.on('error', () => resolve(false));
+              });
+              
+              if (isRunning) {
+                // Store a placeholder in runningProcesses so the UI knows BitWindow is running
+                runningProcesses[chainId] = {
+                  // Minimal process-like interface
+                  kill: () => {
+                    const quitProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
+                    return new Promise((resolve, reject) => {
+                      quitProcess.on('exit', (code) => {
+                        if (code === 0) resolve();
+                        else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
+                      });
+                    });
+                  }
+                };
+                resolve();
+              } else {
+                reject(new Error('BitWindow failed to start'));
+              }
+            } else {
+              reject(new Error(`Failed to start BitWindow, exit code: ${code}`));
+            }
+          });
+        });
       } else {
         // Standard binary execution for other chains
         console.log(`Attempting to start binary at: ${fullBinaryPath}`);
