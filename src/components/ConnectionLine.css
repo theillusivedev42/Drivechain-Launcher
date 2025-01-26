@@ -1,0 +1,43 @@
+.connection-line {
+  position: absolute;
+  height: 2px;
+  background: #ccc;
+  transform-origin: left center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.connection-line.animated {
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    transparent 50%,
+    #4a9eff 50%,
+    #4a9eff 100%
+  );
+  background-size: 20px 100%;
+  animation: moveStripes 1s linear infinite;
+}
+
+@keyframes moveStripes {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 20px 0;
+  }
+}
+
+/* Dark mode styles */
+.dark .connection-line {
+  background: #444;
+}
+
+.dark .connection-line.animated {
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    transparent 50%,
+    #0066cc 50%,
+    #0066cc 100%
+  );
+  background-size: 20px 100%;
+}

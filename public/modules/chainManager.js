@@ -144,12 +144,21 @@ class ChainManager {
       
       const childProcess = spawn(fullBinaryPath, args, { cwd: basePath });
       this.runningProcesses[chainId] = childProcess;
-      this.chainStatuses.set(chainId, 'starting');
       
-      this.mainWindow.webContents.send("chain-status-update", {
-        chainId,
-        status: "starting"
-      });
+      // For non-Bitcoin chains, consider them running immediately
+      if (chainId !== 'bitcoin') {
+        this.chainStatuses.set(chainId, 'running');
+        this.mainWindow.webContents.send("chain-status-update", {
+          chainId,
+          status: "running"
+        });
+      } else {
+        this.chainStatuses.set(chainId, 'starting');
+        this.mainWindow.webContents.send("chain-status-update", {
+          chainId,
+          status: "starting"
+        });
+      }
 
       this.setupProcessListeners(childProcess, chainId, basePath);
 
@@ -223,6 +232,16 @@ class ChainManager {
             rpcCheckInterval = null;
           }
         }
+      }
+      
+      // For non-Bitcoin chains, consider them running as soon as they start outputting
+      if (chainId !== 'bitcoin' && !readyDetected) {
+        readyDetected = true;
+        this.chainStatuses.set(chainId, 'running');
+        this.mainWindow.webContents.send("chain-status-update", {
+          chainId,
+          status: "running"
+        });
       }
 
       this.mainWindow.webContents.send("chain-output", {
