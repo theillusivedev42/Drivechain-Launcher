@@ -157,7 +157,7 @@ const Card = ({
       case 'running':
       case 'starting':
       case 'ready':
-        return 'stop';
+        return isHovered ? 'stop' : 'running';
       default:
         return '';
     }

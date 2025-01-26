@@ -10,6 +10,8 @@
   --download-btn-hover: #0056b3;
   --run-btn: #28a745;
   --run-btn-hover: #218838;
+  --running-btn: #007bff;
+  --running-btn-hover: #0056b3;
   --stop-btn: #f44336;
   --stop-btn-hover: #c82333;
   --downloading-btn: #ffa500;
@@ -187,6 +189,13 @@ body {
   background-color: var(--downloading-btn-hover);
 }
 
+.running {
+  background-color: var(--running-btn);
+}
+.running:hover {
+  background-color: var(--running-btn-hover);
+}
+
 .stop {
   background-color: var(--stop-btn);
 }
@@ -221,12 +230,34 @@ body {
   margin-bottom: 2rem;
 }
 
+.chain-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
 .chain-heading {
   font-size: 1.5rem;
   font-weight: bold;
   text-align: left;
-  margin: 0 0 1rem 0;
+  margin: 0;
   padding: 0;
+}
+
+.quick-start-button {
+  background-color: var(--run-btn);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.quick-start-button:hover {
+  background-color: var(--run-btn-hover);
 }
 
 /* L1 Chain Layout */
