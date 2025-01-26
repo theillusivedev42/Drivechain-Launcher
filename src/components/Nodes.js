@@ -427,6 +427,11 @@ function Nodes() {
     });
   }, [runningNodes]);
 
+  const isBitcoinStopped = useCallback(() => {
+    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
+    return bitcoinChain?.status === 'stopped';
+  }, [chains]);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStoppingSequence, setIsStoppingSequence] = useState(false);
 
@@ -436,53 +441,75 @@ function Nodes() {
     );
   }, [runningNodes]);
 
-  const handleQuickStartStop = useCallback(async () => {
+  const handleStartSequence = useCallback(async () => {
     try {
       setIsProcessing(true);
+      setIsStoppingSequence(false);
+      
+      const bitcoinButton = document.getElementById('download-button-bitcoin');
+      const enforcerButton = document.getElementById('download-button-enforcer');
+      const bitwindowButton = document.getElementById('download-button-bitwindow');
+
+      if (bitcoinButton) bitcoinButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (enforcerButton) enforcerButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (bitwindowButton) bitwindowButton.click();
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  const handleStopSequence = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      setIsStoppingSequence(true);
+      
+      const bitwindowButton = document.getElementById('download-button-bitwindow');
+      const enforcerButton = document.getElementById('download-button-enforcer');
+      const bitcoinButton = document.getElementById('download-button-bitcoin');
+
+      if (bitwindowButton) bitwindowButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (enforcerButton) enforcerButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (bitcoinButton) bitcoinButton.click();
+      
+      while (!isBitcoinStopped()) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+    } catch (error) {
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+      throw error;
+    }
+  }, [isBitcoinStopped]);
+
+  const handleQuickStartStop = useCallback(async () => {
+    try {
       if (!areAllChainsRunning()) {
-        setIsStoppingSequence(false);
-        // Start sequence
-        const bitcoinButton = document.getElementById('download-button-bitcoin');
-        const enforcerButton = document.getElementById('download-button-enforcer');
-        const bitwindowButton = document.getElementById('download-button-bitwindow');
-
-        if (bitcoinButton) bitcoinButton.click();
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        if (enforcerButton) enforcerButton.click();
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        if (bitwindowButton) bitwindowButton.click();
+        await handleStartSequence();
       } else {
-        setIsStoppingSequence(true);
-        // Stop sequence (reverse order)
-        const bitwindowButton = document.getElementById('download-button-bitwindow');
-        const enforcerButton = document.getElementById('download-button-enforcer');
-        const bitcoinButton = document.getElementById('download-button-bitcoin');
-
-        if (bitwindowButton) bitwindowButton.click();
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        if (enforcerButton) enforcerButton.click();
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        if (bitcoinButton) bitcoinButton.click();
-        if (bitcoinButton) bitcoinButton.click();
+        await handleStopSequence();
       }
     } catch (error) {
       console.error('Quick start/stop failed:', error);
-    } finally {
-      setIsProcessing(false);
-      setIsStoppingSequence(false);
     }
-  }, [areAllChainsRunning]);
+  }, [areAllChainsRunning, handleStartSequence, handleStopSequence]);
 
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
+      {/* Quick Start button temporarily hidden - To re-enable, uncomment the following block:
       <button
         onClick={handleQuickStartStop}
-        disabled={isProcessing}
+        disabled={isProcessing && !isBitcoinStopped()}
         style={{
           margin: '10px',
           padding: '8px 16px',
-          backgroundColor: isProcessing
+          backgroundColor: isProcessing && !isBitcoinStopped()
             ? '#FFA726'  // Orange for processing
             : areAllChainsRunning()
               ? '#f44336'  // Red for stop
@@ -490,14 +517,15 @@ function Nodes() {
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: isProcessing ? 'wait' : 'pointer',
-          opacity: isProcessing ? 0.8 : 1
+          cursor: (isProcessing && !isBitcoinStopped()) ? 'wait' : 'pointer',
+          opacity: (isProcessing && !isBitcoinStopped()) ? 0.8 : 1
         }}
       >
         {isProcessing
           ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
           : (!areAllChainsRunning() ? 'Quick Start' : 'Safe Stop')}
       </button>
+      */}
       <div className="chain-list">
         <div className="chain-section">
           <h2 className="chain-heading">Layer 1</h2>
