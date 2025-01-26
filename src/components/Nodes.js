@@ -1,3 +1,187 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import Card from './Card';
@@ -230,9 +414,90 @@ function Nodes() {
     [chains, handleStopChain]
   );
 
+  const waitForChainRunning = useCallback((chainId) => {
+    return new Promise((resolve) => {
+      const checkRunning = () => {
+        if (runningNodes.includes(chainId)) {
+          resolve();
+        } else {
+          setTimeout(checkRunning, 500); // Check every 500ms
+        }
+      };
+      checkRunning();
+    });
+  }, [runningNodes]);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isStoppingSequence, setIsStoppingSequence] = useState(false);
+
+  const areAllChainsRunning = useCallback(() => {
+    return ['bitcoin', 'enforcer', 'bitwindow'].every(chain =>
+      runningNodes.includes(chain)
+    );
+  }, [runningNodes]);
+
+  const handleQuickStartStop = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      if (!areAllChainsRunning()) {
+        setIsStoppingSequence(false);
+        // Start sequence
+        const bitcoinButton = document.getElementById('download-button-bitcoin');
+        const enforcerButton = document.getElementById('download-button-enforcer');
+        const bitwindowButton = document.getElementById('download-button-bitwindow');
+
+        if (bitcoinButton) bitcoinButton.click();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (enforcerButton) enforcerButton.click();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (bitwindowButton) bitwindowButton.click();
+      } else {
+        setIsStoppingSequence(true);
+        // Stop sequence (reverse order)
+        const bitwindowButton = document.getElementById('download-button-bitwindow');
+        const enforcerButton = document.getElementById('download-button-enforcer');
+        const bitcoinButton = document.getElementById('download-button-bitcoin');
+
+        if (bitwindowButton) bitwindowButton.click();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (enforcerButton) enforcerButton.click();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (bitcoinButton) bitcoinButton.click();
+        if (bitcoinButton) bitcoinButton.click();
+      }
+    } catch (error) {
+      console.error('Quick start/stop failed:', error);
+    } finally {
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+    }
+  }, [areAllChainsRunning]);
+
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
+      <button
+        onClick={handleQuickStartStop}
+        disabled={isProcessing}
+        style={{
+          margin: '10px',
+          padding: '8px 16px',
+          backgroundColor: isProcessing
+            ? '#FFA726'  // Orange for processing
+            : areAllChainsRunning()
+              ? '#f44336'  // Red for stop
+              : '#4CAF50', // Green for start
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: isProcessing ? 'wait' : 'pointer',
+          opacity: isProcessing ? 0.8 : 1
+        }}
+      >
+        {isProcessing
+          ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
+          : (!areAllChainsRunning() ? 'Quick Start' : 'Safe Stop')}
+      </button>
       <div className="chain-list">
         <div className="chain-section">
           <h2 className="chain-heading">Layer 1</h2>
