@@ -41,6 +41,16 @@ class ChainManager {
     if (chainId === 'bitcoin') {
       return this.getBitcoinArgs();
     }
+    if (chainId === 'enforcer') {
+      return [
+        '--node-rpc-pass=password',
+        '--node-rpc-user=user',
+        '--node-rpc-addr=127.0.0.1:38332',
+        '--node-zmq-addr-sequence=tcp://127.0.0.1:29000',
+        '--enable-wallet',
+        '--wallet-auto-create'
+      ];
+    }
     return [];
   }
 
