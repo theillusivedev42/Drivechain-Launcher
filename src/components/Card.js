@@ -19,8 +19,17 @@ const Card = ({
   const [isStopAttempted, setIsStopAttempted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
+  const [lastActionTime, setLastActionTime] = useState(0);
 
   const handleAction = async () => {
+    // Add cooldown period of 2 seconds between actions
+    const now = Date.now();
+    if (now - lastActionTime < 2000) {
+      console.log('Action blocked: cooldown period');
+      return;
+    }
+    setLastActionTime(now);
+
     switch (chain.status) {
       case 'not_downloaded':
         try {
