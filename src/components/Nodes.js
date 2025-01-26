@@ -10,21 +10,34 @@ function Nodes() {
   const [chains, setChains] = useState([]);
   const [walletMessage, setWalletMessage] = useState(null);
   const [bitcoinSync, setBitcoinSync] = useState(null);
+  const [runningNodes, setRunningNodes] = useState([]);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
     try {
       const config = await window.electronAPI.getConfig();
+      const dependencyData = await import('../CardData.json');
+      
       const chainsWithStatus = await Promise.all(
         config.chains
           .filter(chain => chain.enabled)
-          .map(async chain => ({
-            ...chain,
-            status: await window.electronAPI.getChainStatus(chain.id),
-            progress: 0,
-          }))
+          .map(async chain => {
+            const dependencyInfo = dependencyData.default.find(d => d.id === chain.id);
+            return {
+              ...chain,
+              dependencies: dependencyInfo?.dependencies || [],
+              status: await window.electronAPI.getChainStatus(chain.id),
+              progress: 0,
+            };
+          })
       );
       setChains(chainsWithStatus);
+      
+      // Initialize running nodes based on initial status
+      const initialRunning = chainsWithStatus
+        .filter(chain => chain.status === 'running' || chain.status === 'ready')
+        .map(chain => chain.id);
+      setRunningNodes(initialRunning);
     } catch (error) {
       console.error('Failed to fetch chain config:', error);
     }
@@ -52,6 +65,13 @@ function Nodes() {
         chain.id === chainId ? { ...chain, status } : chain
       )
     );
+    
+    // Update running nodes list
+    if (status === 'running' || status === 'ready') {
+      setRunningNodes(prev => [...new Set([...prev, chainId])]);
+    } else if (status === 'stopped' || status === 'not_downloaded') {
+      setRunningNodes(prev => prev.filter(id => id !== chainId));
+    }
   }, []);
 
   const downloadCompleteHandler = useCallback(({ chainId }) => {
@@ -149,6 +169,22 @@ function Nodes() {
 
   const handleStartChain = useCallback(async chainId => {
     try {
+      // Find the chain and check its dependencies
+      const chain = chains.find(c => c.id === chainId);
+      if (!chain) {
+        console.error(`Chain ${chainId} not found`);
+        return;
+      }
+
+      // Check if all dependencies are running
+      if (chain.dependencies && chain.dependencies.length > 0) {
+        const missingDeps = chain.dependencies.filter(dep => !runningNodes.includes(dep));
+        if (missingDeps.length > 0) {
+          console.error(`Cannot start ${chainId}: missing dependencies: ${missingDeps.join(', ')}`);
+          return;
+        }
+      }
+
       await window.electronAPI.startChain(chainId);
       setChains(prevChains =>
         prevChains.map(chain =>
@@ -158,7 +194,7 @@ function Nodes() {
     } catch (error) {
       console.error(`Failed to start chain ${chainId}:`, error);
     }
-  }, []);
+  }, [chains, runningNodes]);
 
   const handleStopChain = useCallback(async chainId => {
     try {
@@ -213,6 +249,7 @@ function Nodes() {
                   onStop={handleStopChain}
                   onReset={handleResetChain}
                   onOpenWalletDir={handleOpenWalletDir}
+                  runningNodes={runningNodes}
                 />
               ))}
           </div>
@@ -232,6 +269,7 @@ function Nodes() {
                   onStop={handleStopChain}
                   onReset={handleResetChain}
                   onOpenWalletDir={handleOpenWalletDir}
+                  runningNodes={runningNodes}
                 />
               ))}
           </div>
