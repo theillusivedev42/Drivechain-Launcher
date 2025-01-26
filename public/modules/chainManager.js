@@ -154,13 +154,46 @@ class ChainManager {
   setupProcessListeners(childProcess, chainId, basePath) {
     let buffer = '';
     let readyDetected = false;
+    let rpcCheckInterval = null;
+
+    // Function to check if Bitcoin Core is responding to RPC
+    const checkBitcoinRPC = async () => {
+      if (!readyDetected && chainId === 'bitcoin') {
+        try {
+          await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
+          // If RPC call succeeds, Bitcoin Core is ready
+          readyDetected = true;
+          this.chainStatuses.set(chainId, 'running');
+          this.mainWindow.webContents.send("chain-status-update", {
+            chainId,
+            status: "running"
+          });
+          // Start IBD monitoring
+          this.bitcoinMonitor.startMonitoring().catch(error => {
+            console.error('Failed to start IBD monitoring:', error);
+          });
+          // Clear the interval since we don't need to check anymore
+          if (rpcCheckInterval) {
+            clearInterval(rpcCheckInterval);
+            rpcCheckInterval = null;
+          }
+        } catch (error) {
+          // Ignore errors - we'll try again on next interval
+        }
+      }
+    };
+
+    // Start RPC check interval for Bitcoin
+    if (chainId === 'bitcoin') {
+      rpcCheckInterval = setInterval(checkBitcoinRPC, 1000);
+    }
 
     childProcess.stdout.on('data', (data) => {
       const output = data.toString();
       buffer += output;
       console.log(`[${chainId}] stdout: ${output}`);
       
-      // Bitcoin Core specific ready detection
+      // Bitcoin Core specific ready detection (keep existing method for backwards compatibility)
       if (chainId === 'bitcoin' && !readyDetected) {
         // Look for key initialization messages
         if (buffer.includes('Bound to')) {
@@ -174,6 +207,11 @@ class ChainManager {
           this.bitcoinMonitor.startMonitoring().catch(error => {
             console.error('Failed to start IBD monitoring:', error);
           });
+          // Clear the interval since we detected ready state through stdout
+          if (rpcCheckInterval) {
+            clearInterval(rpcCheckInterval);
+            rpcCheckInterval = null;
+          }
         }
       }
 
@@ -208,6 +246,11 @@ class ChainManager {
 
     childProcess.on("exit", (code, signal) => {
       console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
+      // Clear RPC check interval if it's still running
+      if (rpcCheckInterval) {
+        clearInterval(rpcCheckInterval);
+        rpcCheckInterval = null;
+      }
       delete this.runningProcesses[chainId];
       this.chainStatuses.set(chainId, 'stopped');
       this.mainWindow.webContents.send("chain-status-update", {

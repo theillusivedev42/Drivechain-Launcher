@@ -7,7 +7,7 @@ class BitcoinMonitor {
     this.lastLoggedBlock = 0;
     this.monitoring = false;
     this.rpcConfig = {
-      host: 'localhost',
+      host: '127.0.0.1',  // Use explicit IP instead of localhost
       port: 38332,
       user: 'user',
       password: 'password'
