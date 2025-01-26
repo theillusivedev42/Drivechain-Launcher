@@ -2,6 +2,54 @@
   "schema_version": "1.0",
   "chains": [
       {
+          "id": "bitcoin",
+          "enabled": true,
+          "version": "",
+          "display_name": "Bitcoin (Patched)",
+          "description": "Bitcoin Core with additional patches",
+          "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
+          "directories": {
+              "base": {
+                  "linux": ".drivechain",
+                  "darwin": "Library/Application Support/Drivechain",
+                  "win32": "AppData/Roaming/Drivechain"
+              },
+              "wallet": "wallet.dat"
+          },
+          "extract_dir": {
+              "linux": "Drivechain-Launcher-Downloads/bitcoin",
+              "darwin": "Drivechain-Launcher-Downloads/bitcoin",
+              "win32": "Drivechain-Launcher-Downloads/bitcoin"
+          },
+          "download": {
+              "urls": {
+                  "linux": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu.zip",
+                  "darwin": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-apple-darwin.zip",
+                  "win32": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-w64-msvc.zip"
+              },
+              "sizes": {
+                  "linux": "",
+                  "darwin": "",
+                  "win32": ""
+              },
+              "hashes": {
+                  "linux": "",
+                  "darwin": "",
+                  "win32": ""
+              }
+          },
+          "binary": {
+              "linux": "L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu/bitcoind",
+              "darwin": "L1-bitcoin-patched-latest-x86_64-apple-darwin/bitcoind",
+              "win32": "L1-bitcoin-patched-latest-x86_64-w64-msvc/bitcoind.exe"
+          },
+          "network": {
+              "port": 8332
+          },
+          "chain_type": 0,
+          "slot": ""
+      },
+      {
           "id": "grpcurl",
           "enabled": false,
           "version": "",
@@ -93,54 +141,6 @@
           },
           "network": {
               "port": 0
-          },
-          "chain_type": 0,
-          "slot": ""
-      },
-      {
-          "id": "bitcoin",
-          "enabled": true,
-          "version": "",
-          "display_name": "Bitcoin (Patched)",
-          "description": "Bitcoin Core with additional patches",
-          "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
-          "directories": {
-              "base": {
-                  "linux": ".local/share/Drivechain",
-                  "darwin": "Library/Application Support/Drivechain",
-                  "win32": "AppData/Roaming/Drivechain"
-              },
-              "wallet": "wallet.dat"
-          },
-          "extract_dir": {
-              "linux": "Drivechain-Launcher-Downloads/bitcoin",
-              "darwin": "Drivechain-Launcher-Downloads/bitcoin",
-              "win32": "Drivechain-Launcher-Downloads/bitcoin"
-          },
-          "download": {
-              "urls": {
-                  "linux": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu.zip",
-                  "darwin": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-apple-darwin.zip",
-                  "win32": "https://releases.drivechain.info/L1-bitcoin-patched-latest-x86_64-w64-msvc.zip"
-              },
-              "sizes": {
-                  "linux": "",
-                  "darwin": "",
-                  "win32": ""
-              },
-              "hashes": {
-                  "linux": "",
-                  "darwin": "",
-                  "win32": ""
-              }
-          },
-          "binary": {
-              "linux": "L1-bitcoin-patched-latest-x86_64-unknown-linux-gnu/bitcoind",
-              "darwin": "L1-bitcoin-patched-latest-x86_64-apple-darwin/bitcoind",
-              "win32": "L1-bitcoin-patched-latest-x86_64-w64-msvc/bitcoind.exe"
-          },
-          "network": {
-              "port": 8332
           },
           "chain_type": 0,
           "slot": ""

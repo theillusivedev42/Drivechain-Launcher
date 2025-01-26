@@ -1,3 +1,187 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import Card from './Card';
@@ -10,21 +194,34 @@ function Nodes() {
   const [chains, setChains] = useState([]);
   const [walletMessage, setWalletMessage] = useState(null);
   const [bitcoinSync, setBitcoinSync] = useState(null);
+  const [runningNodes, setRunningNodes] = useState([]);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
     try {
       const config = await window.electronAPI.getConfig();
+      const dependencyData = await import('../CardData.json');
+      
       const chainsWithStatus = await Promise.all(
         config.chains
           .filter(chain => chain.enabled)
-          .map(async chain => ({
-            ...chain,
-            status: await window.electronAPI.getChainStatus(chain.id),
-            progress: 0,
-          }))
+          .map(async chain => {
+            const dependencyInfo = dependencyData.default.find(d => d.id === chain.id);
+            return {
+              ...chain,
+              dependencies: dependencyInfo?.dependencies || [],
+              status: await window.electronAPI.getChainStatus(chain.id),
+              progress: 0,
+            };
+          })
       );
       setChains(chainsWithStatus);
+      
+      // Initialize running nodes based on initial status
+      const initialRunning = chainsWithStatus
+        .filter(chain => chain.status === 'running' || chain.status === 'ready')
+        .map(chain => chain.id);
+      setRunningNodes(initialRunning);
     } catch (error) {
       console.error('Failed to fetch chain config:', error);
     }
@@ -52,6 +249,13 @@ function Nodes() {
         chain.id === chainId ? { ...chain, status } : chain
       )
     );
+    
+    // Update running nodes list
+    if (status === 'running' || status === 'ready') {
+      setRunningNodes(prev => [...new Set([...prev, chainId])]);
+    } else if (status === 'stopped' || status === 'not_downloaded') {
+      setRunningNodes(prev => prev.filter(id => id !== chainId));
+    }
   }, []);
 
   const downloadCompleteHandler = useCallback(({ chainId }) => {
@@ -149,6 +353,22 @@ function Nodes() {
 
   const handleStartChain = useCallback(async chainId => {
     try {
+      // Find the chain and check its dependencies
+      const chain = chains.find(c => c.id === chainId);
+      if (!chain) {
+        console.error(`Chain ${chainId} not found`);
+        return;
+      }
+
+      // Check if all dependencies are running
+      if (chain.dependencies && chain.dependencies.length > 0) {
+        const missingDeps = chain.dependencies.filter(dep => !runningNodes.includes(dep));
+        if (missingDeps.length > 0) {
+          console.error(`Cannot start ${chainId}: missing dependencies: ${missingDeps.join(', ')}`);
+          return;
+        }
+      }
+
       await window.electronAPI.startChain(chainId);
       setChains(prevChains =>
         prevChains.map(chain =>
@@ -158,7 +378,7 @@ function Nodes() {
     } catch (error) {
       console.error(`Failed to start chain ${chainId}:`, error);
     }
-  }, []);
+  }, [chains, runningNodes]);
 
   const handleStopChain = useCallback(async chainId => {
     try {
@@ -194,9 +414,118 @@ function Nodes() {
     [chains, handleStopChain]
   );
 
+  const waitForChainRunning = useCallback((chainId) => {
+    return new Promise((resolve) => {
+      const checkRunning = () => {
+        if (runningNodes.includes(chainId)) {
+          resolve();
+        } else {
+          setTimeout(checkRunning, 500); // Check every 500ms
+        }
+      };
+      checkRunning();
+    });
+  }, [runningNodes]);
+
+  const isBitcoinStopped = useCallback(() => {
+    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
+    return bitcoinChain?.status === 'stopped';
+  }, [chains]);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isStoppingSequence, setIsStoppingSequence] = useState(false);
+
+  const areAllChainsRunning = useCallback(() => {
+    return ['bitcoin', 'enforcer', 'bitwindow'].every(chain =>
+      runningNodes.includes(chain)
+    );
+  }, [runningNodes]);
+
+  const handleStartSequence = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      setIsStoppingSequence(false);
+      
+      const bitcoinButton = document.getElementById('download-button-bitcoin');
+      const enforcerButton = document.getElementById('download-button-enforcer');
+      const bitwindowButton = document.getElementById('download-button-bitwindow');
+
+      if (bitcoinButton) bitcoinButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (enforcerButton) enforcerButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (bitwindowButton) bitwindowButton.click();
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  const handleStopSequence = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      setIsStoppingSequence(true);
+      
+      const bitwindowButton = document.getElementById('download-button-bitwindow');
+      const enforcerButton = document.getElementById('download-button-enforcer');
+      const bitcoinButton = document.getElementById('download-button-bitcoin');
+
+      if (bitwindowButton) bitwindowButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (enforcerButton) enforcerButton.click();
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (bitcoinButton) bitcoinButton.click();
+      
+      while (!isBitcoinStopped()) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+    } catch (error) {
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+      throw error;
+    }
+  }, [isBitcoinStopped]);
+
+  const handleQuickStartStop = useCallback(async () => {
+    try {
+      if (!areAllChainsRunning()) {
+        await handleStartSequence();
+      } else {
+        await handleStopSequence();
+      }
+    } catch (error) {
+      console.error('Quick start/stop failed:', error);
+    }
+  }, [areAllChainsRunning, handleStartSequence, handleStopSequence]);
+
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
+      {/* Quick Start button temporarily hidden - To re-enable, uncomment the following block:
+      <button
+        onClick={handleQuickStartStop}
+        disabled={isProcessing && !isBitcoinStopped()}
+        style={{
+          margin: '10px',
+          padding: '8px 16px',
+          backgroundColor: isProcessing && !isBitcoinStopped()
+            ? '#FFA726'  // Orange for processing
+            : areAllChainsRunning()
+              ? '#f44336'  // Red for stop
+              : '#4CAF50', // Green for start
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: (isProcessing && !isBitcoinStopped()) ? 'wait' : 'pointer',
+          opacity: (isProcessing && !isBitcoinStopped()) ? 0.8 : 1
+        }}
+      >
+        {isProcessing
+          ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
+          : (!areAllChainsRunning() ? 'Quick Start' : 'Safe Stop')}
+      </button>
+      */}
       <div className="chain-list">
         <div className="chain-section">
           <h2 className="chain-heading">Layer 1</h2>
@@ -213,6 +542,7 @@ function Nodes() {
                   onStop={handleStopChain}
                   onReset={handleResetChain}
                   onOpenWalletDir={handleOpenWalletDir}
+                  runningNodes={runningNodes}
                 />
               ))}
           </div>
@@ -232,6 +562,7 @@ function Nodes() {
                   onStop={handleStopChain}
                   onReset={handleResetChain}
                   onOpenWalletDir={handleOpenWalletDir}
+                  runningNodes={runningNodes}
                 />
               ))}
           </div>

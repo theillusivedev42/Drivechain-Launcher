@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
+import Tooltip from './Tooltip';
 
 const Card = ({
   chain,
@@ -12,6 +13,7 @@ const Card = ({
   onStop,
   onOpenWalletDir,
   onReset,
+  runningNodes,
 }) => {
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
@@ -20,8 +22,35 @@ const Card = ({
   const [isHovered, setIsHovered] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
   const [lastActionTime, setLastActionTime] = useState(0);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const buttonRef = useRef(null);
 
-  const handleAction = async () => {
+  const checkDependencies = () => {
+    if (!chain.dependencies || chain.dependencies.length === 0) return true;
+    return chain.dependencies.every(dep => runningNodes.includes(dep));
+  };
+
+  const getMissingDependencies = () => {
+    if (!chain.dependencies) return [];
+    return chain.dependencies.filter(dep => !runningNodes.includes(dep));
+  };
+
+  const getTooltipText = () => {
+    const missing = getMissingDependencies();
+    if (missing.length === 0) return '';
+    
+    const missingNames = missing.map(id => {
+      const depName = id.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+      return depName;
+    });
+
+    return `Required dependencies not running:\n${missingNames.join('\n')}`;
+  };
+
+  const handleAction = async (event) => {
     // Add cooldown period of 2 seconds between actions
     const now = Date.now();
     if (now - lastActionTime < 2000) {
@@ -29,6 +58,17 @@ const Card = ({
       return;
     }
     setLastActionTime(now);
+
+    // Check dependencies before starting
+    if ((chain.status === 'downloaded' || chain.status === 'stopped') && !checkDependencies()) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top
+      });
+      setTooltipVisible(true);
+      return;
+    }
 
     switch (chain.status) {
       case 'not_downloaded':
@@ -45,7 +85,7 @@ const Card = ({
         try {
           console.log(`Starting chain ${chain.id}`);
           await onStart(chain.id);
-          setIsStopAttempted(false); // Reset stop attempt state on start
+          setIsStopAttempted(false);
         } catch (error) {
           console.error('Start failed:', error);
         }
@@ -58,12 +98,12 @@ const Card = ({
             setShowForceStop(true);
           } else {
             console.log(`Stopping chain ${chain.id}`);
-            setIsStopAttempted(true);  // Set before stop
+            setIsStopAttempted(true);
             await onStop(chain.id);
           }
         } catch (error) {
           console.error('Stop failed:', error);
-          setIsStopAttempted(false);  // Reset on error
+          setIsStopAttempted(false);
         }
         break;
     }
@@ -123,7 +163,6 @@ const Card = ({
     }
   };
 
-  // Reset stop attempt when status changes
   useEffect(() => {
     if (chain.status === 'stopped') {
       setIsStopAttempted(false);
@@ -152,6 +191,12 @@ const Card = ({
     }
   };
 
+  // Hide tooltip when mouse leaves button
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTooltipVisible(false);
+  };
+
   return (
     <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
       <div className="card-header">
@@ -162,10 +207,11 @@ const Card = ({
       </div>
       <div className="card-actions">
         <button
+          ref={buttonRef}
           className={`btn ${getButtonClass()}`}
           onClick={handleAction}
           onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseLeave={handleMouseLeave}
           disabled={
             chain.status === 'downloading' || 
             chain.status === 'extracting' ||
@@ -179,6 +225,11 @@ const Card = ({
           <SettingsIcon />
         </button>
       </div>
+      <Tooltip 
+        text={getTooltipText()}
+        visible={tooltipVisible}
+        position={tooltipPosition}
+      />
       {showSettings && (
         <ChainSettingsModal
           chain={fullChainData}

@@ -1,9 +1,32 @@
 [
   {
-    "id": 1,
-    "title": "Bitcoin + BIPs 300/301",
-    "description": "BIP 300 & 301 enabled bitcoin",
-    "downloadLink": "https://example.com/bitcoin-bip-300-301.zip",
-    "blockHeight": 15817
+    "id": "bitcoin",
+    "display_name": "Bitcoin (Patched)",
+    "description": "Bitcoin Core with additional patches",
+    "dependencies": []
+  },
+  {
+    "id": "enforcer",
+    "display_name": "BIP 300/301 Enforcer",
+    "description": "Enforcer for BIP 300/301 functionality",
+    "dependencies": ["bitcoin"]
+  },
+  {
+    "id": "bitwindow",
+    "display_name": "BitWindow",
+    "description": "BitWindow interface",
+    "dependencies": ["bitcoin", "enforcer"]
+  },
+  {
+    "id": "thunder",
+    "display_name": "Thunder",
+    "description": "A high performance largeblock sidechain",
+    "dependencies": ["bitcoin", "enforcer", "bitwindow"]
+  },
+  {
+    "id": "bitnames",
+    "display_name": "Bitnames",
+    "description": "Bitnames sidechain",
+    "dependencies": ["bitcoin", "enforcer", "bitwindow"]
   }
 ]
