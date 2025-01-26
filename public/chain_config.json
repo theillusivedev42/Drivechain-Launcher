@@ -10,7 +10,7 @@
           "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
           "directories": {
               "base": {
-                  "linux": ".local/share/Drivechain",
+                  "linux": ".drivechain",
                   "darwin": "Library/Application Support/Drivechain",
                   "win32": "AppData/Roaming/Drivechain"
               },
