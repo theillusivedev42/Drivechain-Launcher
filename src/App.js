@@ -10,6 +10,7 @@ import Other from './components/Other';
 import FaucetModal from './components/FaucetModal';
 import WalletModal from './components/WalletModal';
 import WelcomeModal from './components/WelcomeModal';
+import QuoteWidget from './components/QuoteWidget';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function AppContent() {
@@ -37,6 +38,7 @@ function AppContent() {
           isOpen={showWelcomeModal}
           onClose={() => setShowWelcomeModal(false)}
         />
+        <QuoteWidget />
       </div>
     </Router>
   );
