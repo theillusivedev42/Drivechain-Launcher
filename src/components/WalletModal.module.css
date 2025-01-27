@@ -23,28 +23,33 @@
 
 .modalHeader {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 16px;
+  position: relative;
 }
 
 .modalTitle {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-}
-
-.description {
-  color: var(--text-secondary);
-  margin-bottom: 24px;
+  text-align: center;
 }
 
 .closeButton {
+  position: absolute;
+  right: 0;
   background: none;
   border: none;
   cursor: pointer;
   padding: 4px;
   color: var(--modal-text);
+}
+
+.description {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  text-align: left;
 }
 
 .closeButton:hover {
