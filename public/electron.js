@@ -10,6 +10,7 @@ const axios = require("axios");
 const { pipeline } = require('stream/promises');
 const ConfigManager = require("./modules/configManager");
 const ChainManager = require("./modules/chainManager");
+const WalletManager = require("./modules/walletManager");
 
 const API_BASE_URL = "https://api.drivechain.live";
 
@@ -558,6 +559,62 @@ app.whenReady().then(async () => {
   
   // Initialize chain manager
   chainManager = new ChainManager(mainWindow, config);
+  const walletManager = new WalletManager(config);
+
+  // Wallet IPC Handlers
+  ipcMain.handle("create-master-wallet", async (event, options) => {
+    try {
+      const wallet = await walletManager.createMasterWallet(options);
+      return { success: true, data: wallet };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("import-master-wallet", async (event, { mnemonic, passphrase }) => {
+    try {
+      const wallet = await walletManager.importMasterWallet(mnemonic, passphrase);
+      return { success: true, data: wallet };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("get-master-wallet", async () => {
+    try {
+      const wallet = await walletManager.getMasterWallet();
+      return { success: true, data: wallet };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("delete-master-wallet", async () => {
+    try {
+      const success = await walletManager.deleteMasterWallet();
+      return { success };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("derive-chain-wallet", async (event, chainId) => {
+    try {
+      const wallet = await walletManager.deriveChainWallet(chainId);
+      return { success: true, data: wallet };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("get-chain-wallet", async (event, chainId) => {
+    try {
+      const wallet = await walletManager.getChainWallet(chainId);
+      return { success: true, data: wallet };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
 
   ipcMain.handle("get-config", async () => {
     return config;

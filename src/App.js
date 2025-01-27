@@ -4,13 +4,12 @@ import './App.css';
 import './scrollbar.css';
 import NavBar from './components/NavBar';
 import Nodes from './components/Nodes';
-import Wallet from './components/Wallet';
 // import Tools from './components/Tools';
 import Settings from './components/Settings';
 import Other from './components/Other';
 import FaucetModal from './components/FaucetModal';
+import WalletModal from './components/WalletModal';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import CUSF from './components/CUSF';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
@@ -25,13 +24,12 @@ function AppContent() {
         <NavBar />
         <Routes>
           <Route path="/" element={<Nodes />} />
-          <Route path="/wallet" element={<Wallet />} />
           {/* <Route path="/tools" element={<Tools />} /> */}
           <Route path="/settings" element={<Settings />} />
           <Route path="/other" element={<Other />} />
-          <Route path="/cusf" element={<CUSF />} />
         </Routes>
         <FaucetModal />
+        <WalletModal />
       </div>
     </Router>
   );

@@ -76,6 +76,24 @@ contextBridge.exposeInMainWorld("electronAPI", {
     };
   },
   waitForChain: (chainId) => ipcRenderer.invoke("wait-for-chain", chainId),
+  
+  // Wallet Methods
+  createMasterWallet: (options) => ipcRenderer.invoke("create-master-wallet", options),
+  importMasterWallet: (mnemonic, passphrase) => 
+    ipcRenderer.invoke("import-master-wallet", { mnemonic, passphrase }),
+  getMasterWallet: () => ipcRenderer.invoke("get-master-wallet"),
+  deleteMasterWallet: () => ipcRenderer.invoke("delete-master-wallet"),
+  deriveChainWallet: (chainId) => ipcRenderer.invoke("derive-chain-wallet", chainId),
+  getChainWallet: (chainId) => ipcRenderer.invoke("get-chain-wallet", chainId),
+  
+  // Wallet Events
+  onWalletUpdate: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on("wallet-updated", subscription);
+    return () => {
+      ipcRenderer.removeListener("wallet-updated", subscription);
+    };
+  },
 });
 
 console.log("Preload script has run");

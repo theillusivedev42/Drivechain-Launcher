@@ -21,26 +21,6 @@ const NavBar = () => {
           </NavLink>
         </li>        
         <li>
-          <NavLink
-            to="/cusf"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.active : ''}`
-            }
-          >
-            CUSF
-          </NavLink>
-        </li>
-        {/* <li>
-          <NavLink
-            to="/wallet"
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.active : ''}`
-            }
-          >
-            Wallet
-          </NavLink>
-        </li> */}
-        <li>
           <ToolsDropdown />
         </li>
 
