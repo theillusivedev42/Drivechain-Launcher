@@ -106,6 +106,7 @@ body {
   padding: 15px 20px;
   flex-grow: 1;
   text-align: left;
+  background-color: #f5f5f5;
 }
 
 .card-content p {
@@ -113,7 +114,10 @@ body {
   font-size: 0.9rem;
   line-height: 1.4;
   color: var(--text-color);
-  opacity: 0.8;
+}
+
+.dark .card-content {
+  background-color: #2a2a2a;
 }
 
 .card-actions {
@@ -242,7 +246,7 @@ body {
   font-weight: bold;
   text-align: left;
   margin: 0;
-  padding: 0;
+  padding: 12px 0;
 }
 
 .quick-start-button {

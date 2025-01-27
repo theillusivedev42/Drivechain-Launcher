@@ -1,0 +1,127 @@
+.widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  background-color: var(--modal-bg);
+  border-radius: 8px;
+  padding: 8px 12px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.quoteContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quoteContent {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.navButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: all 0.2s;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: scale(1.1);
+}
+
+:global(.dark) .navButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.minimizeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  border-radius: 4px;
+  margin: -2px -2px 0 0;
+}
+
+.minimizeButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .minimizeButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.quote {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-color);
+  font-style: italic;
+}
+
+.author {
+  margin-top: 8px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.minimizedWidget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: var(--modal-bg);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
+  z-index: 100;
+}
+
+.minimizedWidget:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+:global(.dark) .widget,
+:global(.dark) .minimizedWidget {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .minimizedWidget:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

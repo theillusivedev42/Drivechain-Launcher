@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDispatch } from 'react-redux';
-import { showFaucetModal } from '../store/faucetSlice';
+import { showWalletModal } from '../store/walletModalSlice';
 import navStyles from './NavBar.module.css';
 import styles from './ToolsDropdown.module.css';
 
@@ -34,10 +34,17 @@ const ToolsDropdown = () => {
   const handleOptionClick = option => {
     console.log(`Selected option: ${option}`);
     setIsOpen(false);
-    if (option === 'Faucet') {
-      dispatch(showFaucetModal());
+    switch (option) {
+      case 'Fast Withdrawal':
+        // TODO: Add fast withdrawal action when implemented
+        console.log('Fast Withdrawal selected');
+        break;
+      case 'Wallet':
+        dispatch(showWalletModal());
+        break;
+      default:
+        break;
     }
-    // Implement other options here
   };
 
   useEffect(() => {
@@ -64,8 +71,8 @@ const ToolsDropdown = () => {
           ref={dropdownRef}
           className={`${styles.dropdownMenu} ${isOpen ? styles.fadeIn : styles.fadeOut}`}
         >
-          <li onClick={() => handleOptionClick('Faucet')}>Faucet</li>
-          {/* ... (keep other options) */}
+          <li onClick={() => handleOptionClick('Wallet')}>Wallet</li>
+          <li onClick={() => handleOptionClick('Fast Withdrawal')}>Fast Withdrawal</li>
         </ul>
       )}
     </div>

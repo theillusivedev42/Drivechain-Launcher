@@ -1,11 +1,97 @@
 const { app, shell } = require("electron");
 const fs = require("fs-extra");
 const path = require("path");
+const WalletService = require("./walletService");
+const { EventEmitter } = require('events');
 
-class WalletManager {
+class WalletManager extends EventEmitter {
   constructor(config) {
+    super();
     this.config = config;
+    this.walletService = new WalletService();
+    
+    // Listen for wallet updates
+    this.walletService.on('wallet-updated', () => {
+      this.emit('wallet-updated');
+    });
   }
+
+  // HD Wallet Management Methods
+  async createMasterWallet(options = {}) {
+    try {
+      const wallet = await this.walletService.generateWallet(options);
+      const success = await this.walletService.saveWallet(wallet);
+      if (!success) throw new Error('Failed to save master wallet');
+      return wallet;
+    } catch (error) {
+      console.error('Error creating master wallet:', error);
+      throw error;
+    }
+  }
+
+  async importMasterWallet(mnemonic, passphrase) {
+    try {
+      const wallet = await this.walletService.generateWallet({
+        customMnemonic: mnemonic,
+        passphrase
+      });
+      const success = await this.walletService.saveWallet(wallet);
+      if (!success) throw new Error('Failed to save imported wallet');
+      return wallet;
+    } catch (error) {
+      console.error('Error importing master wallet:', error);
+      throw error;
+    }
+  }
+
+  async getMasterWallet() {
+    return await this.walletService.loadWallet();
+  }
+
+  async deleteMasterWallet() {
+    return await this.walletService.deleteWallet();
+  }
+
+  // Chain-specific Wallet Methods
+  async deriveChainWallet(chainId) {
+    const chain = this.getChainConfig(chainId);
+    if (!chain) throw new Error('Chain not found');
+
+    try {
+      // For L1 chain
+      if (chain.chain_layer === 1) {
+        return await this.walletService.deriveL1Starter();
+      }
+      // For sidechains
+      else {
+        return await this.walletService.deriveSidechainStarter(chain.id);
+      }
+    } catch (error) {
+      console.error(`Error deriving wallet for chain ${chainId}:`, error);
+      throw error;
+    }
+  }
+
+  async getChainWallet(chainId) {
+    const chain = this.getChainConfig(chainId);
+    if (!chain) throw new Error('Chain not found');
+
+    try {
+      const walletDir = this.walletService.walletDir;
+      const walletPath = chain.chain_layer === 1 
+        ? path.join(walletDir, 'l1_starter.json')
+        : path.join(walletDir, `sidechain_${chainId}_starter.json`);
+
+      if (await fs.pathExists(walletPath)) {
+        return await fs.readJson(walletPath);
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error loading wallet for chain ${chainId}:`, error);
+      return null;
+    }
+  }
+
 
   getChainConfig(chainId) {
     return this.config.chains.find((c) => c.id === chainId);
