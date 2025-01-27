@@ -654,23 +654,36 @@ function Nodes() {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      // Start Bitcoin and wait for it to be ready
-      await window.electronAPI.startChain('bitcoin');
-      await window.electronAPI.waitForChain('bitcoin');
+      // Only start chains that aren't already running
+      if (!runningNodes.includes('bitcoin')) {
+        await window.electronAPI.startChain('bitcoin');
+        await window.electronAPI.waitForChain('bitcoin');
+      }
       
-      // Start Enforcer and wait for it to be ready
-      await window.electronAPI.startChain('enforcer');
-      await window.electronAPI.waitForChain('enforcer');
+      if (!runningNodes.includes('enforcer')) {
+        await window.electronAPI.startChain('enforcer');
+        await window.electronAPI.waitForChain('enforcer');
+      }
       
-      // Start BitWindow and wait for it to be ready
-      await window.electronAPI.startChain('bitwindow');
-      await window.electronAPI.waitForChain('bitwindow');
+      if (!runningNodes.includes('bitwindow')) {
+        await window.electronAPI.startChain('bitwindow');
+        await window.electronAPI.waitForChain('bitwindow');
+      }
     } catch (error) {
       console.error('Start sequence failed:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [runningNodes]);
+
+  // Reset processing state when bitcoin status changes to stopped
+  useEffect(() => {
+    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
+    if (bitcoinChain?.status === 'stopped' && isStoppingSequence) {
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+    }
+  }, [chains]);
 
   const handleStopSequence = useCallback(async () => {
     try {
@@ -678,21 +691,21 @@ function Nodes() {
       setIsStoppingSequence(true);
       
       // Stop in reverse order
-      await window.electronAPI.stopChain('bitwindow');
-      await window.electronAPI.stopChain('enforcer');
-      await window.electronAPI.stopChain('bitcoin');
-      
-      // Wait for Bitcoin to fully stop since it needs graceful shutdown
-      while (!isBitcoinStopped()) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (runningNodes.includes('bitwindow')) {
+        await window.electronAPI.stopChain('bitwindow');
+      }
+      if (runningNodes.includes('enforcer')) {
+        await window.electronAPI.stopChain('enforcer');
+      }
+      if (runningNodes.includes('bitcoin')) {
+        await window.electronAPI.stopChain('bitcoin');
       }
     } catch (error) {
       console.error('Stop sequence failed:', error);
-    } finally {
       setIsProcessing(false);
       setIsStoppingSequence(false);
     }
-  }, [isBitcoinStopped]);
+  }, [runningNodes]);
 
   const handleQuickStartStop = useCallback(async () => {
     try {
