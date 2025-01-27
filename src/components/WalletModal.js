@@ -56,7 +56,7 @@ const WalletModal = () => {
           <div className={styles.tableRow}>
             <div className={styles.starterCol}>Master</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.master ? 'word1 word2 word3 word4' : '••••••••••••'}
+              {revealedMnemonics.master ? 'abandon ability able about above absent absorb abstract absurd abuse access accident' : '••••••••••••'}
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -81,7 +81,7 @@ const WalletModal = () => {
           <div className={styles.tableRow}>
             <div className={styles.starterCol}>Bitcoin Core (Patched)</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer1 ? 'test1 test2 test3 test4' : '••••••••••••'}
+              {revealedMnemonics.layer1 ? 'abandon ability able about above absent absorb abstract absurd abuse access accident account acid acquire across act action actor adapt add addict address adjust advance' : '••••••••••••'}
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -106,7 +106,7 @@ const WalletModal = () => {
           <div className={styles.tableRow}>
             <div className={styles.starterCol}>Lightning</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer2 ? 'demo1 demo2 demo3 demo4' : '••••••••••••'}
+              {revealedMnemonics.layer2 ? 'abandon ability able about above absent absorb abstract absurd abuse access accident' : '••••••••••••'}
             </div>
             <div className={styles.actionsCol}>
               <button 

@@ -66,7 +66,7 @@
 }
 
 .starterTable {
-  border: 2px solid var(--btn-bg);
+  border: 1px solid var(--btn-bg);
   border-radius: 6px;
   overflow: hidden;
   margin: 0 2px;
@@ -74,7 +74,7 @@
 
 .sectionHeader {
   display: grid;
-  grid-template-columns: 2fr 3fr 3fr;
+  grid-template-columns: 2fr 5fr 80px;
   padding: 12px;
   background-color: #f5f5f5;
   font-weight: 600;
@@ -84,21 +84,21 @@
 /* Dark mode styles */
 :global(.dark) .sectionHeader {
   background-color: #2a2a2a;
-  border-bottom-color: #3a3a3a;
+  border-bottom-color: #444;
 }
 
 :global(.dark) .tableRow {
   background-color: #1a1a1a;
-  border-bottom-color: #3a3a3a;
+  border-bottom-color: #444;
 }
 
 :global(.dark) .starterTable {
-  border-color: #3a3a3a;
+  border-color: #444;
 }
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 3fr 3fr;
+  grid-template-columns: 2fr 5fr 80px;
   padding: 12px;
   border-bottom: 1px solid var(--btn-bg);
   align-items: center;
@@ -111,18 +111,30 @@
 
 .starterCol {
   text-align: left;
-  padding-right: 12px;
+  padding: 0 8px;
+  border-right: 1px solid var(--btn-bg);
 }
 
 .mnemonicCol {
   text-align: left;
   font-family: monospace;
+  word-break: break-word;
+  padding: 0 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  border-right: 1px solid var(--btn-bg);
 }
 
 .actionsCol {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+  gap: 2px;
+  justify-content: center;
+  padding: 0;
+}
+
+:global(.dark) .starterCol,
+:global(.dark) .mnemonicCol {
+  border-right-color: #444;
 }
 
 .sectionHeader .mnemonicCol {
