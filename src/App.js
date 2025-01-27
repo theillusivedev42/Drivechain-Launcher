@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import './scrollbar.css';
@@ -9,10 +9,13 @@ import Settings from './components/Settings';
 import Other from './components/Other';
 import FaucetModal from './components/FaucetModal';
 import WalletModal from './components/WalletModal';
+import WelcomeModal from './components/WelcomeModal';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
+  // TODO: Implement file checking logic to determine when to show the welcome modal
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
 
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark' : 'light';
@@ -30,6 +33,10 @@ function AppContent() {
         </Routes>
         <FaucetModal />
         <WalletModal />
+        <WelcomeModal 
+          isOpen={showWelcomeModal}
+          onClose={() => setShowWelcomeModal(false)}
+        />
       </div>
     </Router>
   );
