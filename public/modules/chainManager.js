@@ -459,18 +459,29 @@ class ChainManager {
       const baseDir = chain.directories.base[platform];
       if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
+      // Stop the chain if it's running
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
       }
 
+      // Remove data directory
       const homeDir = app.getPath("home");
       const fullPath = path.join(homeDir, baseDir);
-
       await fs.remove(fullPath);
-      console.log(`Reset chain ${chainId}: removed directory ${fullPath}`);
+      console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
+      // Remove downloaded binaries
+      const extractDir = chain.extract_dir?.[platform];
+      if (extractDir) {
+        const downloadsDir = app.getPath("downloads");
+        const binariesPath = path.join(downloadsDir, extractDir);
+        await fs.remove(binariesPath);
+        console.log(`Reset chain ${chainId}: removed binaries directory ${binariesPath}`);
+      }
+
+      // Recreate empty data directory
       await fs.ensureDir(fullPath);
-      console.log(`Recreated empty directory for chain ${chainId}: ${fullPath}`);
+      console.log(`Recreated empty data directory for chain ${chainId}: ${fullPath}`);
 
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
