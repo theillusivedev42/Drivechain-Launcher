@@ -32,21 +32,19 @@
 .modalBody {
   margin-bottom: 1.5rem;
   color: var(--modal-text);
+  text-align: left;
 }
 
-.modalBody ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
+.modalBody p {
+  margin: 0;
+  line-height: 1.5;
 }
 
-.modalBody li {
-  margin: 0.5rem 0;
-}
-
-.closeButton {
+.generateButton {
   display: block;
-  width: 100%;
-  padding: 10px 20px;
+  width: 200px;
+  padding: 12px 24px;
+  margin: 0 auto 16px;
   background-color: var(--download-btn);
   color: white;
   border: none;
@@ -57,6 +55,95 @@
   transition: background-color 0.2s;
 }
 
-.closeButton:hover {
+.generateButton:hover {
   background-color: var(--download-btn-hover);
+}
+
+.advancedToggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px;
+  color: var(--modal-text);
+  opacity: 0.7;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: opacity 0.2s;
+  user-select: none;
+  margin-top: -8px;
+}
+
+.advancedText {
+  text-decoration: none;
+}
+
+.advancedToggle:hover {
+  opacity: 1;
+}
+
+.advancedToggle:hover .advancedText {
+  text-decoration: underline;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.chevron.up {
+  transform: rotate(180deg);
+}
+
+.advancedSection {
+  margin: 16px -24px 0;
+  padding: 16px 24px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-in-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+}
+
+.inputGroup {
+  margin-bottom: 12px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--btn-bg);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--download-btn);
+}
+
+.dark .advancedSection {
+  border-color: rgba(255, 255, 255, 0.1);
 }
