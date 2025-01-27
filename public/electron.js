@@ -708,6 +708,16 @@ app.whenReady().then(async () => {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle("wait-for-chain", async (event, chainId) => {
+    try {
+      await chainManager.waitForChainReady(chainId);
+      return { success: true };
+    } catch (error) {
+      console.error("Failed waiting for chain:", error);
+      return { success: false, error: error.message };
+    }
+  });
 });
 
 app.on("window-all-closed", () => {

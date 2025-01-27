@@ -73,6 +73,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("bitcoin-sync-started", subscription);
     };
   },
+  waitForChain: (chainId) => ipcRenderer.invoke("wait-for-chain", chainId),
 });
 
 console.log("Preload script has run");

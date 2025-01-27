@@ -11,6 +11,40 @@ class ChainManager {
     this.runningProcesses = {};
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
     this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
+    this.readyStates = new Map(); // Tracks when chains are fully ready
+  }
+
+  // New method to check if a chain is truly ready
+  async isChainReady(chainId) {
+    const status = this.chainStatuses.get(chainId);
+    if (status !== 'running') return false;
+    
+    // For Bitcoin, we need RPC to be responsive
+    if (chainId === 'bitcoin') {
+      try {
+        await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+    
+    // For other chains, 'running' status is sufficient
+    return true;
+  }
+
+  // New method to wait for chain readiness
+  async waitForChainReady(chainId, timeout = 30000) {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < timeout) {
+      if (await this.isChainReady(chainId)) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    throw new Error(`Timeout waiting for ${chainId} to be ready`);
   }
 
   getChainConfig(chainId) {
