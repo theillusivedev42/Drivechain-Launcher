@@ -124,18 +124,7 @@ class ChainManager {
               
               if (isRunning) {
                 // Store a placeholder in runningProcesses so the UI knows BitWindow is running
-                this.runningProcesses[chainId] = {
-                  // Minimal process-like interface
-                  kill: () => {
-                    const quitProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
-                    return new Promise((resolve, reject) => {
-                      quitProcess.on('exit', (code) => {
-                        if (code === 0) resolve();
-                        else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
-                      });
-                    });
-                  }
-                };
+                this.runningProcesses[chainId] = {};
                 resolve();
               } else {
                 reject(new Error('BitWindow failed to start'));
@@ -332,6 +321,53 @@ class ChainManager {
     }
 
     try {
+      // Special handling for BitWindow - force quit on all platforms
+      if (chainId === 'bitwindow') {
+        if (process.platform === 'darwin') {
+          // Force quit on macOS - kill all variants of the process name
+          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('killall', [name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
+        } else if (process.platform === 'win32') {
+          // Force quit on Windows - kill all variants of the process name
+          const processNames = ['BitWindow.exe', 'bitwindow.exe', 'bitwindowd.exe'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('taskkill', ['/F', '/IM', name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
+        } else {
+          // For Linux and other platforms
+          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('pkill', ['-9', name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
+        }
+        delete this.runningProcesses[chainId];
+        this.chainStatuses.set(chainId, 'stopped');
+        return { success: true };
+      }
+
       // For Bitcoin Core, try graceful shutdown first
       if (chainId === 'bitcoin') {
         // Stop IBD monitoring first
