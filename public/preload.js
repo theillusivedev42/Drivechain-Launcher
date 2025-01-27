@@ -1,6 +1,14 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  receive: (channel, callback) => {
+    const subscription = (event, ...args) => callback(...args);
+    ipcRenderer.on(channel, subscription);
+    return () => {
+      ipcRenderer.removeListener(channel, subscription);
+    };
+  },
   getConfig: () => ipcRenderer.invoke("get-config"),
   downloadChain: (chainId) => ipcRenderer.invoke("download-chain", chainId),
   startChain: (chainId) => ipcRenderer.invoke("start-chain", chainId),
@@ -94,6 +102,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("wallet-updated", subscription);
     };
   },
+
+  // Shutdown handlers
+  onShutdownStarted: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on("shutdown-started", subscription);
+    return () => {
+      ipcRenderer.removeListener("shutdown-started", subscription);
+    };
+  },
+  forceKill: () => ipcRenderer.invoke("force-kill"),
 });
 
 console.log("Preload script has run");

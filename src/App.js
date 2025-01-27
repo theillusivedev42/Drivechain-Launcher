@@ -11,6 +11,7 @@ import FaucetModal from './components/FaucetModal';
 import WalletModal from './components/WalletModal';
 import WelcomeModal from './components/WelcomeModal';
 import QuoteWidget from './components/QuoteWidget';
+import ShutdownModal from './components/ShutdownModal';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function AppContent() {
@@ -39,6 +40,7 @@ function AppContent() {
           onClose={() => setShowWelcomeModal(false)}
         />
         <QuoteWidget />
+        <ShutdownModal />
       </div>
     </Router>
   );

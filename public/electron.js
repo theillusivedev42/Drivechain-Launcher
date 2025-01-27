@@ -511,6 +511,14 @@ function createWindow() {
         : `file://${path.join(__dirname, "../build/index.html")}`
     );
 
+    // Handle window close button (X)
+    mainWindow.on('close', (event) => {
+      if (!isShuttingDown) {
+        event.preventDefault();
+        performGracefulShutdown();
+      }
+    });
+
     mainWindow.on("closed", () => {
       mainWindow = null;
     });
@@ -795,10 +803,84 @@ app.whenReady().then(async () => {
   });
 });
 
+// Shutdown handling
+let isShuttingDown = false;
+let forceKillTimeout;
+const SHUTDOWN_TIMEOUT = 30000; // 30 seconds timeout for graceful shutdown
+
+async function performGracefulShutdown() {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  if (mainWindow) {
+    mainWindow.webContents.send("shutdown-started");
+  }
+
+  // Start force kill timeout
+  forceKillTimeout = setTimeout(() => {
+    console.log("Shutdown timeout reached, forcing quit...");
+    forceKillAllProcesses();
+  }, SHUTDOWN_TIMEOUT);
+
+  try {
+    // Stop all chains gracefully
+    if (chainManager) {
+      const runningChains = Object.keys(chainManager.runningProcesses);
+      await Promise.all(runningChains.map(chainId => 
+        chainManager.stopChain(chainId).catch(err => 
+          console.error(`Error stopping ${chainId}:`, err)
+        )
+      ));
+    }
+
+    // Clear timeout since graceful shutdown succeeded
+    clearTimeout(forceKillTimeout);
+    app.quit();
+  } catch (error) {
+    console.error("Error during graceful shutdown:", error);
+    forceKillAllProcesses();
+  }
+}
+
+function forceKillAllProcesses() {
+  if (chainManager) {
+    // Force kill all running processes
+    Object.entries(chainManager.runningProcesses).forEach(([chainId, process]) => {
+      try {
+        if (process.kill) {
+          process.kill('SIGKILL');
+        }
+      } catch (error) {
+        console.error(`Error force killing ${chainId}:`, error);
+      }
+    });
+  }
+  
+  // Clear timeout and quit
+  if (forceKillTimeout) {
+    clearTimeout(forceKillTimeout);
+  }
+  app.quit();
+}
+
+// Handle window close
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    app.quit();
+    performGracefulShutdown();
   }
+});
+
+// Handle force quit (Command+Q on macOS, Alt+F4 on Windows)
+app.on('before-quit', (event) => {
+  if (!isShuttingDown) {
+    event.preventDefault();
+    performGracefulShutdown();
+  }
+});
+
+// Add IPC handler for force kill
+ipcMain.handle('force-kill', () => {
+  forceKillAllProcesses();
 });
 
 app.on("activate", () => {
