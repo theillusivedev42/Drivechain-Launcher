@@ -124,18 +124,7 @@ class ChainManager {
               
               if (isRunning) {
                 // Store a placeholder in runningProcesses so the UI knows BitWindow is running
-                this.runningProcesses[chainId] = {
-                  // Minimal process-like interface
-                  kill: () => {
-                    const quitProcess = spawn('osascript', ['-e', 'tell application "BitWindow" to quit']);
-                    return new Promise((resolve, reject) => {
-                      quitProcess.on('exit', (code) => {
-                        if (code === 0) resolve();
-                        else reject(new Error(`Failed to quit BitWindow, exit code: ${code}`));
-                      });
-                    });
-                  }
-                };
+                this.runningProcesses[chainId] = {};
                 resolve();
               } else {
                 reject(new Error('BitWindow failed to start'));
@@ -332,6 +321,32 @@ class ChainManager {
     }
 
     try {
+      // Special handling for BitWindow - force quit on all platforms
+      if (chainId === 'bitwindow') {
+        if (process.platform === 'darwin') {
+          // Force quit on macOS
+          const killProcess = spawn('killall', ['BitWindow']);
+          await new Promise((resolve, reject) => {
+            killProcess.on('exit', (code) => {
+              if (code === 0) resolve();
+              else reject(new Error(`Failed to kill BitWindow, exit code: ${code}`));
+            });
+          });
+        } else if (process.platform === 'win32') {
+          // Force quit on Windows
+          const killProcess = spawn('taskkill', ['/F', '/IM', 'BitWindow.exe']);
+          await new Promise((resolve, reject) => {
+            killProcess.on('exit', (code) => {
+              if (code === 0) resolve();
+              else reject(new Error(`Failed to kill BitWindow, exit code: ${code}`));
+            });
+          });
+        }
+        delete this.runningProcesses[chainId];
+        this.chainStatuses.set(chainId, 'stopped');
+        return { success: true };
+      }
+
       // For Bitcoin Core, try graceful shutdown first
       if (chainId === 'bitcoin') {
         // Stop IBD monitoring first
