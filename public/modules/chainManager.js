@@ -504,6 +504,17 @@ class ChainManager {
     }
   }
 
+  async openBinaryDir(chainId) {
+    try {
+      const binaryDir = this.getBinaryDir(chainId);
+      await shell.openPath(binaryDir);
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to open binary directory:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
   getFullDataDir(chainId) {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
@@ -513,6 +524,22 @@ class ChainManager {
     if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
     
     return path.join(app.getPath("home"), baseDir);
+  }
+
+  getBinaryDir(chainId) {
+    const chain = this.getChainConfig(chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    const platform = process.platform;
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
+
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
+    const downloadsDir = app.getPath("downloads");
+    const basePath = path.join(downloadsDir, extractDir);
+    return path.join(basePath, path.dirname(binaryPath));
   }
 }
 

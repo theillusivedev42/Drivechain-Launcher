@@ -718,6 +718,24 @@ app.whenReady().then(async () => {
       return { success: false, error: error.message };
     }
   });
+
+  ipcMain.handle("get-binary-dir", async (event, chainId) => {
+    try {
+      return chainManager.getBinaryDir(chainId);
+    } catch (error) {
+      console.error("Failed to get binary directory:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("open-binary-dir", async (event, chainId) => {
+    try {
+      return await chainManager.openBinaryDir(chainId);
+    } catch (error) {
+      console.error("Failed to open binary directory:", error);
+      return { success: false, error: error.message };
+    }
+  });
 });
 
 app.on("window-all-closed", () => {
