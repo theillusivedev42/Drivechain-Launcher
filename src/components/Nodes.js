@@ -756,6 +756,7 @@ function Nodes() {
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
+      {/* Temporarily commented out QuickStartStop button
       {isInitialized && (
         <button
           onClick={handleQuickStartStop}
@@ -787,7 +788,7 @@ function Nodes() {
                 ? 'Quick Start' 
                 : 'Safe Stop'}
         </button>
-      )}
+      )} */}
       <div className="chain-list">
         <div className="chain-section">
           <h2 className="chain-heading">Layer 1</h2>
