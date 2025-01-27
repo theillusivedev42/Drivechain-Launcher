@@ -28,7 +28,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           className={styles.advancedToggle}
           onClick={() => setShowAdvanced(!showAdvanced)}
         >
-          <span className={styles.advancedText}>{showAdvanced ? 'Hide advanced' : 'Show advanced'}</span>
+          <span className={styles.advancedText}>{showAdvanced ? 'Hide restore options' : 'Restore wallet'}</span>
           <span className={`${styles.chevron} ${showAdvanced ? styles.up : ''}`}>▼</span>
         </div>
 
@@ -39,7 +39,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
                 type="text"
                 value={input1}
                 onChange={(e) => setInput1(e.target.value)}
-                placeholder="Option 1"
+                placeholder="Enter BIP39 Mnemonic (12 or 24 words)"
                 className={styles.input}
               />
             </div>
@@ -48,9 +48,14 @@ const WelcomeModal = ({ isOpen, onClose }) => {
                 type="text"
                 value={input2}
                 onChange={(e) => setInput2(e.target.value)}
-                placeholder="Option 2"
+                placeholder="Enter optional passphrase"
                 className={styles.input}
               />
+            </div>
+            <div className={styles.restoreButtonContainer}>
+              <button className={styles.restoreButton} onClick={onClose}>
+                Restore Wallet
+              </button>
             </div>
           </div>
         )}
