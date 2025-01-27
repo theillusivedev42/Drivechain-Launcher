@@ -185,6 +185,214 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import Card from './Card';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
 import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
@@ -195,6 +403,7 @@ function Nodes() {
   const [walletMessage, setWalletMessage] = useState(null);
   const [bitcoinSync, setBitcoinSync] = useState(null);
   const [runningNodes, setRunningNodes] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
@@ -222,8 +431,10 @@ function Nodes() {
         .filter(chain => chain.status === 'running' || chain.status === 'ready')
         .map(chain => chain.id);
       setRunningNodes(initialRunning);
+      setIsInitialized(true);
     } catch (error) {
       console.error('Failed to fetch chain config:', error);
+      setIsInitialized(true); // Still set initialized even on error to prevent infinite loading
     }
   }, []);
 
@@ -435,61 +646,104 @@ function Nodes() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStoppingSequence, setIsStoppingSequence] = useState(false);
 
+  const L1_CHAINS = ['bitcoin', 'enforcer', 'bitwindow'];
+
   const areAllChainsRunning = useCallback(() => {
-    return ['bitcoin', 'enforcer', 'bitwindow'].every(chain =>
+    return L1_CHAINS.every(chain =>
       runningNodes.includes(chain)
     );
   }, [runningNodes]);
+
+  const isAnyL1ChainDownloading = useCallback(() => {
+    return L1_CHAINS.some(chainId => {
+      const chain = chains.find(c => c.id === chainId);
+      return chain && (chain.status === 'downloading' || chain.status === 'extracting');
+    });
+  }, [chains]);
+
+  const areAllL1ChainsDownloaded = useCallback(() => {
+    return L1_CHAINS.every(chainId => {
+      const chain = chains.find(c => c.id === chainId);
+      return chain && chain.status !== 'not_downloaded';
+    });
+  }, [chains]);
+
+  const downloadMissingL1Chains = useCallback(async () => {
+    try {
+      for (const chainId of L1_CHAINS) {
+        const chain = chains.find(c => c.id === chainId);
+        if (chain && chain.status === 'not_downloaded') {
+          await handleDownloadChain(chainId);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to download L1 chains:', error);
+    }
+  }, [chains, handleDownloadChain]);
 
   const handleStartSequence = useCallback(async () => {
     try {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      const bitcoinButton = document.getElementById('download-button-bitcoin');
-      const enforcerButton = document.getElementById('download-button-enforcer');
-      const bitwindowButton = document.getElementById('download-button-bitwindow');
-
-      if (bitcoinButton) bitcoinButton.click();
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      if (enforcerButton) enforcerButton.click();
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      if (bitwindowButton) bitwindowButton.click();
+      // Only start chains that aren't already running
+      if (!runningNodes.includes('bitcoin')) {
+        await window.electronAPI.startChain('bitcoin');
+        await window.electronAPI.waitForChain('bitcoin');
+      }
+      
+      if (!runningNodes.includes('enforcer')) {
+        await window.electronAPI.startChain('enforcer');
+        await window.electronAPI.waitForChain('enforcer');
+      }
+      
+      if (!runningNodes.includes('bitwindow')) {
+        await window.electronAPI.startChain('bitwindow');
+        await window.electronAPI.waitForChain('bitwindow');
+      }
+    } catch (error) {
+      console.error('Start sequence failed:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [runningNodes]);
+
+  // Reset processing state when bitcoin status changes to stopped
+  useEffect(() => {
+    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
+    if (bitcoinChain?.status === 'stopped' && isStoppingSequence) {
+      setIsProcessing(false);
+      setIsStoppingSequence(false);
+    }
+  }, [chains]);
 
   const handleStopSequence = useCallback(async () => {
     try {
       setIsProcessing(true);
       setIsStoppingSequence(true);
       
-      const bitwindowButton = document.getElementById('download-button-bitwindow');
-      const enforcerButton = document.getElementById('download-button-enforcer');
-      const bitcoinButton = document.getElementById('download-button-bitcoin');
-
-      if (bitwindowButton) bitwindowButton.click();
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      if (enforcerButton) enforcerButton.click();
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      if (bitcoinButton) bitcoinButton.click();
-      
-      while (!isBitcoinStopped()) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Stop in reverse order
+      if (runningNodes.includes('bitwindow')) {
+        await window.electronAPI.stopChain('bitwindow');
       }
-      setIsProcessing(false);
-      setIsStoppingSequence(false);
+      if (runningNodes.includes('enforcer')) {
+        await window.electronAPI.stopChain('enforcer');
+      }
+      if (runningNodes.includes('bitcoin')) {
+        await window.electronAPI.stopChain('bitcoin');
+      }
     } catch (error) {
+      console.error('Stop sequence failed:', error);
       setIsProcessing(false);
       setIsStoppingSequence(false);
-      throw error;
     }
-  }, [isBitcoinStopped]);
+  }, [runningNodes]);
 
   const handleQuickStartStop = useCallback(async () => {
     try {
-      if (!areAllChainsRunning()) {
+      if (!areAllL1ChainsDownloaded()) {
+        await downloadMissingL1Chains();
+      } else if (!areAllChainsRunning()) {
         await handleStartSequence();
       } else {
         await handleStopSequence();
@@ -497,35 +751,43 @@ function Nodes() {
     } catch (error) {
       console.error('Quick start/stop failed:', error);
     }
-  }, [areAllChainsRunning, handleStartSequence, handleStopSequence]);
+  }, [areAllL1ChainsDownloaded, areAllChainsRunning, downloadMissingL1Chains, handleStartSequence, handleStopSequence]);
 
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
-      {/* Quick Start button temporarily hidden - To re-enable, uncomment the following block:
-      <button
-        onClick={handleQuickStartStop}
-        disabled={isProcessing && !isBitcoinStopped()}
+      {isInitialized && (
+        <button
+          onClick={handleQuickStartStop}
+          disabled={isProcessing || isAnyL1ChainDownloading()}
         style={{
           margin: '10px',
           padding: '8px 16px',
-          backgroundColor: isProcessing && !isBitcoinStopped()
-            ? '#FFA726'  // Orange for processing
-            : areAllChainsRunning()
-              ? '#f44336'  // Red for stop
-              : '#4CAF50', // Green for start
+          backgroundColor: isProcessing || isAnyL1ChainDownloading()
+            ? '#FFA726'  // Orange for processing/downloading
+            : !areAllL1ChainsDownloaded()
+              ? '#2196F3'  // Blue for download
+              : areAllChainsRunning()
+                ? '#f44336'  // Red for stop
+                : '#4CAF50', // Green for start
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: (isProcessing && !isBitcoinStopped()) ? 'wait' : 'pointer',
-          opacity: (isProcessing && !isBitcoinStopped()) ? 0.8 : 1
+          cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
+          opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1
         }}
       >
         {isProcessing
           ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
-          : (!areAllChainsRunning() ? 'Quick Start' : 'Safe Stop')}
-      </button>
-      */}
+          : isAnyL1ChainDownloading()
+            ? 'Downloading...'
+            : !areAllL1ChainsDownloaded() 
+              ? 'Download L1' 
+              : !areAllChainsRunning() 
+                ? 'Quick Start' 
+                : 'Safe Stop'}
+        </button>
+      )}
       <div className="chain-list">
         <div className="chain-section">
           <h2 className="chain-heading">Layer 1</h2>

@@ -90,6 +90,19 @@ const ChainSettingsModal = ({
               </button>
             </span>
           </div>
+          <div className={styles.infoRow}>
+            <span className={styles.label}>Binary Directory:</span>
+            <span className={styles.dataDir}>
+              {chain.binaryDir}
+              <button
+                className={styles.dirButton}
+                onClick={() => window.electronAPI.openBinaryDir(chain.id)}
+                title="Open binary directory"
+              >
+                <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
+              </button>
+            </span>
+          </div>
         </div>
         <div className={styles.buttonContainer}>
           <button

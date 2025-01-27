@@ -125,10 +125,12 @@ const Card = ({
     try {
       const fullDataDir = await window.electronAPI.getFullDataDir(chain.id);
       const walletDir = await window.electronAPI.getWalletDir(chain.id);
+      const binaryDir = await window.electronAPI.getBinaryDir(chain.id);
       setFullChainData({
         ...chain,
         dataDir: fullDataDir,
         walletDir: walletDir,
+        binaryDir: binaryDir,
       });
       setShowSettings(true);
     } catch (error) {

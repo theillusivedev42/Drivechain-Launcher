@@ -11,6 +11,40 @@ class ChainManager {
     this.runningProcesses = {};
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
     this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
+    this.readyStates = new Map(); // Tracks when chains are fully ready
+  }
+
+  // New method to check if a chain is truly ready
+  async isChainReady(chainId) {
+    const status = this.chainStatuses.get(chainId);
+    if (status !== 'running') return false;
+    
+    // For Bitcoin, we need RPC to be responsive
+    if (chainId === 'bitcoin') {
+      try {
+        await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+    
+    // For other chains, 'running' status is sufficient
+    return true;
+  }
+
+  // New method to wait for chain readiness
+  async waitForChainReady(chainId, timeout = 30000) {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < timeout) {
+      if (await this.isChainReady(chainId)) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    throw new Error(`Timeout waiting for ${chainId} to be ready`);
   }
 
   getChainConfig(chainId) {
@@ -425,18 +459,29 @@ class ChainManager {
       const baseDir = chain.directories.base[platform];
       if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
+      // Stop the chain if it's running
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
       }
 
+      // Remove data directory
       const homeDir = app.getPath("home");
       const fullPath = path.join(homeDir, baseDir);
-
       await fs.remove(fullPath);
-      console.log(`Reset chain ${chainId}: removed directory ${fullPath}`);
+      console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
+      // Remove downloaded binaries
+      const extractDir = chain.extract_dir?.[platform];
+      if (extractDir) {
+        const downloadsDir = app.getPath("downloads");
+        const binariesPath = path.join(downloadsDir, extractDir);
+        await fs.remove(binariesPath);
+        console.log(`Reset chain ${chainId}: removed binaries directory ${binariesPath}`);
+      }
+
+      // Recreate empty data directory
       await fs.ensureDir(fullPath);
-      console.log(`Recreated empty directory for chain ${chainId}: ${fullPath}`);
+      console.log(`Recreated empty data directory for chain ${chainId}: ${fullPath}`);
 
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
@@ -470,6 +515,17 @@ class ChainManager {
     }
   }
 
+  async openBinaryDir(chainId) {
+    try {
+      const binaryDir = this.getBinaryDir(chainId);
+      await shell.openPath(binaryDir);
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to open binary directory:", error);
+      return { success: false, error: error.message };
+    }
+  }
+
   getFullDataDir(chainId) {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
@@ -479,6 +535,22 @@ class ChainManager {
     if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
     
     return path.join(app.getPath("home"), baseDir);
+  }
+
+  getBinaryDir(chainId) {
+    const chain = this.getChainConfig(chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    const platform = process.platform;
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
+
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+
+    const downloadsDir = app.getPath("downloads");
+    const basePath = path.join(downloadsDir, extractDir);
+    return path.join(basePath, path.dirname(binaryPath));
   }
 }
 

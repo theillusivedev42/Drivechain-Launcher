@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getFullDataDir: (chainId) => ipcRenderer.invoke("get-full-data-dir", chainId),
   getWalletDir: (chainId) => ipcRenderer.invoke("get-wallet-dir", chainId),
   openWalletDir: (chainId) => ipcRenderer.invoke("open-wallet-dir", chainId),
+  getBinaryDir: (chainId) => ipcRenderer.invoke("get-binary-dir", chainId),
+  openBinaryDir: (chainId) => ipcRenderer.invoke("open-binary-dir", chainId),
   getDownloads: () => ipcRenderer.invoke("get-downloads"),
   pauseDownload: (chainId) => ipcRenderer.invoke("pause-download", chainId),
   resumeDownload: (chainId) => ipcRenderer.invoke("resume-download", chainId),
@@ -73,6 +75,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("bitcoin-sync-started", subscription);
     };
   },
+  waitForChain: (chainId) => ipcRenderer.invoke("wait-for-chain", chainId),
 });
 
 console.log("Preload script has run");
