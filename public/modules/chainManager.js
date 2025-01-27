@@ -324,23 +324,44 @@ class ChainManager {
       // Special handling for BitWindow - force quit on all platforms
       if (chainId === 'bitwindow') {
         if (process.platform === 'darwin') {
-          // Force quit on macOS
-          const killProcess = spawn('killall', ['BitWindow']);
-          await new Promise((resolve, reject) => {
-            killProcess.on('exit', (code) => {
-              if (code === 0) resolve();
-              else reject(new Error(`Failed to kill BitWindow, exit code: ${code}`));
-            });
-          });
+          // Force quit on macOS - kill all variants of the process name
+          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('killall', [name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
         } else if (process.platform === 'win32') {
-          // Force quit on Windows
-          const killProcess = spawn('taskkill', ['/F', '/IM', 'BitWindow.exe']);
-          await new Promise((resolve, reject) => {
-            killProcess.on('exit', (code) => {
-              if (code === 0) resolve();
-              else reject(new Error(`Failed to kill BitWindow, exit code: ${code}`));
-            });
-          });
+          // Force quit on Windows - kill all variants of the process name
+          const processNames = ['BitWindow.exe', 'bitwindow.exe', 'bitwindowd.exe'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('taskkill', ['/F', '/IM', name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
+        } else {
+          // For Linux and other platforms
+          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
+          for (const name of processNames) {
+            try {
+              const killProcess = spawn('pkill', ['-9', name]);
+              await new Promise((resolve) => {
+                killProcess.on('exit', () => resolve());
+              });
+            } catch (error) {
+              console.log(`No ${name} process found to kill`);
+            }
+          }
         }
         delete this.runningProcesses[chainId];
         this.chainStatuses.set(chainId, 'stopped');
