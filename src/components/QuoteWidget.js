@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Quote, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './QuoteWidget.module.css';
 import quotes from '../data/quotes.json';
 
 const QuoteWidget = () => {
+  const { showQuotes } = useSelector(state => state.settings);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -16,17 +18,21 @@ const QuoteWidget = () => {
   };
 
   useEffect(() => {
-    // Set up interval for cycling quotes
-    const interval = setInterval(() => {
-      goToNextQuote();
-    }, 30000); // Change quote every 30 seconds
+    if (showQuotes) {
+      // Set up interval for cycling quotes
+      const interval = setInterval(() => {
+        goToNextQuote();
+      }, 30000); // Change quote every 30 seconds
 
-    return () => clearInterval(interval);
-  }, []);
+      return () => clearInterval(interval);
+    }
+  }, [showQuotes]);
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
   };
+
+  if (!showQuotes) return null;
 
   const currentQuote = quotes[currentQuoteIndex];
 

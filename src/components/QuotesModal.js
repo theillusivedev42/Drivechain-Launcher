@@ -8,6 +8,7 @@ import { hideQuotesModal } from '../store/quotesModalSlice';
 const QuotesModal = () => {
   const dispatch = useDispatch();
   const { isVisible } = useSelector(state => state.quotesModal);
+  const { showQuotes } = useSelector(state => state.settings);
   const [currentQuote, setCurrentQuote] = useState(null);
 
   useEffect(() => {
@@ -17,7 +18,7 @@ const QuotesModal = () => {
     }
   }, [isVisible]);
 
-  if (!isVisible || !currentQuote) return null;
+  if (!showQuotes || !isVisible || !currentQuote) return null;
 
   const handleClose = () => {
     dispatch(hideQuotesModal());

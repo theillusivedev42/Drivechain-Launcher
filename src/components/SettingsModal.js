@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideSettingsModal } from '../store/settingsModalSlice';
+import { toggleShowQuotes } from '../store/settingsSlice';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
@@ -8,6 +9,7 @@ import { X } from 'lucide-react';
 const SettingsModal = () => {
   const dispatch = useDispatch();
   const { isVisible } = useSelector((state) => state.settingsModal);
+  const { showQuotes } = useSelector((state) => state.settings);
   const { isDarkMode, toggleTheme } = useTheme();
 
   const handleClose = () => {
@@ -43,7 +45,8 @@ const SettingsModal = () => {
             <label className={styles.toggleSwitch}>
               <input
                 type="checkbox"
-                onChange={() => console.log('Show quotes toggled')}
+                checked={showQuotes}
+                onChange={() => dispatch(toggleShowQuotes())}
               />
               <span className={styles.slider}></span>
             </label>
