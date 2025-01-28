@@ -23,6 +23,11 @@
   overflow-y: auto;
 }
 
+/* Wider modal for advanced mode */
+.modalContent[data-mode="advanced"] {
+  max-width: 800px;
+}
+
 .modalContent h2 {
   margin: 0;
   color: var(--modal-text);
@@ -351,8 +356,9 @@
 /* Entropy Input */
 .entropyInput {
   width: 100%;
-  min-height: 80px;
-  padding: 10px 12px;
+  height: 36px;
+  min-height: 36px;
+  padding: 6px 10px;
   box-sizing: border-box;
   border: 1px solid var(--btn-bg);
   border-radius: 4px;
@@ -388,21 +394,21 @@
 
 /* Preview Section */
 .previewSection {
-  margin-top: 20px;
-  padding: 16px;
+  margin-top: 16px;
+  padding: 12px;
   background-color: rgba(128, 128, 128, 0.05);
   border-radius: 6px;
 }
 
 .previewGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .wordCell {
-  padding: 8px;
+  padding: 6px;
   background-color: rgba(128, 128, 128, 0.05);
   border-radius: 4px;
 }
@@ -424,30 +430,33 @@
 }
 
 .technicalInfo {
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid rgba(128, 128, 128, 0.2);
 }
 
 .technicalInfo div {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .technicalInfo strong {
   color: var(--text-color);
   font-size: 0.85rem;
+  min-width: 100px;
 }
 
 .technicalInfo code {
   font-family: monospace;
   font-size: 0.8rem;
-  padding: 4px 8px;
+  padding: 3px 6px;
   background-color: rgba(128, 128, 128, 0.1);
   border-radius: 4px;
   word-break: break-all;
+  flex: 1;
 }
 
 /* Dark Mode Adjustments */

@@ -203,17 +203,10 @@ const WelcomeModal = ({ isOpen, onClose }) => {
 
       {error && <div className={styles.error}>{error}</div>}
 
-      <div className={styles.warningBox}>
-        <p>Advanced mode provides more control over wallet generation:</p>
-        <ul>
-          <li>Custom entropy source</li>
-          <li>Real-time BIP39 preview</li>
-          <li>Technical details display</li>
-        </ul>
-        <p className={styles.warningText}>
-          ⚠️ Only use this if you understand HD wallets and BIP39
-        </p>
-      </div>
+      <p style={{ marginBottom: '20px', color: 'var(--text-color)' }}>
+        Advanced mode provides more control over wallet generation with custom entropy and real-time BIP39 preview.
+        ⚠️ Only use this if you understand HD wallets and BIP39.
+      </p>
 
       <div className={styles.modeToggle}>
         <label>
@@ -278,44 +271,53 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         )}
       </div>
 
-      {preview && (
-        <div className={styles.previewSection}>
-          <div className={styles.previewGrid}>
-            {preview.words.map((word, i) => (
-              <div key={i} className={styles.wordCell}>
-                <div className={styles.word}>{word}</div>
-                <div className={styles.binary}>
-                  {i === preview.words.length - 1 ? (
-                    <>
-                      <span>{preview.lastWordBinary.slice(0, -4)}</span>
-                      <span className={styles.checksum}>
-                        {preview.lastWordBinary.slice(-4)}
-                      </span>
-                    </>
-                  ) : (
-                    preview.binaryStrings[i]
-                  )}
+      <div className={styles.previewSection}>
+        {preview ? (
+          <>
+            <div className={styles.previewGrid}>
+              {preview.words.map((word, i) => (
+                <div key={i} className={styles.wordCell}>
+                  <div className={styles.word}>{word}</div>
+                  <div className={styles.binary}>
+                    {i === preview.words.length - 1 ? (
+                      <>
+                        <span>{preview.lastWordBinary.slice(0, -4)}</span>
+                        <span className={styles.checksum}>
+                          {preview.lastWordBinary.slice(-4)}
+                        </span>
+                      </>
+                    ) : (
+                      preview.binaryStrings[i]
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className={styles.technicalInfo}>
-            <div>
-              <strong>BIP39 Binary:</strong>
-              <code>{preview.bip39Bin}</code>
+            <div className={styles.technicalInfo}>
+              <div>
+                <strong>BIP39 Binary:</strong>
+                <code>{preview.bip39Bin}</code>
+              </div>
+              <div>
+                <strong>Checksum:</strong>
+                <code>{preview.checksumBits}</code>
+              </div>
+              <div>
+                <strong>Master Key:</strong>
+                <code>{preview.masterKey}</code>
+              </div>
             </div>
-            <div>
-              <strong>Checksum:</strong>
-              <code>{preview.checksumBits}</code>
-            </div>
-            <div>
-              <strong>Master Key:</strong>
-              <code>{preview.masterKey}</code>
-            </div>
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', color: 'var(--text-color)', opacity: 0.7 }}>
+            <p>Enter text or hex input above to see the BIP39 preview</p>
+            <p style={{ fontSize: '0.9em', marginTop: '8px' }}>
+              Preview will show mnemonic words, binary representation, and technical details
+            </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className={styles.buttonContainer}>
         <button 
@@ -352,7 +354,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
 
   return (
     <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+      <div className={styles.modalContent} data-mode={currentPage}>
         {currentPage === 'default' && renderDefaultPage()}
         {currentPage === 'restore' && renderRestorePage()}
         {currentPage === 'advanced' && renderAdvancedPage()}
