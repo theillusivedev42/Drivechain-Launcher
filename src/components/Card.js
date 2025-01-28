@@ -4,6 +4,7 @@ import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import Tooltip from './Tooltip';
+// import LogWindow from './LogWindow';
 
 const Card = ({
   chain,
@@ -24,8 +25,63 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  /* Log-related state - temporarily disabled
+  const [logs, setLogs] = useState([]);
+  const logBatchRef = useRef([]);
+  const logUpdateTimeoutRef = useRef(null);
+  */
   const buttonRef = useRef(null);
 
+  /* Log-related effects and handlers - temporarily disabled
+  const batchLogUpdate = useCallback((newLog) => {
+    logBatchRef.current.push(newLog);
+    
+    if (logUpdateTimeoutRef.current) {
+      return;
+    }
+
+    logUpdateTimeoutRef.current = setTimeout(() => {
+      setLogs(prevLogs => {
+        const updatedLogs = [...prevLogs, ...logBatchRef.current];
+        // Keep only the last 1000 logs
+        return updatedLogs.slice(-1000);
+      });
+      logBatchRef.current = [];
+      logUpdateTimeoutRef.current = null;
+    }, 100); // Update every 100ms
+  }, []);
+
+  useEffect(() => {
+    if (chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') {
+      const unsubscribe = window.electronAPI.onChainLog(chain.id, (log) => {
+        batchLogUpdate({
+          timestamp: new Date().toLocaleTimeString(),
+          message: log
+        });
+      });
+      return () => {
+        if (typeof unsubscribe === 'function') unsubscribe();
+        // Clear any pending updates
+        if (logUpdateTimeoutRef.current) {
+          clearTimeout(logUpdateTimeoutRef.current);
+          logUpdateTimeoutRef.current = null;
+        }
+      };
+    } else {
+      // Clear logs when chain stops
+      setLogs([]);
+      logBatchRef.current = [];
+      if (logUpdateTimeoutRef.current) {
+        clearTimeout(logUpdateTimeoutRef.current);
+        logUpdateTimeoutRef.current = null;
+      }
+    }
+  }, [chain.status, chain.id, batchLogUpdate]);
+
+  const handleClearLogs = useCallback(() => {
+    setLogs([]);
+  }, []);
+  */
   const checkDependencies = () => {
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
     return chain.dependencies.every(dep => runningNodes.includes(dep));
@@ -200,54 +256,64 @@ const Card = ({
   };
 
   return (
-    <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-      <div className="card-header">
-        <h2>{chain.display_name}</h2>
-      </div>
-      <div className="card-content">
-        <p>{chain.description}</p>
-      </div>
-      <div className="card-actions">
-        <button
-          ref={buttonRef}
-          className={`btn ${getButtonClass()}`}
-          onClick={handleAction}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={handleMouseLeave}
-          disabled={
-            chain.status === 'downloading' || 
-            chain.status === 'extracting' ||
-            isStopAttempted
-          }
-          id={`download-button-${chain.id}`}
-        >
-          {getButtonText()}
-        </button>
-        <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Settings">
-          <SettingsIcon />
-        </button>
-      </div>
-      <Tooltip 
-        text={getTooltipText()}
-        visible={tooltipVisible}
-        position={tooltipPosition}
-      />
-      {showSettings && (
-        <ChainSettingsModal
-          chain={fullChainData}
-          onClose={() => setShowSettings(false)}
-          onOpenDataDir={handleOpenDataDir}
-          onOpenWalletDir={onOpenWalletDir}
-          onReset={onReset}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
+      <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
+        <div className="card-header">
+          <h2>{chain.display_name}</h2>
+        </div>
+        <div className="card-content">
+          <p>{chain.description}</p>
+        </div>
+        <div className="card-actions">
+          <button
+            ref={buttonRef}
+            className={`btn ${getButtonClass()}`}
+            onClick={handleAction}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={handleMouseLeave}
+            disabled={
+              chain.status === 'downloading' || 
+              chain.status === 'extracting' ||
+              isStopAttempted
+            }
+            id={`download-button-${chain.id}`}
+          >
+            {getButtonText()}
+          </button>
+          <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Settings">
+            <SettingsIcon />
+          </button>
+        </div>
+        <Tooltip 
+          text={getTooltipText()}
+          visible={tooltipVisible}
+          position={tooltipPosition}
         />
-      )}
-      {showForceStop && (
-        <ForceStopModal
-          chainName={chain.display_name}
-          onConfirm={handleForceStop}
-          onClose={() => setShowForceStop(false)}
+        {showSettings && (
+          <ChainSettingsModal
+            chain={fullChainData}
+            onClose={() => setShowSettings(false)}
+            onOpenDataDir={handleOpenDataDir}
+            onOpenWalletDir={onOpenWalletDir}
+            onReset={onReset}
+          />
+        )}
+        {showForceStop && (
+          <ForceStopModal
+            chainName={chain.display_name}
+            onConfirm={handleForceStop}
+            onClose={() => setShowForceStop(false)}
+          />
+        )}
+      </div>
+      {/* Log window temporarily disabled
+      {(chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') && (
+        <LogWindow
+          logs={logs}
+          title={chain.display_name}
+          onClear={handleClearLogs}
         />
-      )}
+      )} */}
     </div>
   );
 };

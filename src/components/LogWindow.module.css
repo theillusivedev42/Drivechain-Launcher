@@ -1,0 +1,102 @@
+.logWindow {
+  margin: 8px 0 16px;
+  background-color: rgba(0, 0, 0, 0.95);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.logContent {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.95);
+}
+
+.logContent:empty {
+  padding: 0;
+  max-height: 0;
+}
+
+/* Custom scrollbar for the log window */
+.logContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.logContent::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.logContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.logContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.logMessage {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  opacity: 0.9;
+}
+
+.logMessage:hover {
+  opacity: 1;
+}
+
+.timestamp {
+  color: #888;
+  margin-right: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.clearButton {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.clearButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}

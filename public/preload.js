@@ -112,6 +112,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
     };
   },
   forceKill: () => ipcRenderer.invoke("force-kill"),
+
+  // Chain logs
+  onChainLog: (chainId, callback) => {
+    const subscription = (event, id, log) => {
+      if (id === chainId) {
+        callback(log);
+      }
+    };
+    ipcRenderer.on("chain-log", subscription);
+    return () => {
+      ipcRenderer.removeListener("chain-log", subscription);
+    };
+  },
 });
 
 console.log("Preload script has run");

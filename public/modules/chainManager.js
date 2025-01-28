@@ -272,6 +272,9 @@ class ChainManager {
         type: 'stdout',
         data: output
       });
+      
+      // Also emit as chain-log for the new log window
+      this.mainWindow.webContents.send("chain-log", chainId, output);
     });
 
     childProcess.stderr.on('data', (data) => {
@@ -284,6 +287,9 @@ class ChainManager {
         type: 'stderr',
         data: output
       });
+      
+      // Also emit as chain-log for the new log window
+      this.mainWindow.webContents.send("chain-log", chainId, output);
     });
 
     childProcess.on("error", (error) => {
