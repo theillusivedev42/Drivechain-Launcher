@@ -1,9 +1,17 @@
 import React from 'react';
+import { useDispatch } from 'react-redux';
+import { showSettingsModal } from '../store/settingsModalSlice';
 import styles from './SettingsIcon.module.css';
 
-const SettingsIcon = () => {
+const NavSettingsIcon = () => {
+  const dispatch = useDispatch();
+  
+  const handleClick = () => {
+    dispatch(showSettingsModal());
+  };
+
   return (
-    <button className={styles.iconWrapper}>
+    <button onClick={handleClick} className={styles.iconWrapper}>
       <svg
         width="20"
         height="20"
@@ -21,4 +29,4 @@ const SettingsIcon = () => {
   );
 };
 
-export default SettingsIcon;
+export default NavSettingsIcon;

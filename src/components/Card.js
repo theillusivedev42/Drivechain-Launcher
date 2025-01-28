@@ -280,7 +280,7 @@ const Card = ({
           >
             {getButtonText()}
           </button>
-          <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Settings">
+          <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
             <SettingsIcon />
           </button>
         </div>
