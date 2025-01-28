@@ -11,15 +11,24 @@ import styles from './DownloadModal.module.css';
 const FADE_DELAY = 7000; // 5 seconds
 
 const DownloadModal = memo(() => {
-  const downloads = useSelector(state => state.downloads, (prev, next) => {
-    // Only update if the number of downloads changed or if any download's progress changed
+  // Memoize the selector function
+  const selectDownloads = useMemo(() => {
+    return state => state.downloads;
+  }, []);
+
+  // Custom equality function that only checks relevant fields and rounds progress
+  const downloadsEqual = useCallback((prev, next) => {
     if (Object.keys(prev).length !== Object.keys(next).length) return false;
     return Object.keys(prev).every(key => {
       const p = prev[key];
       const n = next[key];
-      return p.status === n.status && p.progress === n.progress && p.details === n.details;
+      return p.status === n.status && 
+             Math.round(p.progress) === Math.round(n.progress) && 
+             (p.type !== 'ibd' || p.details === n.details);
     });
-  });
+  }, []);
+
+  const downloads = useSelector(selectDownloads, downloadsEqual);
   const isVisible = useSelector(state => state.downloadModal.isVisible);
   const dispatch = useDispatch();
   const { isDarkMode } = useTheme();

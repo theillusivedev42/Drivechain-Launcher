@@ -9,11 +9,20 @@ const DownloadItem = memo(({ chainId, displayName, status, progress, type, detai
     return status;
   }, [type, status]);
 
+  // Memoize the progress bar style to prevent object recreation
+  const progressStyle = useMemo(() => ({
+    transform: `scaleX(${progress / 100})`,
+    transformOrigin: 'left'
+  }), [progress]);
+
+  // Memoize the progress text with simpler calculation
   const progressText = useMemo(() => {
     if (type === 'ibd' && details) {
-      return details;
+      // Just use the details directly to avoid regex overhead
+      return details.replace(' blocks', '');
     }
-    return `${progress.toFixed(2)}%`;
+    // Round to whole number for less frequent updates
+    return `${Math.round(progress)}%`;
   }, [type, details, progress]);
 
   return (
@@ -25,7 +34,7 @@ const DownloadItem = memo(({ chainId, displayName, status, progress, type, detai
       <div className={styles.progressBarContainer}>
         <div
           className={styles.progressBar}
-          style={{ transform: `scaleX(${progress / 100})`, transformOrigin: 'left' }}
+          style={progressStyle}
         ></div>
       </div>
       <div className={styles.progressText}>
