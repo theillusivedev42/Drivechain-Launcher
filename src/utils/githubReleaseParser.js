@@ -2,7 +2,7 @@ const axios = require('axios');
 const path = require('path');
 
 /**
- * Utility functions for checking GitHub releases via the GitHub API
+ * Utility functions for checking updates via releases.drivechain.info
  */
 
 // Cache the last fetch time and result to avoid hitting rate limits
@@ -31,24 +31,39 @@ function compareVersions(version1, version2) {
 }
 
 /**
- * Extracts version from download URL
+ * Gets the latest version from releases.drivechain.info
  * @param {string} url The download URL
- * @returns {string|null} The version string or null if not found
+ * @returns {Promise<string|null>} The latest version or null if not found
  */
-function extractVersionFromUrl(url) {
-    // Try to match version pattern in URL
-    const versionMatch = url.match(/v(\d+\.\d+\.\d+)/);
-    if (versionMatch) {
-        return versionMatch[1];
+async function getLatestVersion(url) {
+    try {
+        // Make a HEAD request to check if the URL exists and get any version info
+        const response = await axios.head(url);
+        
+        // Check if the server provides a version header
+        const version = response.headers['x-latest-version'];
+        if (version) {
+            return version;
+        }
+
+        // If no version header, try to extract from URL
+        const versionMatch = url.match(/v?(\d+\.\d+\.\d+)/);
+        if (versionMatch) {
+            return versionMatch[1];
+        }
+
+        return null;
+    } catch (error) {
+        console.error(`Failed to get latest version from ${url}:`, error);
+        return null;
     }
-    return null;
 }
 
 /**
- * Fetches GitHub release information
+ * Fetches update information for all components
  * @param {Object} chainConfig The chain configuration object
  * @param {boolean} [force=false] Force fetch even if cache is valid
- * @returns {Promise<Object>} Update information for grpcurl
+ * @returns {Promise<Object>} Update information for all components
  * @throws {Error} If the fetch fails
  */
 async function fetchGithubReleases(chainConfig, force = false) {
@@ -59,122 +74,86 @@ async function fetchGithubReleases(chainConfig, force = false) {
             return cachedResult;
         }
 
-        // Get grpcurl configuration
-        const grpcurlConfig = chainConfig?.chains?.find(chain => chain.id === 'grpcurl');
-        if (!grpcurlConfig) {
-            throw new Error('grpcurl configuration not found');
+        const updates = {};
+
+        // Get status of all chains
+        const chainStatuses = {};
+        for (const chain of chainConfig.chains) {
+            try {
+                const status = await window.electronAPI.getChainStatus(chain.id);
+                chainStatuses[chain.id] = status;
+            } catch (error) {
+                console.error(`Failed to get status for ${chain.id}:`, error);
+                chainStatuses[chain.id] = 'error';
+            }
         }
 
-        // Extract owner and repo from repo_url
-        const repoUrlMatch = grpcurlConfig.repo_url?.match(/github\.com\/([^/]+)\/([^/]+)/);
-        if (!repoUrlMatch) {
-            throw new Error('Invalid GitHub repository URL');
-        }
-        const [, owner, repo] = repoUrlMatch;
+        // Only check enabled chains that are downloaded
+        const downloadedChains = chainConfig.chains.filter(chain => 
+            chain.enabled && 
+            chainStatuses[chain.id] && 
+            chainStatuses[chain.id] !== 'not_downloaded'
+        );
 
-        // Get current version from download URL
-        const currentVersion = extractVersionFromUrl(grpcurlConfig.download.urls.linux);
-        if (!currentVersion) {
-            throw new Error('Could not determine current version from download URL');
-        }
-
-        let response;
-        try {
-            // Fetch releases from GitHub API
-            response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases`, {
-                timeout: 10000,
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'Drivechain-Launcher'
+        // Check each downloaded chain for updates
+        for (const chain of downloadedChains) {
+            try {
+                // Get current version from binary path if available
+                let currentVersion = chain.version;
+                if (!currentVersion && chain.binary[process.platform]) {
+                    const binaryPath = chain.binary[process.platform];
+                    const versionMatch = binaryPath.match(/\d+\.\d+\.\d+/);
+                    if (versionMatch) {
+                        currentVersion = versionMatch[0];
+                    }
                 }
-            });
 
-            if (response.status !== 200) {
-                throw new Error(`GitHub API error! status: ${response.status}`);
-            }
-        } catch (error) {
-            if (error.code === 'ECONNABORTED') {
-                throw new Error('Connection timed out while fetching GitHub releases');
-            }
-            if (error.response) {
-                throw new Error(`Failed to fetch GitHub releases: ${error.response.status} ${error.response.statusText}`);
-            }
-            throw new Error(`Failed to fetch GitHub releases: ${error.message}`);
-        }
-
-        const releases = response.data;
-        if (!releases.length) {
-            throw new Error('No releases found');
-        }
-
-        // Find latest release with required assets
-        const platformExtensions = {
-            linux: '_linux_x86_64.tar.gz',
-            darwin: '_osx_x86_64.tar.gz',
-            win32: '_windows_x86_64.zip'
-        };
-
-        const updates = {
-            grpcurl: {
-                current_version: currentVersion,
-                latest_version: null,
-                has_update: false,
-                platforms: {
-                    linux: null,
-                    darwin: null,
-                    win32: null
+                // If we can't determine current version, skip this chain
+                if (!currentVersion) {
+                    continue;
                 }
-            }
-        };
 
-        // Find the latest release that has all required platform assets
-        for (const release of releases) {
-            const version = release.tag_name.replace(/^v/, '');
-            const versionComparison = compareVersions(version, currentVersion);
-            
-            // Skip if this release is older or same as current
-            if (versionComparison <= 0) continue;
-
-            // Check if this release has all required platform assets
-            const platformAssets = {};
-            let hasAllAssets = true;
-
-            for (const [platform, extension] of Object.entries(platformExtensions)) {
-                const asset = release.assets.find(a => a.name.endsWith(extension));
-                if (!asset) {
-                    hasAllAssets = false;
-                    break;
+                // Get latest version from the release server
+                const latestVersion = await getLatestVersion(chain.download.urls[process.platform]);
+                
+                // If we can't determine latest version, skip this chain
+                if (!latestVersion) {
+                    continue;
                 }
-                platformAssets[platform] = asset;
-            }
 
-            if (hasAllAssets) {
-                updates.grpcurl.latest_version = version;
-                updates.grpcurl.has_update = true;
+                // Compare versions to check for update
+                const hasUpdate = compareVersions(currentVersion, latestVersion) < 0;
 
-                // Add platform-specific information
-                for (const [platform, asset] of Object.entries(platformAssets)) {
-                    updates.grpcurl.platforms[platform] = {
-                        filename: asset.name,
-                        download_url: asset.browser_download_url,
-                        size: asset.size,
-                        found: true
-                    };
-                }
-                break;
-            }
-        }
-
-        // If no update found, set platform info for current version
-        if (!updates.grpcurl.has_update) {
-            updates.grpcurl.latest_version = currentVersion;
-            for (const platform of Object.keys(platformExtensions)) {
-                updates.grpcurl.platforms[platform] = {
-                    filename: path.basename(grpcurlConfig.download.urls[platform]),
-                    download_url: grpcurlConfig.download.urls[platform],
-                    size: grpcurlConfig.download.sizes[platform] || null,
-                    found: true
+                updates[chain.id] = {
+                    displayName: chain.display_name,
+                    current_version: currentVersion,
+                    latest_version: latestVersion,
+                    has_update: hasUpdate,
+                    platforms: {
+                        linux: {
+                            filename: path.basename(chain.download.urls.linux),
+                            download_url: chain.download.urls.linux,
+                            size: chain.download.sizes.linux || null,
+                            found: true
+                        },
+                        darwin: {
+                            filename: path.basename(chain.download.urls.darwin),
+                            download_url: chain.download.urls.darwin,
+                            size: chain.download.sizes.darwin || null,
+                            found: true
+                        },
+                        win32: {
+                            filename: path.basename(chain.download.urls.win32),
+                            download_url: chain.download.urls.win32,
+                            size: chain.download.sizes.win32 || null,
+                            found: true
+                        }
+                    }
                 };
+            } catch (error) {
+                console.error(`Failed to check updates for ${chain.id}:`, error);
+                // Skip this chain if there's an error
+                continue;
             }
         }
 
@@ -185,12 +164,12 @@ async function fetchGithubReleases(chainConfig, force = false) {
         return updates;
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
-            throw new Error('Connection timed out while fetching GitHub releases');
+            throw new Error('Connection timed out while checking for updates');
         }
         if (error.response) {
-            throw new Error(`Failed to fetch GitHub releases: ${error.response.status} ${error.response.statusText}`);
+            throw new Error(`Failed to check for updates: ${error.response.status} ${error.response.statusText}`);
         }
-        throw new Error(`Failed to fetch GitHub releases: ${error.message}`);
+        throw new Error(`Failed to check for updates: ${error.message}`);
     }
 }
 
