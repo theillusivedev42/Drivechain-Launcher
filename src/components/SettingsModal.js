@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideSettingsModal } from '../store/settingsModalSlice';
 import { toggleShowQuotes } from '../store/settingsSlice';
+import { setAvailableUpdates, setIsChecking, setLastChecked, setError } from '../store/updateSlice';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
@@ -13,6 +14,7 @@ const SettingsModal = () => {
   const { isVisible } = useSelector((state) => state.settingsModal);
   const { showQuotes } = useSelector((state) => state.settings);
   const { isDarkMode, toggleTheme } = useTheme();
+  const { isChecking, lastChecked } = useSelector((state) => state.updates);
 
   const handleClose = () => {
     dispatch(hideSettingsModal());
@@ -21,6 +23,23 @@ const SettingsModal = () => {
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       handleClose();
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    try {
+      dispatch(setIsChecking(true));
+      const result = await window.electronAPI.checkForUpdates();
+      if (result.success) {
+        dispatch(setAvailableUpdates(result.updates));
+        dispatch(setLastChecked(Date.now()));
+      } else {
+        dispatch(setError(result.error));
+      }
+    } catch (error) {
+      dispatch(setError(error.message));
+    } finally {
+      dispatch(setIsChecking(false));
     }
   };
 
@@ -96,6 +115,21 @@ const SettingsModal = () => {
               <span className={styles.slider}></span>
             </label>
           </div>
+        </div>
+
+        <div className={styles.updateSection}>
+          <button 
+            className={styles.updateButton} 
+            onClick={handleCheckUpdates}
+            disabled={isChecking}
+          >
+            {isChecking ? 'Checking...' : 'Check for Updates'}
+          </button>
+          {lastChecked && (
+            <span className={styles.lastChecked}>
+              Last checked: {new Date(lastChecked).toLocaleTimeString()}
+            </span>
+          )}
         </div>
 
         <button className={styles.resetButton} onClick={handleReset}>

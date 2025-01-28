@@ -7,8 +7,9 @@ const tar = require("tar");
 const { pipeline } = require('stream/promises');
 
 class DownloadManager {
-  constructor(mainWindow) {
+  constructor(mainWindow, config) {
     this.mainWindow = mainWindow;
+    this.config = config;
     this.activeDownloads = new Map();
     this.pausedDownloads = new Map();
   }
@@ -209,6 +210,7 @@ class DownloadManager {
       const downloadsArray = [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
         .map(([chainId, download]) => ({
           chainId,
+          displayName: this.config.chains.find(c => c.id === chainId)?.display_name || chainId,
           progress: download.progress,
           status: download.status,
           downloadedLength: download.downloadedLength,
