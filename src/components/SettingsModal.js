@@ -132,6 +132,27 @@ const SettingsModal = () => {
           )}
         </div>
 
+        <div className={styles.settingGroup}>
+          <div className={styles.settingRow}>
+            <span className={styles.settingLabel}>Master Wallet Directory</span>
+            <button 
+              className={styles.updateButton}
+              onClick={async () => {
+                try {
+                  const result = await window.electronAPI.invoke('open-wallet-starters-dir');
+                  if (!result.success) {
+                    throw new Error(result.error);
+                  }
+                } catch (error) {
+                  console.error('Error opening master wallet directory:', error);
+                }
+              }}
+            >
+              Open
+            </button>
+          </div>
+        </div>
+
         <button className={styles.resetButton} onClick={handleReset}>
           Reset Everything
         </button>

@@ -146,6 +146,13 @@ input:checked + .slider:before {
   cursor: not-allowed;
 }
 
+/* Make update button more compact when in a setting row */
+.settingRow .updateButton {
+  padding: 6px 12px;
+  font-size: 0.85em;
+  min-width: 80px;
+}
+
 .lastChecked {
   font-size: 0.8em;
   color: #666;

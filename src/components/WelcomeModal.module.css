@@ -205,3 +205,23 @@
 .restoreButton:hover {
   background-color: var(--download-btn-hover);
 }
+
+.error {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.generateButton:disabled,
+.restoreButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.generateButton:disabled::before {
+  animation: none;
+}

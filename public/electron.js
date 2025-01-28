@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs-extra");
 const isDev = require("electron-is-dev");
@@ -10,6 +10,7 @@ const DownloadManager = require("./modules/downloadManager");
 const ApiManager = require("./modules/apiManager");
 const DirectoryManager = require("./modules/directoryManager");
 const UpdateManager = require("./modules/updateManager");
+
 
 const configPath = path.join(__dirname, "chain_config.json");
 let config;
@@ -284,6 +285,19 @@ function setupIPCHandlers() {
     try {
       return await fastWithdrawalManager.getBalanceBTC();
     } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Master wallet directory handler
+  ipcMain.handle("open-wallet-starters-dir", async () => {
+    try {
+      const walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+      await fs.ensureDir(walletDir); // Create if doesn't exist
+      await shell.openPath(walletDir);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to open wallet starters directory:', error);
       return { success: false, error: error.message };
     }
   });
