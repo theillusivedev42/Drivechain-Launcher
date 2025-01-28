@@ -310,7 +310,7 @@ app.whenReady().then(async () => {
   walletManager = new WalletManager(config);
   fastWithdrawalManager = new FastWithdrawalManager();
   apiManager = new ApiManager();
-  updateManager = new UpdateManager(config);
+  updateManager = new UpdateManager(config, chainManager);
   downloadManager = new DownloadManager(mainWindow, config);
   
   setupIPCHandlers();

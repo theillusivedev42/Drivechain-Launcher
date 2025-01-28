@@ -1,14 +1,15 @@
-const { fetchGithubReleases } = require("../../src/utils/githubReleaseParser");
+const { fetchGithubReleases } = require('./githubReleaseParser');
 
 class UpdateManager {
-  constructor(config) {
+  constructor(config, chainManager) {
     this.config = config;
+    this.chainManager = chainManager;
   }
 
   async checkForUpdates() {
     try {
       const updates = {};
-      const result = await fetchGithubReleases(this.config);
+      const result = await fetchGithubReleases(this.config, this.chainManager);
       
       if (result.grpcurl?.has_update) {
         updates.grpcurl = {

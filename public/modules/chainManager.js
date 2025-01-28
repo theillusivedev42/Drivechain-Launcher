@@ -501,9 +501,18 @@ class ChainManager {
       const baseDir = chain.directories.base[platform];
       if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-      // Stop the chain if it's running
+      // First, update UI to show reset is starting
+      this.chainStatuses.set(chainId, 'resetting');
+      this.mainWindow.webContents.send("chain-status-update", {
+        chainId,
+        status: "resetting",
+      });
+
+      // Stop the chain if it's running and wait a moment for cleanup
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
+        // Give a small delay for process cleanup
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       // Remove data directory
@@ -525,6 +534,10 @@ class ChainManager {
       await fs.ensureDir(fullPath);
       console.log(`Recreated empty data directory for chain ${chainId}: ${fullPath}`);
 
+      // Small delay before final status update to ensure UI is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      this.chainStatuses.set(chainId, 'not_downloaded');
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
         status: "not_downloaded",
