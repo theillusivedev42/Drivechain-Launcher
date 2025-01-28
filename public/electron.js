@@ -311,7 +311,7 @@ app.whenReady().then(async () => {
   fastWithdrawalManager = new FastWithdrawalManager();
   apiManager = new ApiManager();
   updateManager = new UpdateManager(config);
-  downloadManager = new DownloadManager(mainWindow);
+  downloadManager = new DownloadManager(mainWindow, config);
   
   setupIPCHandlers();
 });
