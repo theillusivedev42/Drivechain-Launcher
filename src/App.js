@@ -22,16 +22,28 @@ import { setAvailableUpdates, setIsChecking, setLastChecked, setError, dismissNo
 function AppContent() {
   const { isDarkMode } = useTheme();
   const dispatch = useDispatch();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const { available: updates, showNotification } = useSelector(state => state.updates);
 
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
 
-  // Check for updates on startup
+  // Check for updates and master wallet on startup
   useEffect(() => {
-    const checkForUpdates = async () => {
+    const initializeApp = async () => {
+      // Check for master wallet
+      try {
+        const result = await window.electronAPI.getMasterWallet();
+        if (!result.success || !result.data) {
+          setShowWelcomeModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking master wallet:', error);
+        setShowWelcomeModal(true);
+      }
+
+      // Check for updates
       try {
         dispatch(setIsChecking(true));
         const result = await window.electronAPI.checkForUpdates();
@@ -48,7 +60,7 @@ function AppContent() {
       }
     };
 
-    checkForUpdates();
+    initializeApp();
   }, [dispatch]);
 
   const handleDownloadUpdate = async (chainId) => {

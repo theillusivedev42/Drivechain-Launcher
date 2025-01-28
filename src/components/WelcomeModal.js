@@ -8,6 +8,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
+  const isValidMnemonic = (mnemonic) => {
+    const words = mnemonic.trim().split(' ');
+    return words.length === 12 || words.length === 24;
+  };
+
   if (!isOpen) return null;
 
   const handleGenerateWallet = async () => {
@@ -15,27 +20,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       setIsGenerating(true);
       setError('');
       
-      // Generate master wallet
+      // Generate master wallet (which automatically generates all chain wallets)
       const result = await window.electronAPI.createMasterWallet();
       if (!result.success) {
         throw new Error(result.error);
       }
-
-      // Get chain IDs from config
-      const config = await window.electronAPI.getConfig();
-      const l1Chain = config.chains.find(c => c.chain_layer === 1);
-      const sidechains = config.chains.filter(c => c.chain_layer === 2);
-
-      // Derive L1 wallet
-      if (l1Chain) {
-        await window.electronAPI.deriveChainWallet(l1Chain.id);
-      }
-
-      // Derive sidechain wallets
-      for (const chain of sidechains) {
-        await window.electronAPI.deriveChainWallet(chain.id);
-      }
-
       onClose();
     } catch (error) {
       console.error('Error generating wallet:', error);
@@ -54,27 +43,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         throw new Error('Please enter a mnemonic phrase');
       }
 
-      // Import master wallet
+      // Import master wallet (which automatically generates all chain wallets)
       const result = await window.electronAPI.importMasterWallet(mnemonic, passphrase);
       if (!result.success) {
         throw new Error(result.error);
       }
-
-      // Get chain IDs from config
-      const config = await window.electronAPI.getConfig();
-      const l1Chain = config.chains.find(c => c.chain_layer === 1);
-      const sidechains = config.chains.filter(c => c.chain_layer === 2);
-
-      // Derive L1 wallet
-      if (l1Chain) {
-        await window.electronAPI.deriveChainWallet(l1Chain.id);
-      }
-
-      // Derive sidechain wallets
-      for (const chain of sidechains) {
-        await window.electronAPI.deriveChainWallet(chain.id);
-      }
-
       onClose();
     } catch (error) {
       console.error('Error restoring wallet:', error);
@@ -120,7 +93,14 @@ const WelcomeModal = ({ isOpen, onClose }) => {
               <input
                 type="text"
                 value={mnemonic}
-                onChange={(e) => setMnemonic(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setMnemonic(value);
+                  // Clear error if input becomes valid
+                  if (isValidMnemonic(value)) {
+                    setError('');
+                  }
+                }}
                 placeholder="Enter BIP39 Mnemonic (12 or 24 words)"
                 className={styles.input}
               />
@@ -138,7 +118,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
               <button 
                 className={styles.restoreButton} 
                 onClick={handleRestoreWallet}
-                disabled={isGenerating}
+                disabled={isGenerating || !isValidMnemonic(mnemonic)}
               >
                 {isGenerating ? 'Restoring...' : 'Restore Wallet'}
               </button>
