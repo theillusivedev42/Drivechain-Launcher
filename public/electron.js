@@ -263,6 +263,31 @@ function setupIPCHandlers() {
     }
   });
 
+  // Advanced wallet handlers
+  ipcMain.handle("preview-wallet", async (event, options) => {
+    try {
+      return await walletManager.walletService.previewWallet(options);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("create-advanced-wallet", async (event, options) => {
+    try {
+      return await walletManager.walletService.createAdvancedWallet(options);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("generate-random-entropy", async () => {
+    try {
+      return walletManager.walletService.generateRandomEntropy();
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
   // Other handlers
   ipcMain.handle("get-config", async () => {
     return config;

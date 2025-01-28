@@ -94,6 +94,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   deriveChainWallet: (chainId) => ipcRenderer.invoke("derive-chain-wallet", chainId),
   getChainWallet: (chainId) => ipcRenderer.invoke("get-chain-wallet", chainId),
   
+  // Advanced Wallet Methods
+  previewWallet: (options) => ipcRenderer.invoke("preview-wallet", options),
+  createAdvancedWallet: (options) => ipcRenderer.invoke("create-advanced-wallet", options),
+  generateRandomEntropy: () => ipcRenderer.invoke("generate-random-entropy"),
+  
   // Wallet Events
   onWalletUpdate: (callback) => {
     const subscription = (event, data) => callback(data);

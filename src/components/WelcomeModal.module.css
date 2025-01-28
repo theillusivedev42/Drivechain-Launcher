@@ -215,6 +215,7 @@
   cursor: not-allowed;
 }
 
+/* Warning Box */
 .warningBox {
   background-color: rgba(255, 193, 7, 0.1);
   border-radius: 6px;
@@ -246,12 +247,153 @@
   gap: 6px;
 }
 
+/* Mode Toggle */
+.modeToggle {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: rgba(128, 128, 128, 0.05);
+  border-radius: 4px;
+}
+
+.modeToggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.modeToggle label:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+.modeToggle input[type="radio"] {
+  margin: 0;
+}
+
+/* Entropy Input */
+.entropyInput {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--btn-bg);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-family: monospace;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.entropyInput:focus {
+  outline: none;
+  border-color: var(--download-btn);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.randomButton {
+  padding: 6px 12px;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.randomButton:hover {
+  background-color: var(--btn-hover);
+  transform: translateY(-1px);
+}
+
+/* Preview Section */
+.previewSection {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: rgba(128, 128, 128, 0.05);
+  border-radius: 6px;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.wordCell {
+  padding: 8px;
+  background-color: rgba(128, 128, 128, 0.05);
+  border-radius: 4px;
+}
+
+.word {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text-color);
+}
+
+.binary {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: rgba(128, 128, 128, 0.8);
+}
+
+.checksum {
+  color: #28a745;
+}
+
+.technicalInfo {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.technicalInfo div {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.technicalInfo strong {
+  color: var(--text-color);
+  font-size: 0.85rem;
+}
+
+.technicalInfo code {
+  font-family: monospace;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background-color: rgba(128, 128, 128, 0.1);
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+/* Dark Mode Adjustments */
 :global(.dark) .warningBox {
   background-color: rgba(255, 193, 7, 0.05);
 }
 
 :global(.dark) .warningText {
   color: #ffc107;
+}
+
+:global(.dark) .modeToggle label:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .checksum {
+  color: #3dd15f;
 }
 
 :global(.dark) .optionToggle:hover {

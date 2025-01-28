@@ -206,6 +206,107 @@ class WalletService extends EventEmitter {
     }
   }
 
+  // Preview wallet from entropy input
+  async previewWallet({ input, isHexMode }) {
+    try {
+      let entropy;
+      if (isHexMode) {
+        // Direct hex input
+        if (!/^[0-9a-fA-F]*$/.test(input) || input.length > 64 || input.length % 8 !== 0) {
+          throw new Error('Invalid hex format');
+        }
+        entropy = Buffer.from(input, 'hex');
+      } else {
+        // Hash text input to get entropy
+        const hash = crypto.createHash('sha256').update(input).digest();
+        entropy = hash.slice(0, 16); // Take first 16 bytes
+      }
+
+      // Generate mnemonic from entropy
+      const mnemonic = bip39.entropyToMnemonic(entropy);
+      const words = mnemonic.split(' ');
+
+      // Get binary representation for each word
+      const binaryStrings = [];
+      const entropyBits = this.bytesToBinary(entropy);
+      const checksumBits = this.calculateChecksumBits(entropy);
+      
+      // Split into 11-bit chunks
+      for (let i = 0; i < words.length - 1; i++) {
+        const chunk = entropyBits.slice(i * 11, (i + 1) * 11);
+        binaryStrings.push(chunk);
+      }
+
+      // Handle last word (entropy + checksum)
+      const lastEntropyBits = entropyBits.slice(-7);
+      const lastWordBinary = lastEntropyBits + checksumBits.slice(0, 4);
+      binaryStrings.push(lastWordBinary);
+
+      // Generate seed and master key
+      const seed = await bip39.mnemonicToSeed(mnemonic);
+      const hdkey = HDKey.fromMasterSeed(seed);
+      
+      return {
+        success: true,
+        data: {
+          words,
+          binaryStrings,
+          lastWordBinary,
+          bip39Bin: entropyBits + checksumBits,
+          checksumBits,
+          masterKey: hdkey.privateKey.toString('hex')
+        }
+      };
+    } catch (error) {
+      console.error('Error previewing wallet:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Create wallet from entropy input
+  async createAdvancedWallet({ input, isHexMode }) {
+    try {
+      const preview = await this.previewWallet({ input, isHexMode });
+      if (!preview.success) {
+        throw new Error(preview.error);
+      }
+
+      // Create wallet from preview data
+      const mnemonic = preview.data.words.join(' ');
+      const seed = await bip39.mnemonicToSeed(mnemonic);
+      const hdkey = HDKey.fromMasterSeed(seed);
+
+      const wallet = {
+        mnemonic,
+        seed_hex: seed.toString('hex'),
+        xprv: hdkey.privateExtendedKey,
+        bip39_bin: preview.data.bip39Bin,
+        bip39_csum: preview.data.checksumBits,
+        bip39_csum_hex: Buffer.from([parseInt(preview.data.checksumBits, 2)]).toString('hex')
+      };
+
+      // Save wallet and generate starters
+      await this.saveWallet(wallet);
+      await this.generateAllStarters();
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating advanced wallet:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Generate random entropy
+  generateRandomEntropy() {
+    try {
+      const entropy = crypto.randomBytes(16); // 128 bits = 16 bytes
+      return { success: true, data: entropy.toString('hex') };
+    } catch (error) {
+      console.error('Error generating random entropy:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   bytesToBinary(bytes) {
     return Array.from(bytes)
       .map(byte => byte.toString(2).padStart(8, '0'))
