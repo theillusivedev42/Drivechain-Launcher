@@ -94,30 +94,38 @@
   background-color: var(--download-btn-hover);
 }
 
-.advancedToggle {
+.optionsContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.optionToggle {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 4px;
-  padding: 4px;
+  padding: 6px 10px;
   color: var(--modal-text);
   opacity: 0.7;
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: opacity 0.2s;
+  font-size: 0.9rem;
+  transition: all 0.2s;
   user-select: none;
-  margin-top: -8px;
+  border-radius: 4px;
 }
 
-.advancedText {
+.optionToggle:hover {
+  opacity: 1;
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+.optionText {
   text-decoration: none;
 }
 
-.advancedToggle:hover {
-  opacity: 1;
-}
-
-.advancedToggle:hover .advancedText {
+.optionToggle:hover .optionText {
   text-decoration: underline;
 }
 
@@ -133,27 +141,22 @@
   transform: rotate(180deg);
 }
 
-.advancedSection {
+.advancedSection,
+.restoreSection {
   margin: 16px -24px 0;
-  padding: 16px 24px 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  opacity: 0;
-  max-height: 0;
-  transform: translateY(-10px);
-  transition: all 0.2s ease-in-out;
-  overflow: hidden;
-  animation: slideDown 0.2s ease-in-out forwards;
+  padding: 16px 24px;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  animation: slideDown 0.3s ease-in-out forwards;
+  background-color: rgba(128, 128, 128, 0.05);
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    max-height: 0;
     transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    max-height: 200px;
     transform: translateY(0);
   }
 }
@@ -164,23 +167,20 @@
 
 .input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 12px;
   box-sizing: border-box;
   border: 1px solid var(--btn-bg);
   border-radius: 4px;
   background-color: var(--bg-color);
   color: var(--text-color);
   font-size: 0.9rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--download-btn);
-}
-
-.dark .advancedSection {
-  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .restoreButtonContainer {
@@ -189,21 +189,73 @@
   margin-top: 16px;
 }
 
-.restoreButton {
-  width: 140px;
-  padding: 8px 16px;
+.restoreButton,
+.advancedButton {
+  min-width: 140px;
+  padding: 10px 16px;
   background-color: var(--download-btn);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 500;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
-.restoreButton:hover {
+.restoreButton:hover:not(:disabled),
+.advancedButton:hover:not(:disabled) {
   background-color: var(--download-btn-hover);
+  transform: translateY(-1px);
+}
+
+.restoreButton:disabled,
+.advancedButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.warningBox {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.warningBox p {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.warningBox ul {
+  margin: 0 0 12px;
+  padding-left: 24px;
+}
+
+.warningBox li {
+  margin: 6px 0;
+  color: var(--text-color);
+}
+
+.warningText {
+  color: #856404;
+  margin: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:global(.dark) .warningBox {
+  background-color: rgba(255, 193, 7, 0.05);
+}
+
+:global(.dark) .warningText {
+  color: #ffc107;
+}
+
+:global(.dark) .optionToggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .error {

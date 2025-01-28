@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './WelcomeModal.module.css';
 
 const WelcomeModal = ({ isOpen, onClose }) => {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeSection, setActiveSection] = useState('default'); // 'default', 'restore', or 'advanced'
   const [mnemonic, setMnemonic] = useState('');
   const [passphrase, setPassphrase] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -79,15 +79,29 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           {isGenerating ? 'Generating...' : 'Generate Wallet'}
         </button>
 
-        <div 
-          className={styles.advancedToggle}
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          <span className={styles.advancedText}>{showAdvanced ? 'Hide restore options' : 'Restore wallet'}</span>
-          <span className={`${styles.chevron} ${showAdvanced ? styles.up : ''}`}>▼</span>
+        <div className={styles.optionsContainer}>
+          <div 
+            className={styles.optionToggle}
+            onClick={() => setActiveSection(activeSection === 'restore' ? 'default' : 'restore')}
+          >
+            <span className={styles.optionText}>
+              {activeSection === 'restore' ? 'Hide restore options' : 'Restore wallet'}
+            </span>
+            <span className={`${styles.chevron} ${activeSection === 'restore' ? styles.up : ''}`}>▼</span>
+          </div>
+
+          <div 
+            className={styles.optionToggle}
+            onClick={() => setActiveSection(activeSection === 'advanced' ? 'default' : 'advanced')}
+          >
+            <span className={styles.optionText}>
+              {activeSection === 'advanced' ? 'Hide advanced options' : 'Advanced mode'}
+            </span>
+            <span className={`${styles.chevron} ${activeSection === 'advanced' ? styles.up : ''}`}>▼</span>
+          </div>
         </div>
 
-        {showAdvanced && (
+        {activeSection === 'restore' && (
           <div className={styles.advancedSection}>
             <div className={styles.inputGroup}>
               <input
@@ -123,6 +137,29 @@ const WelcomeModal = ({ isOpen, onClose }) => {
                 {isGenerating ? 'Restoring...' : 'Restore Wallet'}
               </button>
             </div>
+          </div>
+        )}
+
+        {activeSection === 'advanced' && (
+          <div className={styles.advancedSection}>
+            <div className={styles.warningBox}>
+              <p>Advanced mode provides more control over wallet generation:</p>
+              <ul>
+                <li>Custom entropy source</li>
+                <li>Manual derivation paths</li>
+                <li>Chain-specific settings</li>
+              </ul>
+              <p className={styles.warningText}>
+                ⚠️ Only use this if you understand HD wallets and BIP39
+              </p>
+            </div>
+            <button 
+              className={styles.advancedButton}
+              onClick={() => {/* TODO: Implement advanced wallet creation */}}
+              disabled={isGenerating}
+            >
+              {isGenerating ? 'Generating...' : 'Create Advanced Wallet'}
+            </button>
           </div>
         )}
       </div>
