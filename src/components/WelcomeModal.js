@@ -15,9 +15,13 @@ const WelcomeModal = ({ isOpen, onClose }) => {
 
   // Validate hex input
   const isValidHexInput = (value) => {
-    return /^[0-9a-fA-F]*$/.test(value) && // Valid hex chars
-           value.length <= 64 &&            // Max length
-           (value.length === 0 || value.length % 8 === 0); // Multiple of 8 if not empty
+    // Allow empty input or valid hex characters up to 64 chars
+    return value === '' || (/^[0-9a-fA-F]*$/.test(value) && value.length <= 64);
+  };
+
+  // Validate hex length for preview/create
+  const isValidHexLength = (value) => {
+    return [16, 32, 64].includes(value.length);
   };
 
   // Update preview when entropy input changes
@@ -25,6 +29,17 @@ const WelcomeModal = ({ isOpen, onClose }) => {
     const updatePreview = async () => {
       if (!entropyInput) {
         setPreview(null);
+        setError('');
+        return;
+      }
+
+      // For hex mode, validate length before preview
+      if (isHexMode && !isValidHexLength(entropyInput)) {
+        setPreview(null);
+        const currentLength = entropyInput.length;
+        const nextValidLength = currentLength <= 16 ? 16 : currentLength <= 32 ? 32 : 64;
+        const charsNeeded = nextValidLength - currentLength;
+        setError(`Current length: ${currentLength}. Add ${charsNeeded} more character${charsNeeded === 1 ? '' : 's'} to reach ${nextValidLength} (valid lengths: 16, 32, or 64). Using Generate Random is recommended.`);
         return;
       }
 
@@ -124,14 +139,20 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       <div className={styles.optionsContainer}>
         <span 
           className={styles.textLink}
-          onClick={() => setCurrentPage('restore')}
+          onClick={() => {
+            setCurrentPage('restore');
+            setError('');
+          }}
         >
           Restore from backup
         </span>
         <span className={styles.separator}>•</span>
         <span 
           className={styles.textLink}
-          onClick={() => setCurrentPage('advanced')}
+          onClick={() => {
+            setCurrentPage('advanced');
+            setError('');
+          }}
         >
           Advanced options
         </span>
@@ -144,7 +165,10 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       <div className={styles.pageHeader}>
         <button 
           className={styles.backButton}
-          onClick={() => setCurrentPage('default')}
+          onClick={() => {
+            setCurrentPage('default');
+            setError('');
+          }}
         >
           ← Back
         </button>
@@ -194,14 +218,15 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       <div className={styles.pageHeader}>
         <button 
           className={styles.backButton}
-          onClick={() => setCurrentPage('default')}
+          onClick={() => {
+            setCurrentPage('default');
+            setError('');
+          }}
         >
           ← Back
         </button>
         <h2>Advanced Wallet Creation</h2>
       </div>
-
-      {error && <div className={styles.error}>{error}</div>}
 
       <p style={{ marginBottom: '20px', color: 'var(--text-color)' }}>
         Advanced mode provides more control over wallet generation with custom entropy and real-time BIP39 preview.
@@ -240,23 +265,32 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           value={entropyInput}
           onChange={(e) => {
             const value = e.target.value;
-            if (isHexMode && !isValidHexInput(value)) return;
-            setEntropyInput(value);
+            if (isHexMode) {
+              if (isValidHexInput(value)) {
+                setEntropyInput(value);
+              }
+            } else {
+              setEntropyInput(value);
+            }
           }}
-          placeholder={isHexMode 
-            ? "Enter hex (up to 64 characters, multiples of 8)"
+          placeholder={isHexMode
+            ? "Enter hex (16/32/64 chars) or use Generate Random for valid entropy"
             : "Enter text to be hashed into entropy"
           }
           className={styles.entropyInput}
         />
-        {isHexMode && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '8px' }}>
+          {error && <div className={styles.error} style={{ margin: 0, textAlign: 'left', flex: 1 }}>{error}</div>}
           <button
             className={styles.randomButton}
+            style={{ marginLeft: error ? '16px' : 'auto' }}
             onClick={async () => {
               try {
                 const result = await window.electronAPI.generateRandomEntropy();
                 if (result.success) {
-                  setEntropyInput(result.data);
+                  // For hex mode, use full 32 bytes (64 chars), for text mode use 16 bytes (32 chars)
+                  setEntropyInput(isHexMode ? result.data : result.data.slice(0, 32));
+                  setError('');
                 } else {
                   setError(result.error);
                 }
@@ -268,7 +302,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           >
             Generate Random
           </button>
-        )}
+        </div>
       </div>
 
       <div className={styles.previewSection}>
