@@ -1,4 +1,5 @@
 const axios = require('axios');
+const path = require('path');
 
 /**
  * Utility functions for checking GitHub releases via the GitHub API
@@ -30,6 +31,20 @@ function compareVersions(version1, version2) {
 }
 
 /**
+ * Extracts version from download URL
+ * @param {string} url The download URL
+ * @returns {string|null} The version string or null if not found
+ */
+function extractVersionFromUrl(url) {
+    // Try to match version pattern in URL
+    const versionMatch = url.match(/v(\d+\.\d+\.\d+)/);
+    if (versionMatch) {
+        return versionMatch[1];
+    }
+    return null;
+}
+
+/**
  * Fetches GitHub release information
  * @param {Object} chainConfig The chain configuration object
  * @param {boolean} [force=false] Force fetch even if cache is valid
@@ -51,17 +66,16 @@ async function fetchGithubReleases(chainConfig, force = false) {
         }
 
         // Extract owner and repo from repo_url
-        // Expected format: https://github.com/fullstorydev/grpcurl
         const repoUrlMatch = grpcurlConfig.repo_url?.match(/github\.com\/([^/]+)\/([^/]+)/);
         if (!repoUrlMatch) {
             throw new Error('Invalid GitHub repository URL');
         }
         const [, owner, repo] = repoUrlMatch;
 
-        // Get current version from config
-        const currentVersion = grpcurlConfig.download?.base_url?.match(/\/v([^/]+)\//)?.[1];
+        // Get current version from download URL
+        const currentVersion = extractVersionFromUrl(grpcurlConfig.download.urls.linux);
         if (!currentVersion) {
-            throw new Error('Could not determine current version from base_url');
+            throw new Error('Could not determine current version from download URL');
         }
 
         let response;
@@ -79,7 +93,6 @@ async function fetchGithubReleases(chainConfig, force = false) {
                 throw new Error(`GitHub API error! status: ${response.status}`);
             }
         } catch (error) {
-            // Re-throw with proper error message
             if (error.code === 'ECONNABORTED') {
                 throw new Error('Connection timed out while fetching GitHub releases');
             }
@@ -116,7 +129,7 @@ async function fetchGithubReleases(chainConfig, force = false) {
 
         // Find the latest release that has all required platform assets
         for (const release of releases) {
-            const version = release.tag_name;
+            const version = release.tag_name.replace(/^v/, '');
             const versionComparison = compareVersions(version, currentVersion);
             
             // Skip if this release is older or same as current
@@ -157,8 +170,8 @@ async function fetchGithubReleases(chainConfig, force = false) {
             updates.grpcurl.latest_version = currentVersion;
             for (const platform of Object.keys(platformExtensions)) {
                 updates.grpcurl.platforms[platform] = {
-                    filename: grpcurlConfig.download.files[platform],
-                    download_url: `${grpcurlConfig.download.base_url}${grpcurlConfig.download.files[platform]}`,
+                    filename: path.basename(grpcurlConfig.download.urls[platform]),
+                    download_url: grpcurlConfig.download.urls[platform],
                     size: grpcurlConfig.download.sizes[platform] || null,
                     found: true
                 };

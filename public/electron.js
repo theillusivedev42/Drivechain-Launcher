@@ -12,6 +12,7 @@ const ConfigManager = require("./modules/configManager");
 const ChainManager = require("./modules/chainManager");
 const WalletManager = require("./modules/walletManager");
 const FastWithdrawalManager = require("./modules/fastWithdrawalManager");
+const { fetchGithubReleases } = require("../src/utils/githubReleaseParser");
 
 const API_BASE_URL = "https://api.drivechain.live";
 
@@ -19,6 +20,33 @@ const configPath = path.join(__dirname, "chain_config.json");
 let config;
 let mainWindow = null;
 let chainManager;
+
+async function checkForUpdates() {
+  try {
+    const updates = {};
+    const result = await fetchGithubReleases(config);
+    
+    if (result.grpcurl?.has_update) {
+      updates.grpcurl = {
+        displayName: "gRPCurl",
+        current_version: result.grpcurl.current_version,
+        latest_version: result.grpcurl.latest_version,
+        download_url: result.grpcurl.platforms[process.platform]?.download_url
+      };
+    }
+
+    return {
+      success: true,
+      updates
+    };
+  } catch (error) {
+    console.error("Failed to check for updates:", error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
 
 function getWalletDir(chainId) {
   const chain = getChainConfig(chainId);
@@ -60,7 +88,7 @@ class DownloadManager {
     const fileName = url.split('/').pop();
     if (fileName.endsWith('.tar.gz')) return '.tar.gz';
     if (fileName.endsWith('.zip')) return '.zip';
-    return '.zip'; // Default to .zip for backward compatibility
+    return '.zip';
   }
 
   async downloadAndExtract(chainId, url, basePath) {
@@ -68,18 +96,13 @@ class DownloadManager {
     const tempPath = path.join(basePath, `temp_${chainId}${fileExt}`);
 
     try {
-      console.log(`Starting download for ${chainId} from ${url}`);
       await this.downloadFile(chainId, url, tempPath);
-      console.log(
-        `Download completed for ${chainId}. File saved at ${tempPath}`
-      );
-
+      
       if (fileExt === '.tar.gz') {
         await this.extractTarGz(chainId, tempPath, basePath);
       } else {
         await this.extractZip(chainId, tempPath, basePath);
       }
-      console.log(`Extraction completed for ${chainId}`);
 
       await fs.promises.unlink(tempPath);
 
@@ -88,7 +111,6 @@ class DownloadManager {
       mainWindow.webContents.send("download-complete", { chainId });
     } catch (error) {
       console.error(`Error processing ${chainId}:`, error);
-      console.error(`Error stack: ${error.stack}`);
       this.activeDownloads.delete(chainId);
       this.pausedDownloads.delete(chainId);
       this.sendDownloadsUpdate();
@@ -100,24 +122,19 @@ class DownloadManager {
 
       try {
         await fs.promises.unlink(tempPath);
-        console.log(`Cleaned up partial download for ${chainId}`);
       } catch (unlinkError) {
-        console.error(
-          `Failed to delete partial download for ${chainId}:`,
-          unlinkError
-        );
+        console.error(`Failed to delete partial download for ${chainId}:`, unlinkError);
       }
     }
   }
 
   async extractTarGz(chainId, tarPath, basePath) {
-    console.log(`Starting tar.gz extraction to ${basePath} for ${chainId}`);
     try {
       await pipeline(
         fs.createReadStream(tarPath),
         tar.x({
           cwd: basePath,
-          strip: 0 // Preserve directory structure
+          strip: 0
         })
       );
     } catch (error) {
@@ -145,13 +162,11 @@ class DownloadManager {
           method: "GET",
           url: url,
           responseType: "stream",
-          headers:
-            downloadedLength > 0 ? { Range: `bytes=${downloadedLength}-` } : {},
+          headers: downloadedLength > 0 ? { Range: `bytes=${downloadedLength}-` } : {},
           cancelToken: cancelSource.token,
         });
 
-        const totalLength =
-          parseInt(headers["content-length"], 10) + downloadedLength;
+        const totalLength = parseInt(headers["content-length"], 10) + downloadedLength;
 
         data.pipe(writer);
 
@@ -176,19 +191,15 @@ class DownloadManager {
           if (downloadedLength === totalLength) {
             resolve();
           } else if (!this.pausedDownloads.has(chainId)) {
-            reject(
-              new Error(
-                `Incomplete download: expected ${totalLength} bytes, got ${downloadedLength} bytes`
-              )
-            );
+            reject(new Error(`Incomplete download: expected ${totalLength} bytes, got ${downloadedLength} bytes`));
           } else {
-            resolve(); // Resolve if paused, we'll resume later
+            resolve();
           }
         });
       } catch (error) {
         if (axios.isCancel(error)) {
           console.log("Download canceled:", error.message);
-          resolve(); // Resolve on cancel, as it's an expected behavior
+          resolve();
         } else {
           reject(error);
         }
@@ -197,12 +208,9 @@ class DownloadManager {
   }
 
   async extractZip(chainId, zipPath, basePath) {
-    console.log(`Starting extraction to ${basePath} for ${chainId}`);
     return new Promise((resolve, reject) => {
       try {
-        // Special handling for BitWindow on macOS - use native unzip
         if (chainId === 'bitwindow' && process.platform === 'darwin') {
-          console.log('Using native unzip for BitWindow on macOS');
           const unzipProcess = spawn('unzip', ['-o', zipPath, '-d', basePath]);
           
           unzipProcess.stdout.on('data', (data) => {
@@ -225,7 +233,6 @@ class DownloadManager {
             reject(error);
           });
         } else {
-          // Use adm-zip for all other cases
           const zip = new AdmZip(zipPath);
           zip.extractAllToAsync(basePath, true, (error) => {
             if (error) {
@@ -251,12 +258,7 @@ class DownloadManager {
       }
       this.pausedDownloads.set(chainId, download);
       this.activeDownloads.delete(chainId);
-      this.updateDownloadProgress(
-        chainId,
-        download.progress,
-        download.downloadedLength,
-        "paused"
-      );
+      this.updateDownloadProgress(chainId, download.progress, download.downloadedLength, "paused");
       return true;
     }
     return false;
@@ -267,12 +269,7 @@ class DownloadManager {
     if (download) {
       this.activeDownloads.set(chainId, download);
       this.pausedDownloads.delete(chainId);
-      this.updateDownloadProgress(
-        chainId,
-        download.progress,
-        download.downloadedLength,
-        "downloading"
-      );
+      this.updateDownloadProgress(chainId, download.progress, download.downloadedLength, "downloading");
       const chain = config.chains.find((c) => c.id === chainId);
       if (chain) {
         const platform = process.platform;
@@ -292,14 +289,8 @@ class DownloadManager {
     return false;
   }
 
-  updateDownloadProgress(
-    chainId,
-    progress,
-    downloadedLength,
-    status = "downloading"
-  ) {
-    const download =
-      this.activeDownloads.get(chainId) || this.pausedDownloads.get(chainId);
+  updateDownloadProgress(chainId, progress, downloadedLength, status = "downloading") {
+    const download = this.activeDownloads.get(chainId) || this.pausedDownloads.get(chainId);
     if (download) {
       download.progress = progress;
       download.status = status;
@@ -310,19 +301,14 @@ class DownloadManager {
 
   sendDownloadsUpdate() {
     if (mainWindow) {
-      const downloadsArray = [
-        ...this.activeDownloads.entries(),
-        ...this.pausedDownloads.entries(),
-      ].map(([chainId, download]) => {
-        const chain = config.chains.find((c) => c.id === chainId);
-        return {
+      const downloadsArray = [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
+        .map(([chainId, download]) => ({
           chainId,
-          displayName: chain ? chain.display_name : chainId,
+          displayName: config.chains.find(c => c.id === chainId)?.display_name || chainId,
           progress: download.progress,
           status: download.status,
           downloadedLength: download.downloadedLength,
-        };
-      });
+        }));
       mainWindow.webContents.send("downloads-update", downloadsArray);
     }
   }
@@ -355,11 +341,6 @@ async function submitClaim(destination, amount) {
 
 async function requestFaucet(amount, address) {
   try {
-    // Placeholder for API call
-    // const response = await axios.post('https://faucet-api-url.com', { amount, address });
-    // return response.data;
-
-    // For now, we'll just return a mock successful response
     return { success: true, message: "BTC requested successfully" };
   } catch (error) {
     console.error("Faucet request failed:", error);
@@ -387,7 +368,6 @@ async function getOpenablePath(fullPath) {
   } else if (analysis.exists && analysis.isFile) {
     return path.dirname(fullPath);
   } else {
-    // If path doesn't exist, return the nearest existing parent directory
     let currentPath = fullPath;
     while (currentPath !== path.parse(currentPath).root) {
       currentPath = path.dirname(currentPath);
@@ -423,7 +403,6 @@ async function openWalletLocation(chainId) {
         openedPath: fullPath,
       };
     } else {
-      // If it's a file, open its containing directory
       const dirPath = path.dirname(fullPath);
       await shell.openPath(dirPath);
       return {
@@ -432,7 +411,6 @@ async function openWalletLocation(chainId) {
       };
     }
   } else {
-    // If the exact path doesn't exist, don't open anything
     return {
       success: false,
       error: "Wallet directory not found",
@@ -512,7 +490,6 @@ function createWindow() {
         : `file://${path.join(__dirname, "../build/index.html")}`
     );
 
-    // Handle window close button (X)
     mainWindow.on('close', (event) => {
       if (!isShuttingDown) {
         event.preventDefault();
@@ -566,14 +543,14 @@ app.whenReady().then(async () => {
   createWindow();
   setupIPCHandlers();
   
-  // Initialize chain manager
   chainManager = new ChainManager(mainWindow, config);
-
-  // Initialize wallet manager
   const walletManager = new WalletManager(config);
-
-  // Initialize fast withdrawal manager
   const fastWithdrawalManager = new FastWithdrawalManager();
+
+  // Add update check handler
+  ipcMain.handle("check-for-updates", async () => {
+    return await checkForUpdates();
+  });
 
   // Wallet IPC Handlers
   ipcMain.handle("create-master-wallet", async (event, options) => {
@@ -690,18 +667,17 @@ app.whenReady().then(async () => {
       const walletPath = chain.directories.wallet;
 
       if (chainId === "zsail" || chainId === "ethsail") {
-        // Handle absolute paths for zsail and ethsail
         if (typeof walletPath === "object") {
           return walletPath[platform] || null;
         }
         return walletPath || null;
       } else {
-        // Standard handling for other chains
         const baseDir = chain.directories.base[platform];
         return path.join(app.getPath("home"), baseDir, walletPath);
       }
     });
   }
+
   if (!ipcMain.listenerCount("open-wallet-dir")) {
     ipcMain.handle("open-wallet-dir", async (event, chainId) => {
       try {
@@ -808,22 +784,18 @@ app.whenReady().then(async () => {
     }
   });
 
-  // Fast Withdrawal IPC Handlers
   ipcMain.handle("get-balance-btc", async (event, options) => {
     try {
       return await fastWithdrawalManager.getBalanceBTC();
-      
     } catch (error) {
       return { success: false, error: error.message };
     }
   });
-
 });
 
-// Shutdown handling
 let isShuttingDown = false;
 let forceKillTimeout;
-const SHUTDOWN_TIMEOUT = 30000; // 30 seconds timeout for graceful shutdown
+const SHUTDOWN_TIMEOUT = 30000;
 
 async function performGracefulShutdown() {
   if (isShuttingDown) return;
@@ -833,14 +805,12 @@ async function performGracefulShutdown() {
     mainWindow.webContents.send("shutdown-started");
   }
 
-  // Start force kill timeout
   forceKillTimeout = setTimeout(() => {
     console.log("Shutdown timeout reached, forcing quit...");
     forceKillAllProcesses();
   }, SHUTDOWN_TIMEOUT);
 
   try {
-    // Stop all chains gracefully
     if (chainManager) {
       const runningChains = Object.keys(chainManager.runningProcesses);
       await Promise.all(runningChains.map(chainId => 
@@ -850,7 +820,6 @@ async function performGracefulShutdown() {
       ));
     }
 
-    // Clear timeout since graceful shutdown succeeded
     clearTimeout(forceKillTimeout);
     app.quit();
   } catch (error) {
@@ -861,7 +830,6 @@ async function performGracefulShutdown() {
 
 function forceKillAllProcesses() {
   if (chainManager) {
-    // Force kill all running processes
     Object.entries(chainManager.runningProcesses).forEach(([chainId, process]) => {
       try {
         if (process.kill) {
@@ -873,21 +841,18 @@ function forceKillAllProcesses() {
     });
   }
   
-  // Clear timeout and quit
   if (forceKillTimeout) {
     clearTimeout(forceKillTimeout);
   }
   app.quit();
 }
 
-// Handle window close
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     performGracefulShutdown();
   }
 });
 
-// Handle force quit (Command+Q on macOS, Alt+F4 on Windows)
 app.on('before-quit', (event) => {
   if (!isShuttingDown) {
     event.preventDefault();
@@ -895,7 +860,6 @@ app.on('before-quit', (event) => {
   }
 });
 
-// Add IPC handler for force kill
 ipcMain.handle('force-kill', () => {
   forceKillAllProcesses();
 });

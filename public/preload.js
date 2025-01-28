@@ -115,6 +115,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     };
   },
   forceKill: () => ipcRenderer.invoke("force-kill"),
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
 
   // Chain logs
   onChainLog: (chainId, callback) => {
