@@ -220,6 +220,41 @@ class WalletService extends EventEmitter {
     const hashBits = this.bytesToBinary(hash);
     return hashBits.slice(0, CS);
   }
+
+  async generateAllStarters() {
+    try {
+      // Check if master wallet exists
+      const masterWallet = await this.loadWallet();
+      if (!masterWallet) {
+        console.log('No master wallet found, skipping starter generation');
+        return;
+      }
+
+      // Generate L1 starter
+      try {
+        await this.deriveL1Starter();
+        console.log('Generated L1 starter');
+      } catch (error) {
+        console.error('Error generating L1 starter:', error);
+      }
+
+      // Generate sidechain starters for Thunder (slot 9) and Bitnames (slot 2)
+      const sidechainSlots = [9, 2]; // Thunder and Bitnames respectively
+      for (const slot of sidechainSlots) {
+        try {
+          await this.deriveSidechainStarter(slot);
+          console.log(`Generated sidechain starter for slot ${slot}`);
+        } catch (error) {
+          console.error(`Error generating sidechain starter for slot ${slot}:`, error);
+        }
+      }
+
+      this.emit('wallet-updated');
+    } catch (error) {
+      console.error('Error generating all starters:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = WalletService;

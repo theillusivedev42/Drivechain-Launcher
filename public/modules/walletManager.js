@@ -14,14 +14,29 @@ class WalletManager extends EventEmitter {
     this.walletService.on('wallet-updated', () => {
       this.emit('wallet-updated');
     });
+
+    // Generate all starters on initialization if master wallet exists
+    this.walletService.generateAllStarters().catch(error => {
+      console.error('Error generating wallet starters on init:', error);
+    });
   }
 
   // HD Wallet Management Methods
   async createMasterWallet(options = {}) {
     try {
+      // Generate and save master wallet
       const wallet = await this.walletService.generateWallet(options);
       const success = await this.walletService.saveWallet(wallet);
       if (!success) throw new Error('Failed to save master wallet');
+
+      // Generate all chain starters immediately
+      try {
+        await this.walletService.generateAllStarters();
+      } catch (error) {
+        console.error('Error generating chain starters:', error);
+        // Don't throw here - master wallet was created successfully
+      }
+
       return wallet;
     } catch (error) {
       console.error('Error creating master wallet:', error);
