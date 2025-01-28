@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useDispatch } from 'react-redux';
 import { showWalletModal } from '../store/walletModalSlice';
+import { showFastWithdrawalModal } from '../store/fastWithdrawalModalSlice';
 import navStyles from './NavBar.module.css';
 import styles from './ToolsDropdown.module.css';
 
@@ -36,8 +37,7 @@ const ToolsDropdown = () => {
     setIsOpen(false);
     switch (option) {
       case 'Fast Withdrawal':
-        // TODO: Add fast withdrawal action when implemented
-        console.log('Fast Withdrawal selected');
+        dispatch(showFastWithdrawalModal());
         break;
       case 'Wallet':
         dispatch(showWalletModal());

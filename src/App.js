@@ -9,6 +9,7 @@ import Settings from './components/Settings';
 import Other from './components/Other';
 import FaucetModal from './components/FaucetModal';
 import WalletModal from './components/WalletModal';
+import FastWithdrawalModal from './components/FastWithdrawalModal';
 import WelcomeModal from './components/WelcomeModal';
 import QuoteWidget from './components/QuoteWidget';
 import ShutdownModal from './components/ShutdownModal';
@@ -34,7 +35,8 @@ function AppContent() {
           <Route path="/other" element={<Other />} />
         </Routes>
         <FaucetModal />
-        <WalletModal />
+      <WalletModal />
+      <FastWithdrawalModal />
         <WelcomeModal 
           isOpen={showWelcomeModal}
           onClose={() => setShowWelcomeModal(false)}

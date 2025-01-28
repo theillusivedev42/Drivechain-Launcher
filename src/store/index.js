@@ -4,6 +4,7 @@ import chainsReducer from './chainsSlice';
 import downloadModalReducer from './downloadModalSlice';
 import faucetReducer from './faucetSlice';
 import walletModalReducer from './walletModalSlice';
+import fastWithdrawalModalReducer from './fastWithdrawalModalSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     downloadModal: downloadModalReducer,
     faucet: faucetReducer,
     walletModal: walletModalReducer,
+    fastWithdrawalModal: fastWithdrawalModalReducer,
   },
 });
