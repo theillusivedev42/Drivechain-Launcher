@@ -5,17 +5,28 @@ const downloadSlice = createSlice({
   initialState: {},
   reducers: {
     updateDownloads: (state, action) => {
-      action.payload.forEach(download => {
+      // First check what needs to be updated
+      const updates = action.payload.filter(download => {
+        const current = state[download.chainId];
+        return !current || 
+          current.status !== download.status || 
+          current.progress !== download.progress;
+      });
+
+      // Only update changed downloads
+      updates.forEach(download => {
         state[download.chainId] = {
           ...download,
           type: 'download'
         };
       });
+
       // Remove completed downloads but keep IBD
+      const activeChainIds = new Set(action.payload.map(d => d.chainId));
       Object.keys(state).forEach(chainId => {
         if (
           state[chainId].type === 'download' && 
-          !action.payload.find(d => d.chainId === chainId)
+          !activeChainIds.has(chainId)
         ) {
           delete state[chainId];
         }
@@ -23,8 +34,10 @@ const downloadSlice = createSlice({
     },
     updateIBDStatus: (state, action) => {
       const { chainId, status } = action.payload;
+      const current = state[chainId];
+      
       if (status.inProgress) {
-        state[chainId] = {
+        const newState = {
           chainId,
           type: 'ibd',
           status: 'syncing',
@@ -32,11 +45,15 @@ const downloadSlice = createSlice({
           displayName: 'Bitcoin Core',
           details: `${status.currentBlock.toLocaleString()} / ${status.totalBlocks.toLocaleString()} blocks`
         };
-      } else {
-        // Remove IBD entry when sync is complete
-        if (state[chainId]?.type === 'ibd') {
-          delete state[chainId];
+
+        // Only update if something changed
+        if (!current || 
+            current.progress !== newState.progress || 
+            current.details !== newState.details) {
+          state[chainId] = newState;
         }
+      } else if (current?.type === 'ibd') {
+        delete state[chainId];
       }
     },
   },

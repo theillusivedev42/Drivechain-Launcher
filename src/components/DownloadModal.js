@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useTheme } from '../contexts/ThemeContext';
 import {
@@ -10,8 +10,16 @@ import styles from './DownloadModal.module.css';
 
 const FADE_DELAY = 7000; // 5 seconds
 
-const DownloadModal = () => {
-  const downloads = useSelector(state => state.downloads);
+const DownloadModal = memo(() => {
+  const downloads = useSelector(state => state.downloads, (prev, next) => {
+    // Only update if the number of downloads changed or if any download's progress changed
+    if (Object.keys(prev).length !== Object.keys(next).length) return false;
+    return Object.keys(prev).every(key => {
+      const p = prev[key];
+      const n = next[key];
+      return p.status === n.status && p.progress === n.progress && p.details === n.details;
+    });
+  });
   const isVisible = useSelector(state => state.downloadModal.isVisible);
   const dispatch = useDispatch();
   const { isDarkMode } = useTheme();
@@ -19,13 +27,15 @@ const DownloadModal = () => {
   const timerRef = useRef(null);
   const modalRef = useRef(null);
 
-  const activeDownloads = Object.entries(downloads).filter(
-    ([_, download]) =>
-      download.status === 'downloading' || 
-      download.status === 'extracting' ||
-      download.status === 'syncing' ||
-      (download.type === 'ibd' && download.progress < 100)
-  );
+  const activeDownloads = useMemo(() => {
+    return Object.entries(downloads).filter(
+      ([_, download]) =>
+        download.status === 'downloading' || 
+        download.status === 'extracting' ||
+        download.status === 'syncing' ||
+        (download.type === 'ibd' && download.progress < 100)
+    );
+  }, [downloads]);
 
   const closeModal = useCallback(() => {
     setIsClosing(true);
@@ -72,15 +82,15 @@ const DownloadModal = () => {
     }
   }, [isVisible, closeModal, handleClickOutside, resetTimer]);
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     resetTimer();
-  };
+  }, [resetTimer]);
 
   useEffect(() => {
     const { electronAPI } = window;
@@ -122,6 +132,6 @@ const DownloadModal = () => {
       </div>
     </div>
   );
-};
+});
 
 export default DownloadModal;

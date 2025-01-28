@@ -13,6 +13,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  will-change: opacity, visibility;
 }
 
 .fadeIn {
@@ -42,6 +43,7 @@
   background-color: var(--download-item-bg);
   border-radius: 4px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  contain: content;
 }
 
 .downloadHeader {
@@ -69,12 +71,18 @@
   border-radius: 2px;
   overflow: hidden;
   margin-bottom: 6px;
+  contain: strict;
+  transform: translateZ(0);
 }
 
 .progressBar {
   height: 100%;
+  width: 100%;
   background-color: var(--progress-bar-fill);
-  transition: width 0.3s ease;
+  transform-origin: left;
+  transition: transform 0.3s ease;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .progressText {
