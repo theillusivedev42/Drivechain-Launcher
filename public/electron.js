@@ -11,6 +11,7 @@ const { pipeline } = require('stream/promises');
 const ConfigManager = require("./modules/configManager");
 const ChainManager = require("./modules/chainManager");
 const WalletManager = require("./modules/walletManager");
+const FastWithdrawalManager = require("./modules/fastWithdrawalManager");
 
 const API_BASE_URL = "https://api.drivechain.live";
 
@@ -567,7 +568,12 @@ app.whenReady().then(async () => {
   
   // Initialize chain manager
   chainManager = new ChainManager(mainWindow, config);
+
+  // Initialize wallet manager
   const walletManager = new WalletManager(config);
+
+  // Initialize fast withdrawal manager
+  const fastWithdrawalManager = new FastWithdrawalManager();
 
   // Wallet IPC Handlers
   ipcMain.handle("create-master-wallet", async (event, options) => {
@@ -801,6 +807,17 @@ app.whenReady().then(async () => {
       return { success: false, error: error.message };
     }
   });
+
+  // Fast Withdrawal IPC Handlers
+  ipcMain.handle("get-balance-btc", async (event, options) => {
+    try {
+      return await fastWithdrawalManager.getBalanceBTC();
+      
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
 });
 
 // Shutdown handling

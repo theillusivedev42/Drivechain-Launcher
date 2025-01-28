@@ -103,6 +103,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     };
   },
 
+  // Fast withdrawal methods
+  getBalanceBTC: () => ipcRenderer.invoke("get-balance-btc"),
+
   // Shutdown handlers
   onShutdownStarted: (callback) => {
     const subscription = (event, data) => callback(data);

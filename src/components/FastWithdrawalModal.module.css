@@ -25,16 +25,60 @@
   color: var(--text-color);
 }
 
-.modalContent button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 1.5rem;
 }
 
-.modalContent button:hover {
-  opacity: 0.9;
+.submitButton {
+  background-color: #4CAF50;
+  color: white;
+  border: 1px solid #45a049;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover {
+  background-color: #45a049;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancelButton {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background-color: #e4e4e4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .submitButton {
+  background-color: #3d8b40;
+  border-color: #357a38;
+}
+
+[data-theme='dark'] .submitButton:hover {
+  background-color: #357a38;
+}
+
+[data-theme='dark'] .cancelButton {
+  background-color: #424242;
+  color: #e0e0e0;
+  border-color: #505050;
+}
+
+[data-theme='dark'] .cancelButton:hover {
+  background-color: #505050;
 }
