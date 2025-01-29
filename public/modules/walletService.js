@@ -12,17 +12,14 @@ class WalletService extends EventEmitter {
 
   constructor() {
     super();
-    // Use drivechain-launcher config directory
-    this.walletDir = path.join(app.getPath('home'), '.config', 'drivechain-launcher', 'wallet_starters');
+    this.walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+    this.mnemonicsDir = path.join(this.walletDir, 'mnemonics');
     fs.ensureDirSync(this.walletDir);
+    fs.ensureDirSync(this.mnemonicsDir);
   }
 
-  getMnemonicPath(slot) {
-    // For sidechains, return path to the plain text mnemonic file
-    if (slot === "9" || slot === "2") {
-      return path.join(this.walletDir, `sidechain_${slot}_starter.txt`);
-    }
-    throw new Error(`Invalid sidechain slot: ${slot}`);
+  getMnemonicPath(chainId) {
+    return path.join(this.mnemonicsDir, `sidechain_${chainId}.txt`);
   }
 
   async generateWallet(options = {}) {
@@ -114,12 +111,9 @@ class WalletService extends EventEmitter {
         throw new Error('Master starter not found or invalid');
       }
 
-      // Ensure slot is a number for derivation path
-      const slotNumber = Number(sidechainSlot);
-      
       // Derive sidechain key
       const hdkey = HDKey.fromExtendedKey(masterWallet.xprv);
-      const sidechainPath = `m/44'/0'/${slotNumber}'`;
+      const sidechainPath = `m/44'/0'/${sidechainSlot}'`;
       const sidechainKey = hdkey.derive(sidechainPath);
       
       // Generate entropy from private key
@@ -183,12 +177,12 @@ class WalletService extends EventEmitter {
   }
 
   async saveSidechainStarter(slot, walletData) {
-    // Save full wallet data as JSON
-    const jsonPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
-    await fs.writeJson(jsonPath, walletData, { spaces: 2 });
+    // Save full wallet data
+    const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
+    await fs.writeJson(sidechainPath, walletData, { spaces: 2 });
     
-    // Save just the mnemonic as plain text for chain apps
-    const mnemonicPath = path.join(this.walletDir, `sidechain_${slot}_starter.txt`);
+    // Save mnemonic only for chain apps
+    const mnemonicPath = path.join(this.mnemonicsDir, `sidechain_${slot}.txt`);
     await fs.writeFile(mnemonicPath, walletData.mnemonic);
     
     this.emit('wallet-updated');
@@ -358,7 +352,7 @@ class WalletService extends EventEmitter {
       }
 
       // Generate sidechain starters for Thunder (slot 9) and Bitnames (slot 2)
-      const sidechainSlots = ["9", "2"]; // Thunder and Bitnames respectively, as strings to match config
+      const sidechainSlots = [9, 2]; // Thunder and Bitnames respectively
       for (const slot of sidechainSlots) {
         try {
           await this.deriveSidechainStarter(slot);

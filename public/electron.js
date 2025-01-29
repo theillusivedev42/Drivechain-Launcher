@@ -155,8 +155,8 @@ function setupIPCHandlers() {
       const chain = config.chains.find(c => c.id === chainId);
       let args = [];
       
-      if (chain && chain.chain_layer === 2 && chain.slot) {
-        const mnemonicPath = walletManager.walletService.getMnemonicPath(chain.slot);
+      if (chain && chain.chain_layer === 2) {
+        const mnemonicPath = walletManager.walletService.getMnemonicPath(chainId);
         args = ['--mnemonic-seed-phrase-path', mnemonicPath];
       }
       
