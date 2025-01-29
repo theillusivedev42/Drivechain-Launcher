@@ -140,9 +140,41 @@ function setupIPCHandlers() {
   });
 
   // Chain handlers
+  ipcMain.handle("get-mnemonic-path", async (event, chainId) => {
+    try {
+      return walletManager.walletService.getMnemonicPath(chainId);
+    } catch (error) {
+      console.error("Failed to get mnemonic path:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("start-chain", async (event, chainId) => {
     try {
-      return await chainManager.startChain(chainId);
+      const chain = config.chains.find(c => c.id === chainId);
+      let args = [];
+      
+      // Only for Thunder and Bitnames (layer 2 chains)
+      if (chain && chain.chain_layer === 2 && chain.slot) {
+        const walletPath = path.join(
+          app.getPath("home"),
+          chain.directories.base[process.platform],
+          "wallet.mdb"
+        );
+        
+        const walletExists = await fs.pathExists(walletPath);
+        console.log(`[${chainId}] Checking wallet.mdb at: ${walletPath}`);
+        
+        if (!walletExists) {
+          const mnemonicPath = walletManager.walletService.getMnemonicPath(chain.slot);
+          args = ['--mnemonic-seed-phrase-path', mnemonicPath];
+          console.log(`[${chainId}] First run detected - passing mnemonic arg: ${mnemonicPath}`);
+        } else {
+          console.log(`[${chainId}] wallet.mdb exists - skipping mnemonic arg`);
+        }
+      }
+      
+      return await chainManager.startChain(chainId, args);
     } catch (error) {
       console.error("Failed to start chain:", error);
       return { success: false, error: error.message };

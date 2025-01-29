@@ -87,9 +87,9 @@
               }
           },
           "binary": {
-              "linux": "bip300301-enforcer-latest-x86_64-unknown-linux-gnu/bip300301_enforcer-0.2.0-x86_64-unknown-linux-gnu",
-              "darwin": "bip300301-enforcer-latest-x86_64-apple-darwin/bip300301_enforcer-0.2.0-x86_64-apple-darwin",
-              "win32": "bip300301-enforcer-latest-x86_64-pc-windows-gnu/bip300301_enforcer-0.2.0-x86_64-pc-windows-gnu.exe"
+              "linux": "bip300301-enforcer-latest-x86_64-unknown-linux-gnu/bip300301_enforcer-0.3.1-x86_64-unknown-linux-gnu",
+              "darwin": "bip300301-enforcer-latest-x86_64-apple-darwin/bip300301_enforcer-0.3.1-x86_64-apple-darwin",
+              "win32": "bip300301-enforcer-latest-x86_64-pc-windows-gnu/bip300301_enforcer-0.3.1-x86_64-pc-windows-gnu.exe"
           },
           "network": {
               "port": 0
@@ -191,7 +191,8 @@
               "port": 6009
           },
           "chain_type": 2,
-          "slot": ""
+          "chain_layer": 2,
+          "slot": "9"
       },
       {
           "id": "bitnames",
@@ -202,9 +203,9 @@
           "repo_url": "https://github.com/LayerTwo-Labs/bitnames",
           "directories": {
               "base": {
-                  "linux": ".local/share/bitnames",
-                  "darwin": "Library/Application Support/bitnames",
-                  "win32": "AppData/Roaming/bitnames"
+                  "linux": ".local/share/plain_bitnames",
+                  "darwin": "Library/Application Support/plain_bitnames",
+                  "win32": "AppData/Roaming/plain_bitnames"
               },
               "wallet": "wallet.mdb"
           },
@@ -239,7 +240,8 @@
               "port": 0
           },
           "chain_type": 2,
-          "slot": ""
+          "chain_layer": 2,
+          "slot": "2"
       }
   ]
 }

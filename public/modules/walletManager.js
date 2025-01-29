@@ -14,11 +14,6 @@ class WalletManager extends EventEmitter {
     this.walletService.on('wallet-updated', () => {
       this.emit('wallet-updated');
     });
-
-    // Generate all starters on initialization if master wallet exists
-    this.walletService.generateAllStarters().catch(error => {
-      console.error('Error generating wallet starters on init:', error);
-    });
   }
 
   // HD Wallet Management Methods

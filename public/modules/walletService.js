@@ -13,7 +13,13 @@ class WalletService extends EventEmitter {
   constructor() {
     super();
     this.walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+    this.mnemonicsDir = path.join(this.walletDir, 'mnemonics');
     fs.ensureDirSync(this.walletDir);
+    fs.ensureDirSync(this.mnemonicsDir);
+  }
+
+  getMnemonicPath(chainId) {
+    return path.join(this.mnemonicsDir, `sidechain_${chainId}.txt`);
   }
 
   async generateWallet(options = {}) {
@@ -171,8 +177,19 @@ class WalletService extends EventEmitter {
   }
 
   async saveSidechainStarter(slot, walletData) {
+    // Save full wallet data
     const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
     await fs.writeJson(sidechainPath, walletData, { spaces: 2 });
+    
+    // Save mnemonic only for chain apps if it doesn't exist
+    const mnemonicPath = path.join(this.mnemonicsDir, `sidechain_${slot}.txt`);
+    if (!(await fs.pathExists(mnemonicPath))) {
+      console.log(`Creating new mnemonic file for slot ${slot}`);
+      await fs.writeFile(mnemonicPath, walletData.mnemonic);
+    } else {
+      console.log(`Mnemonic file already exists for slot ${slot}, skipping creation`);
+    }
+    
     this.emit('wallet-updated');
   }
 
@@ -331,28 +348,34 @@ class WalletService extends EventEmitter {
         return;
       }
 
-      // Generate L1 starter
-      try {
-        await this.deriveL1Starter();
-        console.log('Generated L1 starter');
-      } catch (error) {
-        console.error('Error generating L1 starter:', error);
+      // Check and generate L1 starter if needed
+      const l1Path = path.join(this.walletDir, 'l1_starter.json');
+      if (!(await fs.pathExists(l1Path))) {
+        try {
+          await this.deriveL1Starter();
+          console.log('Generated new L1 starter');
+        } catch (error) {
+          console.error('Error generating L1 starter:', error);
+        }
       }
 
-      // Generate sidechain starters for Thunder (slot 9) and Bitnames (slot 2)
+      // Check and generate sidechain starters if needed
       const sidechainSlots = [9, 2]; // Thunder and Bitnames respectively
       for (const slot of sidechainSlots) {
-        try {
-          await this.deriveSidechainStarter(slot);
-          console.log(`Generated sidechain starter for slot ${slot}`);
-        } catch (error) {
-          console.error(`Error generating sidechain starter for slot ${slot}:`, error);
+        const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
+        if (!(await fs.pathExists(sidechainPath))) {
+          try {
+            await this.deriveSidechainStarter(slot);
+            console.log(`Generated new sidechain starter for slot ${slot}`);
+          } catch (error) {
+            console.error(`Error generating sidechain starter for slot ${slot}:`, error);
+          }
         }
       }
 
       this.emit('wallet-updated');
     } catch (error) {
-      console.error('Error generating all starters:', error);
+      console.error('Error checking/generating starters:', error);
       throw error;
     }
   }
