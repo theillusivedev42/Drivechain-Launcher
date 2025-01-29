@@ -85,8 +85,9 @@ const Card = ({
           console.log(`Starting chain ${chain.id}`);
           
           // For sidechains, add mnemonic path argument
-          if (chain.chain_layer === 2) {
-            const mnemonicPath = await window.electronAPI.getMnemonicPath(chain.id);
+          if (chain.chain_layer === 2 && chain.slot) {
+            // Convert chain ID to slot number for the mnemonic path
+            const mnemonicPath = await window.electronAPI.getMnemonicPath(chain.slot);
             await onStart(chain.id, ['--mnemonic-seed-phrase-path', mnemonicPath]);
           } else {
             await onStart(chain.id);
