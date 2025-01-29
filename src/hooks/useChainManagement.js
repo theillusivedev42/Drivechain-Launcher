@@ -62,7 +62,7 @@ export const useChainManagement = () => {
     [dispatch]
   );
 
-  const handleStartChain = useCallback(async chainId => {
+  const handleStartChain = useCallback(async (chainId, args = []) => {
     try {
       // Find the chain and check its dependencies
       const chain = chains.find(c => c.id === chainId);
@@ -80,7 +80,7 @@ export const useChainManagement = () => {
         }
       }
 
-      await window.electronAPI.startChain(chainId);
+      await window.electronAPI.startChain(chainId, args);
       setChains(prevChains =>
         prevChains.map(chain =>
           chain.id === chainId ? { ...chain, status: 'running' } : chain

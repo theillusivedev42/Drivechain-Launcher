@@ -88,7 +88,7 @@ class ChainManager {
     return [];
   }
 
-  async startChain(chainId) {
+  async startChain(chainId, additionalArgs = []) {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
 
@@ -207,7 +207,8 @@ class ChainManager {
         await fs.promises.chmod(fullBinaryPath, "755");
       }
 
-      const args = this.getChainArgs(chainId);
+      const baseArgs = this.getChainArgs(chainId);
+      const args = [...baseArgs, ...additionalArgs];
       console.log(`Starting ${chainId} with args:`, args);
       
       const childProcess = spawn(fullBinaryPath, args, { cwd: basePath });

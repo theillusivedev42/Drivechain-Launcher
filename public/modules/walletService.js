@@ -13,7 +13,13 @@ class WalletService extends EventEmitter {
   constructor() {
     super();
     this.walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+    this.mnemonicsDir = path.join(this.walletDir, 'mnemonics');
     fs.ensureDirSync(this.walletDir);
+    fs.ensureDirSync(this.mnemonicsDir);
+  }
+
+  getMnemonicPath(chainId) {
+    return path.join(this.mnemonicsDir, `sidechain_${chainId}.txt`);
   }
 
   async generateWallet(options = {}) {
@@ -171,8 +177,14 @@ class WalletService extends EventEmitter {
   }
 
   async saveSidechainStarter(slot, walletData) {
+    // Save full wallet data
     const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
     await fs.writeJson(sidechainPath, walletData, { spaces: 2 });
+    
+    // Save mnemonic only for chain apps
+    const mnemonicPath = path.join(this.mnemonicsDir, `sidechain_${slot}.txt`);
+    await fs.writeFile(mnemonicPath, walletData.mnemonic);
+    
     this.emit('wallet-updated');
   }
 

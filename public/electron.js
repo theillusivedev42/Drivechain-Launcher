@@ -140,9 +140,27 @@ function setupIPCHandlers() {
   });
 
   // Chain handlers
+  ipcMain.handle("get-mnemonic-path", async (event, chainId) => {
+    try {
+      return walletManager.walletService.getMnemonicPath(chainId);
+    } catch (error) {
+      console.error("Failed to get mnemonic path:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("start-chain", async (event, chainId) => {
     try {
-      return await chainManager.startChain(chainId);
+      // Add mnemonic path for sidechains
+      const chain = config.chains.find(c => c.id === chainId);
+      let args = [];
+      
+      if (chain && chain.chain_layer === 2) {
+        const mnemonicPath = walletManager.walletService.getMnemonicPath(chainId);
+        args = ['--mnemonic-seed-phrase-path', mnemonicPath];
+      }
+      
+      return await chainManager.startChain(chainId, args);
     } catch (error) {
       console.error("Failed to start chain:", error);
       return { success: false, error: error.message };

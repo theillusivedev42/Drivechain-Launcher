@@ -191,7 +191,8 @@
               "port": 6009
           },
           "chain_type": 2,
-          "slot": ""
+          "chain_layer": 2,
+          "slot": "9"
       },
       {
           "id": "bitnames",
@@ -239,7 +240,8 @@
               "port": 0
           },
           "chain_type": 2,
-          "slot": ""
+          "chain_layer": 2,
+          "slot": "2"
       }
   ]
 }

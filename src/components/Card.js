@@ -83,7 +83,14 @@ const Card = ({
       case 'stopped':
         try {
           console.log(`Starting chain ${chain.id}`);
-          await onStart(chain.id);
+          
+          // For sidechains, add mnemonic path argument
+          if (chain.chain_layer === 2) {
+            const mnemonicPath = await window.electronAPI.getMnemonicPath(chain.id);
+            await onStart(chain.id, ['--mnemonic-seed-phrase-path', mnemonicPath]);
+          } else {
+            await onStart(chain.id);
+          }
         } catch (error) {
           console.error('Start failed:', error);
         }
