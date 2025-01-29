@@ -108,50 +108,60 @@ class ChainManager {
           await fs.promises.access(appBundlePath, fs.constants.F_OK);
           console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
           
-          // Get the actual binary path inside the .app bundle
-          const binaryPath = path.join(appBundlePath, 'Contents/MacOS/BitWindow');
-          
-          // Launch BitWindow directly for better process control
-          const childProcess = spawn(binaryPath, [], {
-            cwd: path.dirname(appBundlePath),
-            env: {
-              ...process.env,
-              ELECTRON_RUN_AS_NODE: '0',
-              ELECTRON_NO_ATTACH_CONSOLE: '1'
-            }
+          // Launch using 'open' command for snappy startup
+          const childProcess = spawn('open', ['-a', appBundlePath], { 
+            cwd: path.dirname(appBundlePath) 
           });
           
-          this.runningProcesses[chainId] = childProcess;
-          
-          // Set up process monitoring
-          childProcess.on('exit', (code, signal) => {
-            console.log(`BitWindow process exited with code ${code} (signal: ${signal})`);
-            
-            // Clean up
-            delete this.runningProcesses[chainId];
-            this.chainStatuses.set(chainId, 'stopped');
-            this.mainWindow.webContents.send("chain-status-update", {
-              chainId,
-              status: "stopped",
-              exitCode: code,
-              exitSignal: signal
+          // Wait for the app to start
+          await new Promise((resolve, reject) => {
+            childProcess.on('exit', async (code) => {
+              if (code === 0) {
+                // Check if BitWindow is actually running using AppleScript
+                const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "bitwindow"']);
+                const isRunning = await new Promise((resolve) => {
+                  checkProcess.stdout.on('data', (data) => {
+                    resolve(parseInt(data.toString().trim()) > 0);
+                  });
+                  checkProcess.on('error', () => resolve(false));
+                });
+                
+                if (isRunning) {
+                  // Store process info
+                  this.runningProcesses[chainId] = {};
+                  
+                  // Start process checker
+                  const checkInterval = setInterval(async () => {
+                    const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "bitwindow"']);
+                    const stillRunning = await new Promise((resolve) => {
+                      checkProcess.stdout.on('data', (data) => {
+                        resolve(parseInt(data.toString().trim()) > 0);
+                      });
+                      checkProcess.on('error', () => resolve(false));
+                    });
+
+                    if (!stillRunning) {
+                      // BitWindow was closed
+                      clearInterval(this.processCheckers.get(chainId));
+                      this.processCheckers.delete(chainId);
+                      delete this.runningProcesses[chainId];
+                      this.chainStatuses.set(chainId, 'stopped');
+                      this.mainWindow.webContents.send("chain-status-update", {
+                        chainId,
+                        status: "stopped"
+                      });
+                    }
+                  }, 1000);
+                  this.processCheckers.set(chainId, checkInterval);
+                  
+                  resolve();
+                } else {
+                  reject(new Error('BitWindow failed to start'));
+                }
+              } else {
+                reject(new Error(`Failed to start BitWindow, exit code: ${code}`));
+              }
             });
-          });
-          
-          // Set up log streaming
-          const logProcess = spawn('log', ['stream', '--predicate', 'process == "BitWindow"']);
-          this.logProcesses.set(chainId, logProcess);
-          
-          logProcess.stdout.on('data', (data) => {
-            const output = data.toString();
-            console.log(`[${chainId}] log: ${output}`);
-            this.mainWindow.webContents.send("chain-log", chainId, output);
-          });
-          
-          logProcess.stderr.on('data', (data) => {
-            const output = data.toString();
-            console.error(`[${chainId}] log error: ${output}`);
-            this.mainWindow.webContents.send("chain-log", chainId, output);
           });
         } else {
           // For other platforms, launch binary directly
@@ -169,9 +179,6 @@ class ChainManager {
           this.runningProcesses[chainId] = childProcess;
           this.setupProcessListeners(childProcess, chainId, basePath);
         }
-
-        // Give BitWindow a moment to initialize
-        await new Promise(resolve => setTimeout(resolve, 2000));
 
         this.chainStatuses.set(chainId, 'running');
         this.mainWindow.webContents.send("chain-status-update", {
@@ -354,13 +361,6 @@ class ChainManager {
       // Special handling for BitWindow
       if (chainId === 'bitwindow') {
         try {
-          // Stop log streaming if it exists
-          const logProcess = this.logProcesses.get(chainId);
-          if (logProcess) {
-            logProcess.kill();
-            this.logProcesses.delete(chainId);
-          }
-
           // Update UI to show stopping state
           this.chainStatuses.set(chainId, 'stopping');
           this.mainWindow.webContents.send("chain-status-update", {
@@ -368,10 +368,25 @@ class ChainManager {
             status: "stopping"
           });
 
-          // Kill BitWindow process
-          if (childProcess) {
+          // Stop process checker if exists
+          const checkInterval = this.processCheckers.get(chainId);
+          if (checkInterval) {
+            clearInterval(checkInterval);
+            this.processCheckers.delete(chainId);
+          }
+
+          // Kill both processes
+          if (process.platform === 'darwin') {
+            // Kill both processes
+            const killBitWindow = spawn('killall', ['bitwindow']);
+            const killBitWindowd = spawn('killall', ['bitwindowd']);
+            
+            await Promise.all([
+              new Promise(resolve => killBitWindow.on('exit', resolve)),
+              new Promise(resolve => killBitWindowd.on('exit', resolve))
+            ]);
+          } else {
             childProcess.kill();
-            await new Promise(resolve => setTimeout(resolve, 500)); // Give it a moment to close
           }
 
           delete this.runningProcesses[chainId];
