@@ -110,6 +110,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Fast withdrawal methods
   getBalanceBTC: () => ipcRenderer.invoke("get-balance-btc"),
+  requestWithdrawal: (destination, amount, layer2Chain) => 
+    ipcRenderer.invoke("request-withdrawal", destination, amount, layer2Chain),
+  notifyPaymentComplete: (hash, txid) =>
+    ipcRenderer.invoke("notify-payment-complete", hash, txid),
 
   // Shutdown handlers
   onShutdownStarted: (callback) => {
