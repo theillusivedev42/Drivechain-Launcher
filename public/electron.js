@@ -314,6 +314,22 @@ function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle("request-withdrawal", async (event, destination, amount, layer2Chain) => {
+    try {
+      return await fastWithdrawalManager.requestWithdrawal(destination, amount, layer2Chain);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("notify-payment-complete", async (event, hash, txid) => {
+    try {
+      return await fastWithdrawalManager.notifyPaymentComplete(hash, txid);
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  });
+
   // Master wallet directory handler
   ipcMain.handle("open-wallet-starters-dir", async () => {
     try {
