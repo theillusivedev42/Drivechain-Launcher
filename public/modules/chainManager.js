@@ -3,6 +3,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
 const BitcoinMonitor = require("./bitcoinMonitor");
+const BitWindowClient = require("./bitWindowClient");
 
 class ChainManager {
   constructor(mainWindow, config) {
@@ -12,14 +13,15 @@ class ChainManager {
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
     this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
     this.readyStates = new Map(); // Tracks when chains are fully ready
+    this.bitWindowClient = new BitWindowClient();
+    this.logProcesses = new Map(); // Track log streaming processes
+    this.processCheckers = new Map(); // Track process check intervals
   }
 
-  // New method to check if a chain is truly ready
   async isChainReady(chainId) {
     const status = this.chainStatuses.get(chainId);
     if (status !== 'running') return false;
     
-    // For Bitcoin, we need RPC to be responsive
     if (chainId === 'bitcoin') {
       try {
         await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
@@ -29,11 +31,9 @@ class ChainManager {
       }
     }
     
-    // For other chains, 'running' status is sufficient
     return true;
   }
 
-  // New method to wait for chain readiness
   async waitForChainReady(chainId, timeout = 30000) {
     const startTime = Date.now();
     
@@ -99,41 +99,86 @@ class ChainManager {
     const downloadsDir = app.getPath("downloads");
     const basePath = path.join(downloadsDir, extractDir);
 
-    // Special handling for BitWindow on macOS
-    if (chainId === 'bitwindow' && platform === 'darwin') {
-      const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
+    // Special handling for BitWindow
+    if (chainId === 'bitwindow') {
       try {
-        await fs.promises.access(appBundlePath, fs.constants.F_OK);
-        console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
-        
-        // Launch the app using 'open' command
-        const childProcess = spawn('open', ['-a', appBundlePath], { cwd: path.dirname(appBundlePath) });
-        
-        // Wait for the app to actually start
-        await new Promise((resolve, reject) => {
-          childProcess.on('exit', async (code) => {
-            if (code === 0) {
-              // Check if BitWindow is actually running
-              const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "BitWindow"']);
-              const isRunning = await new Promise((resolve) => {
-                checkProcess.stdout.on('data', (data) => {
-                  resolve(parseInt(data.toString().trim()) > 0);
-                });
-                checkProcess.on('error', () => resolve(false));
-              });
-              
-              if (isRunning) {
-                // Store a placeholder in runningProcesses so the UI knows BitWindow is running
-                this.runningProcesses[chainId] = {};
-                resolve();
-              } else {
-                reject(new Error('BitWindow failed to start'));
-              }
-            } else {
-              reject(new Error(`Failed to start BitWindow, exit code: ${code}`));
-            }
+        if (platform === 'darwin') {
+          // On macOS, launch the .app bundle
+          const appBundlePath = path.join(downloadsDir, extractDir, 'BitWindow.app');
+          await fs.promises.access(appBundlePath, fs.constants.F_OK);
+          console.log(`Starting BitWindow app bundle at: ${appBundlePath}`);
+          
+          // Launch using 'open' command for snappy startup
+          const childProcess = spawn('open', ['-a', appBundlePath], { 
+            cwd: path.dirname(appBundlePath) 
           });
-        });
+          
+          // Wait for the app to start
+          await new Promise((resolve, reject) => {
+            childProcess.on('exit', async (code) => {
+              if (code === 0) {
+                // Check if BitWindow is actually running using AppleScript
+                const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "bitwindow"']);
+                const isRunning = await new Promise((resolve) => {
+                  checkProcess.stdout.on('data', (data) => {
+                    resolve(parseInt(data.toString().trim()) > 0);
+                  });
+                  checkProcess.on('error', () => resolve(false));
+                });
+                
+                if (isRunning) {
+                  // Store process info
+                  this.runningProcesses[chainId] = {};
+                  
+                  // Start process checker
+                  const checkInterval = setInterval(async () => {
+                    const checkProcess = spawn('osascript', ['-e', 'tell application "System Events" to count processes whose name is "bitwindow"']);
+                    const stillRunning = await new Promise((resolve) => {
+                      checkProcess.stdout.on('data', (data) => {
+                        resolve(parseInt(data.toString().trim()) > 0);
+                      });
+                      checkProcess.on('error', () => resolve(false));
+                    });
+
+                    if (!stillRunning) {
+                      // BitWindow was closed
+                      clearInterval(this.processCheckers.get(chainId));
+                      this.processCheckers.delete(chainId);
+                      delete this.runningProcesses[chainId];
+                      this.chainStatuses.set(chainId, 'stopped');
+                      this.mainWindow.webContents.send("chain-status-update", {
+                        chainId,
+                        status: "stopped"
+                      });
+                    }
+                  }, 1000);
+                  this.processCheckers.set(chainId, checkInterval);
+                  
+                  resolve();
+                } else {
+                  reject(new Error('BitWindow failed to start'));
+                }
+              } else {
+                reject(new Error(`Failed to start BitWindow, exit code: ${code}`));
+              }
+            });
+          });
+        } else {
+          // For other platforms, launch binary directly
+          const binaryPath = chain.binary[platform];
+          if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+          
+          const fullBinaryPath = path.join(basePath, binaryPath);
+          await fs.promises.access(fullBinaryPath, fs.constants.F_OK);
+          
+          if (process.platform !== "win32") {
+            await fs.promises.chmod(fullBinaryPath, "755");
+          }
+          
+          const childProcess = spawn(fullBinaryPath, [], { cwd: basePath });
+          this.runningProcesses[chainId] = childProcess;
+          this.setupProcessListeners(childProcess, chainId, basePath);
+        }
 
         this.chainStatuses.set(chainId, 'running');
         this.mainWindow.webContents.send("chain-status-update", {
@@ -168,7 +213,6 @@ class ChainManager {
       const childProcess = spawn(fullBinaryPath, args, { cwd: basePath });
       this.runningProcesses[chainId] = childProcess;
       
-      // For non-Bitcoin chains, consider them running immediately
       if (chainId !== 'bitcoin') {
         this.chainStatuses.set(chainId, 'running');
         this.mainWindow.webContents.send("chain-status-update", {
@@ -198,34 +242,29 @@ class ChainManager {
     let readyDetected = false;
     let rpcCheckInterval = null;
 
-    // Function to check if Bitcoin Core is responding to RPC
     const checkBitcoinRPC = async () => {
       if (!readyDetected && chainId === 'bitcoin') {
         try {
           await this.bitcoinMonitor.makeRpcCall('getblockchaininfo');
-          // If RPC call succeeds, Bitcoin Core is ready
           readyDetected = true;
           this.chainStatuses.set(chainId, 'running');
           this.mainWindow.webContents.send("chain-status-update", {
             chainId,
             status: "running"
           });
-          // Start IBD monitoring
           this.bitcoinMonitor.startMonitoring().catch(error => {
             console.error('Failed to start IBD monitoring:', error);
           });
-          // Clear the interval since we don't need to check anymore
           if (rpcCheckInterval) {
             clearInterval(rpcCheckInterval);
             rpcCheckInterval = null;
           }
         } catch (error) {
-          // Ignore errors - we'll try again on next interval
+          // Ignore errors - we'll try again
         }
       }
     };
 
-    // Start RPC check interval for Bitcoin
     if (chainId === 'bitcoin') {
       rpcCheckInterval = setInterval(checkBitcoinRPC, 1000);
     }
@@ -235,9 +274,7 @@ class ChainManager {
       buffer += output;
       console.log(`[${chainId}] stdout: ${output}`);
       
-      // Bitcoin Core specific ready detection (keep existing method for backwards compatibility)
       if (chainId === 'bitcoin' && !readyDetected) {
-        // Look for key initialization messages
         if (buffer.includes('Bound to')) {
           readyDetected = true;
           this.chainStatuses.set(chainId, 'running');
@@ -245,11 +282,9 @@ class ChainManager {
             chainId,
             status: "running"
           });
-          // Start IBD monitoring
           this.bitcoinMonitor.startMonitoring().catch(error => {
             console.error('Failed to start IBD monitoring:', error);
           });
-          // Clear the interval since we detected ready state through stdout
           if (rpcCheckInterval) {
             clearInterval(rpcCheckInterval);
             rpcCheckInterval = null;
@@ -257,7 +292,6 @@ class ChainManager {
         }
       }
       
-      // For non-Bitcoin chains, consider them running as soon as they start outputting
       if (chainId !== 'bitcoin' && !readyDetected) {
         readyDetected = true;
         this.chainStatuses.set(chainId, 'running');
@@ -273,7 +307,6 @@ class ChainManager {
         data: output
       });
       
-      // Also emit as chain-log for the new log window
       this.mainWindow.webContents.send("chain-log", chainId, output);
     });
 
@@ -288,7 +321,6 @@ class ChainManager {
         data: output
       });
       
-      // Also emit as chain-log for the new log window
       this.mainWindow.webContents.send("chain-log", chainId, output);
     });
 
@@ -304,7 +336,6 @@ class ChainManager {
 
     childProcess.on("exit", (code, signal) => {
       console.log(`Process for ${chainId} exited with code ${code} (signal: ${signal})`);
-      // Clear RPC check interval if it's still running
       if (rpcCheckInterval) {
         clearInterval(rpcCheckInterval);
         rpcCheckInterval = null;
@@ -327,59 +358,54 @@ class ChainManager {
     }
 
     try {
-      // Special handling for BitWindow - force quit on all platforms
+      // Special handling for BitWindow
       if (chainId === 'bitwindow') {
-        if (process.platform === 'darwin') {
-          // Force quit on macOS - kill all variants of the process name
-          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
-          for (const name of processNames) {
-            try {
-              const killProcess = spawn('killall', [name]);
-              await new Promise((resolve) => {
-                killProcess.on('exit', () => resolve());
-              });
-            } catch (error) {
-              console.log(`No ${name} process found to kill`);
-            }
+        try {
+          // Update UI to show stopping state
+          this.chainStatuses.set(chainId, 'stopping');
+          this.mainWindow.webContents.send("chain-status-update", {
+            chainId,
+            status: "stopping"
+          });
+
+          // Stop process checker if exists
+          const checkInterval = this.processCheckers.get(chainId);
+          if (checkInterval) {
+            clearInterval(checkInterval);
+            this.processCheckers.delete(chainId);
           }
-        } else if (process.platform === 'win32') {
-          // Force quit on Windows - kill all variants of the process name
-          const processNames = ['BitWindow.exe', 'bitwindow.exe', 'bitwindowd.exe'];
-          for (const name of processNames) {
-            try {
-              const killProcess = spawn('taskkill', ['/F', '/IM', name]);
-              await new Promise((resolve) => {
-                killProcess.on('exit', () => resolve());
-              });
-            } catch (error) {
-              console.log(`No ${name} process found to kill`);
-            }
+
+          // Kill both processes
+          if (process.platform === 'darwin') {
+            // Kill both processes
+            const killBitWindow = spawn('killall', ['bitwindow']);
+            const killBitWindowd = spawn('killall', ['bitwindowd']);
+            
+            await Promise.all([
+              new Promise(resolve => killBitWindow.on('exit', resolve)),
+              new Promise(resolve => killBitWindowd.on('exit', resolve))
+            ]);
+          } else {
+            childProcess.kill();
           }
-        } else {
-          // For Linux and other platforms
-          const processNames = ['BitWindow', 'bitwindow', 'bitwindowd'];
-          for (const name of processNames) {
-            try {
-              const killProcess = spawn('pkill', ['-9', name]);
-              await new Promise((resolve) => {
-                killProcess.on('exit', () => resolve());
-              });
-            } catch (error) {
-              console.log(`No ${name} process found to kill`);
-            }
-          }
+
+          delete this.runningProcesses[chainId];
+          this.chainStatuses.set(chainId, 'stopped');
+          return { success: true };
+        } catch (error) {
+          console.error('Failed to stop BitWindow gracefully:', error);
+          // Just in case process is still in our tracking
+          delete this.runningProcesses[chainId];
+          this.chainStatuses.set(chainId, 'stopped');
+          return { success: true };
         }
-        delete this.runningProcesses[chainId];
-        this.chainStatuses.set(chainId, 'stopped');
-        return { success: true };
       }
 
       // For Bitcoin Core, try graceful shutdown first
       if (chainId === 'bitcoin') {
-        // Stop IBD monitoring first
         this.bitcoinMonitor.stopMonitoring();
 
-        const platform = process.platform; // Global Node.js process
+        const platform = process.platform;
         const chain = this.getChainConfig(chainId);
         if (!chain) throw new Error("Chain not found");
         
@@ -388,17 +414,14 @@ class ChainManager {
         
         const downloadsDir = app.getPath("downloads");
         const basePath = path.join(downloadsDir, extractDir);
-        // bitcoin-cli is in same directory as bitcoind
         const binaryDir = path.dirname(path.join(basePath, chain.binary[platform]));
         const bitcoinCliPath = path.join(binaryDir, platform === 'win32' ? 'bitcoin-cli.exe' : 'bitcoin-cli');
         
         try {
-          // Make bitcoin-cli executable
           if (process.platform !== "win32") {
             await fs.promises.chmod(bitcoinCliPath, "755");
           }
 
-          // Try graceful shutdown first
           console.log('Attempting graceful shutdown with:', bitcoinCliPath);
           const stopProcess = spawn(bitcoinCliPath, [
             '-signet',
@@ -407,10 +430,9 @@ class ChainManager {
             '-rpcport=38332',
             'stop'
           ], {
-            shell: true // Handle paths with spaces
+            shell: true
           });
 
-          // Capture any error output
           stopProcess.stderr.on('data', (data) => {
             console.error('bitcoin-cli error:', data.toString());
           });
@@ -423,7 +445,6 @@ class ChainManager {
 
           await new Promise((resolve) => stopProcess.on('close', resolve));
           
-          // Wait for the process to actually stop
           await new Promise((resolve) => {
             const checkInterval = setInterval(() => {
               if (!this.runningProcesses[chainId]) {
@@ -439,7 +460,6 @@ class ChainManager {
         }
       }
       
-      // Fallback to force kill if graceful shutdown fails or for other chains
       childProcess.kill();
       delete this.runningProcesses[chainId];
       this.chainStatuses.set(chainId, 'stopped');
@@ -462,7 +482,7 @@ class ChainManager {
 
     // Special handling for BitWindow on macOS
     if (chainId === 'bitwindow' && platform === 'darwin') {
-      const appBundlePath = path.join(downloadsDir, extractDir, 'bitwindow.app');
+      const appBundlePath = path.join(downloadsDir, extractDir, 'BitWindow.app');
       try {
         await fs.promises.access(appBundlePath);
         if (this.runningProcesses[chainId]) {
@@ -501,27 +521,22 @@ class ChainManager {
       const baseDir = chain.directories.base[platform];
       if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-      // First, update UI to show reset is starting
       this.chainStatuses.set(chainId, 'resetting');
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
         status: "resetting",
       });
 
-      // Stop the chain if it's running and wait a moment for cleanup
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
-        // Give a small delay for process cleanup
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Remove data directory
       const homeDir = app.getPath("home");
       const fullPath = path.join(homeDir, baseDir);
       await fs.remove(fullPath);
       console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
-      // Remove downloaded binaries
       const extractDir = chain.extract_dir?.[platform];
       if (extractDir) {
         const downloadsDir = app.getPath("downloads");
@@ -530,11 +545,9 @@ class ChainManager {
         console.log(`Reset chain ${chainId}: removed binaries directory ${binariesPath}`);
       }
 
-      // Recreate empty data directory
       await fs.ensureDir(fullPath);
       console.log(`Recreated empty data directory for chain ${chainId}: ${fullPath}`);
 
-      // Small delay before final status update to ensure UI is ready
       await new Promise(resolve => setTimeout(resolve, 100));
       
       this.chainStatuses.set(chainId, 'not_downloaded');
