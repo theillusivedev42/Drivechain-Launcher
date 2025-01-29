@@ -203,9 +203,9 @@
           "repo_url": "https://github.com/LayerTwo-Labs/bitnames",
           "directories": {
               "base": {
-                  "linux": ".local/share/bitnames",
-                  "darwin": "Library/Application Support/bitnames",
-                  "win32": "AppData/Roaming/bitnames"
+                  "linux": ".local/share/plain_bitnames",
+                  "darwin": "Library/Application Support/plain_bitnames",
+                  "win32": "AppData/Roaming/plain_bitnames"
               },
               "wallet": "wallet.mdb"
           },
