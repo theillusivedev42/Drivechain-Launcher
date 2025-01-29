@@ -4,7 +4,6 @@ import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import Tooltip from './Tooltip';
-// import LogWindow from './LogWindow';
 
 const Card = ({
   chain,
@@ -19,69 +18,13 @@ const Card = ({
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
   const [showForceStop, setShowForceStop] = useState(false);
-  const [isStopAttempted, setIsStopAttempted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [fullChainData, setFullChainData] = useState(chain);
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  /* Log-related state - temporarily disabled
-  const [logs, setLogs] = useState([]);
-  const logBatchRef = useRef([]);
-  const logUpdateTimeoutRef = useRef(null);
-  */
   const buttonRef = useRef(null);
 
-  /* Log-related effects and handlers - temporarily disabled
-  const batchLogUpdate = useCallback((newLog) => {
-    logBatchRef.current.push(newLog);
-    
-    if (logUpdateTimeoutRef.current) {
-      return;
-    }
-
-    logUpdateTimeoutRef.current = setTimeout(() => {
-      setLogs(prevLogs => {
-        const updatedLogs = [...prevLogs, ...logBatchRef.current];
-        // Keep only the last 1000 logs
-        return updatedLogs.slice(-1000);
-      });
-      logBatchRef.current = [];
-      logUpdateTimeoutRef.current = null;
-    }, 100); // Update every 100ms
-  }, []);
-
-  useEffect(() => {
-    if (chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') {
-      const unsubscribe = window.electronAPI.onChainLog(chain.id, (log) => {
-        batchLogUpdate({
-          timestamp: new Date().toLocaleTimeString(),
-          message: log
-        });
-      });
-      return () => {
-        if (typeof unsubscribe === 'function') unsubscribe();
-        // Clear any pending updates
-        if (logUpdateTimeoutRef.current) {
-          clearTimeout(logUpdateTimeoutRef.current);
-          logUpdateTimeoutRef.current = null;
-        }
-      };
-    } else {
-      // Clear logs when chain stops
-      setLogs([]);
-      logBatchRef.current = [];
-      if (logUpdateTimeoutRef.current) {
-        clearTimeout(logUpdateTimeoutRef.current);
-        logUpdateTimeoutRef.current = null;
-      }
-    }
-  }, [chain.status, chain.id, batchLogUpdate]);
-
-  const handleClearLogs = useCallback(() => {
-    setLogs([]);
-  }, []);
-  */
   const checkDependencies = () => {
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
     return chain.dependencies.every(dep => runningNodes.includes(dep));
@@ -141,7 +84,6 @@ const Card = ({
         try {
           console.log(`Starting chain ${chain.id}`);
           await onStart(chain.id);
-          setIsStopAttempted(false);
         } catch (error) {
           console.error('Start failed:', error);
         }
@@ -150,16 +92,14 @@ const Card = ({
       case 'starting':
       case 'ready':
         try {
-          if (isStopAttempted) {
-            setShowForceStop(true);
-          } else {
-            console.log(`Stopping chain ${chain.id}`);
-            setIsStopAttempted(true);
-            await onStop(chain.id);
-          }
+          console.log(`Stopping chain ${chain.id}`);
+          // Update UI immediately to show stopping state
+          onUpdateChain(chain.id, { status: 'stopping' });
+          await onStop(chain.id);
         } catch (error) {
           console.error('Stop failed:', error);
-          setIsStopAttempted(false);
+          // Revert to running state if stop fails
+          onUpdateChain(chain.id, { status: 'running' });
         }
         break;
     }
@@ -168,12 +108,13 @@ const Card = ({
   const handleForceStop = async () => {
     try {
       console.log(`Force stopping chain ${chain.id}`);
+      onUpdateChain(chain.id, { status: 'stopping' });
       await onStop(chain.id);
     } catch (error) {
       console.error('Force stop failed:', error);
+      onUpdateChain(chain.id, { status: 'running' });
     } finally {
       setShowForceStop(false);
-      setIsStopAttempted(false);
     }
   };
 
@@ -212,6 +153,8 @@ const Card = ({
       case 'downloaded':
       case 'stopped':
         return 'run';
+      case 'stopping':
+        return 'stopping';
       case 'running':
       case 'starting':
       case 'ready':
@@ -220,12 +163,6 @@ const Card = ({
         return '';
     }
   };
-
-  useEffect(() => {
-    if (chain.status === 'stopped') {
-      setIsStopAttempted(false);
-    }
-  }, [chain.status]);
 
   const getButtonText = () => {
     switch (chain.status) {
@@ -238,10 +175,11 @@ const Card = ({
       case 'downloaded':
       case 'stopped':
         return 'Start';
+      case 'stopping':
+        return 'Stopping...';
       case 'running':
       case 'starting':
       case 'ready':
-        if (isStopAttempted) return 'Stopping...';
         if (!isHovered) return 'Running';
         return 'Stop';
       default:
@@ -274,7 +212,7 @@ const Card = ({
             disabled={
               chain.status === 'downloading' || 
               chain.status === 'extracting' ||
-              isStopAttempted
+              chain.status === 'stopping'
             }
             id={`download-button-${chain.id}`}
           >
@@ -306,14 +244,6 @@ const Card = ({
           />
         )}
       </div>
-      {/* Log window temporarily disabled
-      {(chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') && (
-        <LogWindow
-          logs={logs}
-          title={chain.display_name}
-          onClear={handleClearLogs}
-        />
-      )} */}
     </div>
   );
 };
