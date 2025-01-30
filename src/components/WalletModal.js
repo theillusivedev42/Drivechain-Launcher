@@ -10,7 +10,8 @@ const WalletModal = () => {
   const [revealedMnemonics, setRevealedMnemonics] = useState({
     master: false,
     layer1: false,
-    layer2: false
+    layer2_thunder: false,
+    layer2_bitnames: false
   });
 
   const toggleMnemonic = (key) => {
@@ -104,17 +105,36 @@ const WalletModal = () => {
             <div className={styles.actionsCol}></div>
           </div>
           <div className={styles.tableRow}>
-            <div className={styles.starterCol}>Lightning</div>
+            <div className={styles.starterCol}>Thunder</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer2 ? 'abandon ability able about above absent absorb abstract absurd abuse access accident' : '••••••••••••'}
+              {revealedMnemonics.layer2_thunder ? 'abandon ability able about above absent absorb abstract absurd abuse access accident' : '••••••••••••'}
             </div>
             <div className={styles.actionsCol}>
               <button 
                 className={styles.iconButton} 
-                title={revealedMnemonics.layer2 ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('layer2')}
+                title={revealedMnemonics.layer2_thunder ? "Hide" : "Reveal"}
+                onClick={() => toggleMnemonic('layer2_thunder')}
               >
-                {revealedMnemonics.layer2 ? <EyeOff size={18} /> : <Eye size={18} />}
+                {revealedMnemonics.layer2_thunder ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              <button className={styles.deleteIconButton} title="Delete Starter">
+                <Trash2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.tableRow}>
+            <div className={styles.starterCol}>Bitnames</div>
+            <div className={styles.mnemonicCol}>
+              {revealedMnemonics.layer2_bitnames ? 'abandon ability able about above absent absorb abstract absurd abuse access accident' : '••••••••••••'}
+            </div>
+            <div className={styles.actionsCol}>
+              <button 
+                className={styles.iconButton} 
+                title={revealedMnemonics.layer2_bitnames ? "Hide" : "Reveal"}
+                onClick={() => toggleMnemonic('layer2_bitnames')}
+              >
+                {revealedMnemonics.layer2_bitnames ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
               <button className={styles.deleteIconButton} title="Delete Starter">
                 <Trash2 size={18} />
