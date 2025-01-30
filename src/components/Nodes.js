@@ -647,6 +647,7 @@ function Nodes() {
   const [isStoppingSequence, setIsStoppingSequence] = useState(false);
 
   const L1_CHAINS = ['bitcoin', 'enforcer', 'bitwindow'];
+  const L2_CHAINS = ['thunder', 'bitnames'];
 
   const areAllChainsRunning = useCallback(() => {
     return L1_CHAINS.every(chain =>
@@ -686,20 +687,19 @@ function Nodes() {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      // Only start chains that aren't already running
+      // Start chains with fixed delays between each
       if (!runningNodes.includes('bitcoin')) {
         await window.electronAPI.startChain('bitcoin');
-        await window.electronAPI.waitForChain('bitcoin');
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       
       if (!runningNodes.includes('enforcer')) {
         await window.electronAPI.startChain('enforcer');
-        await window.electronAPI.waitForChain('enforcer');
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       
       if (!runningNodes.includes('bitwindow')) {
         await window.electronAPI.startChain('bitwindow');
-        await window.electronAPI.waitForChain('bitwindow');
       }
     } catch (error) {
       console.error('Start sequence failed:', error);
@@ -722,12 +722,22 @@ function Nodes() {
       setIsProcessing(true);
       setIsStoppingSequence(true);
       
-      // Stop in reverse order
+      // First stop any running L2 chains
+      for (const chainId of L2_CHAINS) {
+        if (runningNodes.includes(chainId)) {
+          await window.electronAPI.stopChain(chainId);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+      
+      // Then stop L1 chains in reverse order
       if (runningNodes.includes('bitwindow')) {
         await window.electronAPI.stopChain('bitwindow');
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       if (runningNodes.includes('enforcer')) {
         await window.electronAPI.stopChain('enforcer');
+        await new Promise(resolve => setTimeout(resolve, 3000));
       }
       if (runningNodes.includes('bitcoin')) {
         await window.electronAPI.stopChain('bitcoin');
@@ -756,42 +766,42 @@ function Nodes() {
   return (
     <div className="Nodes">
       <h1>Drivechain Launcher</h1>
-      {/* Temporarily commented out QuickStartStop button
-      {isInitialized && (
-        <button
-          onClick={handleQuickStartStop}
-          disabled={isProcessing || isAnyL1ChainDownloading()}
-        style={{
-          margin: '10px',
-          padding: '8px 16px',
-          backgroundColor: isProcessing || isAnyL1ChainDownloading()
-            ? '#FFA726'  // Orange for processing/downloading
-            : !areAllL1ChainsDownloaded()
-              ? '#2196F3'  // Blue for download
-              : areAllChainsRunning()
-                ? '#f44336'  // Red for stop
-                : '#4CAF50', // Green for start
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
-          opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1
-        }}
-      >
-        {isProcessing
-          ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
-          : isAnyL1ChainDownloading()
-            ? 'Downloading...'
-            : !areAllL1ChainsDownloaded() 
-              ? 'Download L1' 
-              : !areAllChainsRunning() 
-                ? 'Quick Start' 
-                : 'Safe Stop'}
-        </button>
-      )} */}
       <div className="chain-list">
         <div className="chain-section">
-          <h2 className="chain-heading">Layer 1</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h2 className="chain-heading" style={{ margin: 0 }}>Layer 1</h2>
+            {isInitialized && (
+              <button
+                onClick={handleQuickStartStop}
+                disabled={isProcessing || isAnyL1ChainDownloading()}
+                className={`btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? 'btn-shimmer' : ''}`}
+                data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: isProcessing || isAnyL1ChainDownloading()
+                    ? 'var(--downloading-btn)'  // Orange for processing/downloading
+                    : !areAllL1ChainsDownloaded()
+                      ? 'var(--download-btn)'  // Blue for download
+                      : areAllChainsRunning()
+                        ? 'var(--stop-btn)'  // Red for stop
+                        : 'var(--run-btn)', // Green for start
+                  cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
+                  opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1,
+                  width: 'auto'  // Override fixed width from btn class
+                }}
+              >
+                {isProcessing
+                  ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
+                  : isAnyL1ChainDownloading()
+                    ? 'Downloading...'
+                    : !areAllL1ChainsDownloaded() 
+                      ? 'Download L1' 
+                      : !areAllChainsRunning() 
+                        ? 'Quick Start' 
+                        : 'Safe Stop'}
+              </button>
+            )}
+          </div>
           <div className="l1-chains">
             {chains
               .filter(chain => chain.chain_type === 0)
