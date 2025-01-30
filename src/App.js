@@ -85,7 +85,7 @@ function AppContent() {
         <FaucetModal />
         <WalletModal />
         <FastWithdrawalModal />
-        <SettingsModal />
+        <SettingsModal onResetComplete={() => setShowWelcomeModal(true)} />
         <WelcomeModal 
           isOpen={showWelcomeModal}
           onClose={() => setShowWelcomeModal(false)}

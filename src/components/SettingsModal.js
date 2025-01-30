@@ -8,7 +8,7 @@ import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 import ResetAllModal from './ResetAllModal';
 
-const SettingsModal = () => {
+const SettingsModal = ({ onResetComplete }) => {
   const [showResetModal, setShowResetModal] = useState(false);
   const dispatch = useDispatch();
   const { isVisible } = useSelector((state) => state.settingsModal);
@@ -51,6 +51,9 @@ const SettingsModal = () => {
     try {
       // Delete wallet starters directory first
       await window.electronAPI.invoke('delete-wallet-starters-dir');
+      
+      // Recreate wallet starters directories
+      await window.electronAPI.invoke('init-wallet-dirs');
 
       // Then handle chain resets
       const chains = await window.electronAPI.getConfig();
@@ -67,6 +70,7 @@ const SettingsModal = () => {
       }
       setShowResetModal(false);
       handleClose(); // Close the settings modal after reset
+      onResetComplete(); // Show the welcome modal
     } catch (error) {
       console.error('Failed to reset all chains:', error);
     }

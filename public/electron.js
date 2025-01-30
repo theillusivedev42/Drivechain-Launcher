@@ -409,7 +409,7 @@ function setupIPCHandlers() {
     }
   });
 
-  // Delete wallet starters directory handler
+  // Wallet directory handlers
   ipcMain.handle("delete-wallet-starters-dir", async () => {
     try {
       const walletDir = path.join(app.getPath('userData'), 'wallet_starters');
@@ -419,6 +419,19 @@ function setupIPCHandlers() {
       return { success: true };
     } catch (error) {
       console.error('Failed to delete wallet starters directory:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("init-wallet-dirs", async () => {
+    try {
+      const walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+      const mnemonicsDir = path.join(walletDir, 'mnemonics');
+      await fs.ensureDir(walletDir);
+      await fs.ensureDir(mnemonicsDir);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to initialize wallet directories:', error);
       return { success: false, error: error.message };
     }
   });
