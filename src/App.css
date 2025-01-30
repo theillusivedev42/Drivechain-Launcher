@@ -16,6 +16,8 @@
   --stop-btn-hover: #c82333;
   --downloading-btn: #ffa500;
   --downloading-btn-hover: #cc8400;
+  --stopping-btn: #ff6b6b;
+  --stopping-btn-hover: #ff4f4f;
   --modal-bg: #f0f0f0;
   --modal-text: #333;
   --download-item-bg: #fff;
@@ -40,6 +42,8 @@
   --stop-btn-hover: #a71d2a;
   --downloading-btn: #cc8400;
   --downloading-btn-hover: #b37400;
+  --stopping-btn: #e64545;
+  --stopping-btn-hover: #d13030;
   --modal-bg: #444444;
   --modal-text: #ffffff;
   --download-item-bg: #555555;
@@ -139,7 +143,12 @@ body {
   font-size: 0.9rem;
   text-align: center;
   color: white;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:disabled {
+  cursor: wait;
+  opacity: 0.8;
 }
 
 .settings-icon-button {
@@ -205,6 +214,13 @@ body {
 }
 .stop:hover {
   background-color: var(--stop-btn-hover);
+}
+
+.stopping {
+  background-color: var(--stopping-btn);
+}
+.stopping:hover {
+  background-color: var(--stopping-btn-hover);
 }
 
 .settings {
