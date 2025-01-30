@@ -67,25 +67,27 @@ class BitcoinMonitor {
         try {
           const status = await this.checkIBDStatus();
           
-          // Use Bitcoin Core's verification progress for more accurate tracking
-          const progressPercent = status.progress * 100;
+          // Calculate progress based on blocks synced vs total blocks
+          const progressPercent = status.headers > 0 
+            ? (status.blocks / status.headers) * 100 
+            : 0;
 
           // Log progress every 1000 blocks
           if (status.blocks >= this.lastLoggedBlock + 1000) {
-            console.log(`Bitcoin Core sync progress: ${progressPercent.toFixed(2)}% (at block ${status.blocks})`);
+            console.log(`Bitcoin Core synced ${status.blocks}/${status.headers} blocks (${progressPercent.toFixed(2)}%)`);
             this.lastLoggedBlock = status.blocks;
           }
 
-          // Send status update to renderer - consider in progress until both IBD is false and progress is complete
+          // Send status update to renderer
           this.mainWindow.webContents.send('bitcoin-sync-status', {
-            inProgress: status.inIBD || status.progress <= 0.9999,
+            inProgress: status.inIBD,
             percent: progressPercent,
             currentBlock: status.blocks,
             totalBlocks: status.headers
           });
 
-          // Only consider sync complete when both IBD is false and progress is essentially 100%
-          if (!status.inIBD && status.progress > 0.9999) {
+          // If IBD is complete, stop monitoring
+          if (!status.inIBD) {
             console.log('Bitcoin Core IBD complete');
             this.monitoring = false;
             break;
