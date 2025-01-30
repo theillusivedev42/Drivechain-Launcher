@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChainSettingsModal.module.css';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, RefreshCw } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFolderOpen as faFolderOpenRegular } from '@fortawesome/free-regular-svg-icons';
 import ResetConfirmModal from './ResetConfirmModal';
@@ -16,11 +16,30 @@ const ChainSettingsModal = ({
   const { isDarkMode } = useTheme();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
   const handleResetConfirm = () => {
     onReset(chain.id);
     setShowResetConfirm(false);
     onClose();
   };
+
+  const handleCheckUpdate = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const hasUpdate = await window.electronAPI.checkForChainUpdate(chain.id);
+      setUpdateAvailable(hasUpdate);
+    } catch (error) {
+      console.error('Failed to check for updates:', error);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  useEffect(() => {
+    handleCheckUpdate();
+  }, [chain.id, handleCheckUpdate]);
 
   const handleResetChain = () => {
     setShowResetConfirm(true);
@@ -103,6 +122,21 @@ const ChainSettingsModal = ({
             </div>
           </div>
           <div className={styles.buttonContainer}>
+            <button
+                onClick={handleCheckUpdate}
+                className={`btn ${styles.updateBtn}`}
+                disabled={isCheckingUpdate}
+              >
+                <RefreshCw
+                  size={16}
+                  className={isCheckingUpdate ? styles.spinning : ''}
+                />
+                {isCheckingUpdate
+                  ? 'Checking...'
+                  : updateAvailable
+                  ? 'Update Available'
+                  : 'Check for Updates'}
+              </button>
             <button
               onClick={handleResetChain}
               className={`btn ${styles.resetBtn}`}

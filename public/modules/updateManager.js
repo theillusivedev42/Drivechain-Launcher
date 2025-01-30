@@ -11,6 +11,12 @@ class UpdateManager {
 
   async checkLastModified(url, chainId) {
     try {
+      // First check if the chain is actually downloaded
+      const status = await this.chainManager.getChainStatus(chainId);
+      if (status === 'not_downloaded') {
+        return false; // Chain isn't downloaded, so no update needed
+      }
+
       const response = await axios.head(url);
       const serverTimestamp = response.headers['last-modified'];
       if (!serverTimestamp) return true; // If no last-modified header, assume update needed

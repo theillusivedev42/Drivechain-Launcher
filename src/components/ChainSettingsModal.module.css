@@ -115,6 +115,42 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+  gap: 8px;
+}
+
+.updateBtn {
+  background-color: var(--success-color, #28a745);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.updateBtn:hover {
+  background-color: var(--success-hover-color, #218838);
+}
+
+.updateBtn:disabled {
+  background-color: var(--secondary-color, #6c757d);
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .resetBtn {

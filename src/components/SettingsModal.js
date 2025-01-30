@@ -204,7 +204,7 @@ const SettingsModal = ({ onResetComplete }) => {
                 throw new Error(result.error);
               }
 
-              setUpdateStatus('Updates are being applied. The chains will restart automatically when ready.');
+              setUpdateStatus('Updates are being applied. Please wait for the process to complete.');
               setShowUpdateConfirm(false);
             } catch (error) {
               console.error('Failed to apply updates:', error);
