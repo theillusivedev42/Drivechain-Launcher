@@ -87,17 +87,6 @@ const SettingsModal = ({ onResetComplete }) => {
           </div>
 
           <div className={styles.settingRow}>
-            <span className={styles.settingLabel}>Show Logs</span>
-            <label className={styles.toggleSwitch}>
-              <input
-                type="checkbox"
-                onChange={() => console.log('Show logs toggled')}
-              />
-              <span className={styles.slider}></span>
-            </label>
-          </div>
-
-          <div className={styles.settingRow}>
             <span className={styles.settingLabel}>Dark Mode</span>
             <label className={styles.toggleSwitch}>
               <input
