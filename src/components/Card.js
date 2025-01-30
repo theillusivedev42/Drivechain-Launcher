@@ -30,23 +30,57 @@ const Card = ({
     return chain.dependencies.every(dep => runningNodes.includes(dep));
   };
 
+  const checkReverseDependencies = () => {
+    // Get all chains that depend on this chain
+    const dependentChains = runningNodes.filter(nodeId => {
+      const chainData = window.cardData.find(c => c.id === nodeId);
+      return chainData?.dependencies?.includes(chain.id);
+    });
+    return dependentChains.length === 0;
+  };
+
   const getMissingDependencies = () => {
     if (!chain.dependencies) return [];
     return chain.dependencies.filter(dep => !runningNodes.includes(dep));
   };
 
-  const getTooltipText = () => {
-    const missing = getMissingDependencies();
-    if (missing.length === 0) return '';
-    
-    const missingNames = missing.map(id => {
-      const depName = id.split('-').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-      ).join(' ');
-      return depName;
+  const getRunningDependents = () => {
+    return runningNodes.filter(nodeId => {
+      const chainData = window.cardData.find(c => c.id === nodeId);
+      return chainData?.dependencies?.includes(chain.id);
     });
+  };
 
-    return `Required dependencies not running:\n${missingNames.join('\n')}`;
+  const getTooltipText = () => {
+    // Check for missing dependencies when starting
+    if (chain.status === 'downloaded' || chain.status === 'stopped') {
+      const missing = getMissingDependencies();
+      if (missing.length > 0) {
+        const missingNames = missing.map(id => {
+          const depName = id.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ');
+          return depName;
+        });
+        return `Required dependencies not running:\n${missingNames.join('\n')}`;
+      }
+    }
+    
+    // Check for running dependents when stopping
+    if (chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') {
+      const dependents = getRunningDependents();
+      if (dependents.length > 0) {
+        const dependentNames = dependents.map(id => {
+          const depName = id.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ');
+          return depName;
+        });
+        return `Cannot stop: Following chains depend on this:\n${dependentNames.join('\n')}`;
+      }
+    }
+    
+    return '';
   };
 
   const handleAction = async (event) => {
@@ -92,6 +126,12 @@ const Card = ({
       case 'starting':
       case 'ready':
         try {
+          // Check for running dependent chains
+          if (!checkReverseDependencies()) {
+            setShowForceStop(true);
+            return;
+          }
+          
           console.log(`Stopping chain ${chain.id}`);
           // Update UI immediately to show stopping state
           onUpdateChain(chain.id, { status: 'stopping' });
@@ -241,6 +281,10 @@ const Card = ({
             chainName={chain.display_name}
             onConfirm={handleForceStop}
             onClose={() => setShowForceStop(false)}
+            dependentChains={getRunningDependents().map(id => {
+              const chainData = window.cardData.find(c => c.id === id);
+              return chainData?.display_name || id;
+            })}
           />
         )}
       </div>

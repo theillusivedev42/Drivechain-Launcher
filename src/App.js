@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import './App.css';
 import './scrollbar.css';
 import NavBar from './components/NavBar';
+import cardData from './CardData.json';
 import Nodes from './components/Nodes';
 // import Tools from './components/Tools';
 import Settings from './components/Settings';
@@ -24,6 +25,11 @@ function AppContent() {
   const dispatch = useDispatch();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const { available: updates, showNotification } = useSelector(state => state.updates);
+
+  // Make cardData globally available
+  useEffect(() => {
+    window.cardData = cardData;
+  }, []);
 
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark' : 'light';
