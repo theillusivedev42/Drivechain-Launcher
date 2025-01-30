@@ -234,61 +234,63 @@ const Card = ({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
-      <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-        <div className="card-header">
-          <h2>{chain.display_name}</h2>
-        </div>
-        <div className="card-content">
-          <p>{chain.description}</p>
-        </div>
-        <div className="card-actions">
-          <button
-            ref={buttonRef}
-            className={`btn ${getButtonClass()}`}
-            onClick={handleAction}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={handleMouseLeave}
-            disabled={
-              chain.status === 'downloading' || 
-              chain.status === 'extracting' ||
-              chain.status === 'stopping'
-            }
-            id={`download-button-${chain.id}`}
-          >
-            {getButtonText()}
-          </button>
-          <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
-            <SettingsIcon />
-          </button>
-        </div>
-        <Tooltip 
-          text={getTooltipText()}
-          visible={tooltipVisible}
-          position={tooltipPosition}
-        />
-        {showSettings && (
-          <ChainSettingsModal
-            chain={fullChainData}
-            onClose={() => setShowSettings(false)}
-            onOpenDataDir={handleOpenDataDir}
-            onOpenWalletDir={onOpenWalletDir}
-            onReset={onReset}
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
+        <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
+          <div className="card-header">
+            <h2>{chain.display_name}</h2>
+          </div>
+          <div className="card-content">
+            <p>{chain.description}</p>
+          </div>
+          <div className="card-actions">
+            <button
+              ref={buttonRef}
+              className={`btn ${getButtonClass()}`}
+              onClick={handleAction}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={handleMouseLeave}
+              disabled={
+                chain.status === 'downloading' || 
+                chain.status === 'extracting' ||
+                chain.status === 'stopping'
+              }
+              id={`download-button-${chain.id}`}
+            >
+              {getButtonText()}
+            </button>
+            <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
+              <SettingsIcon />
+            </button>
+          </div>
+          <Tooltip 
+            text={getTooltipText()}
+            visible={tooltipVisible}
+            position={tooltipPosition}
           />
-        )}
-        {showForceStop && (
-          <ForceStopModal
-            chainName={chain.display_name}
-            onConfirm={handleForceStop}
-            onClose={() => setShowForceStop(false)}
-            dependentChains={getRunningDependents().map(id => {
-              const chainData = window.cardData.find(c => c.id === id);
-              return chainData?.display_name || id;
-            })}
-          />
-        )}
+        </div>
       </div>
-    </div>
+      {showSettings && (
+        <ChainSettingsModal
+          chain={fullChainData}
+          onClose={() => setShowSettings(false)}
+          onOpenDataDir={handleOpenDataDir}
+          onOpenWalletDir={onOpenWalletDir}
+          onReset={onReset}
+        />
+      )}
+      {showForceStop && (
+        <ForceStopModal
+          chainName={chain.display_name}
+          onConfirm={handleForceStop}
+          onClose={() => setShowForceStop(false)}
+          dependentChains={getRunningDependents().map(id => {
+            const chainData = window.cardData.find(c => c.id === id);
+            return chainData?.display_name || id;
+          })}
+        />
+      )}
+    </>
   );
 };
 
