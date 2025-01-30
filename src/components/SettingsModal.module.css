@@ -192,3 +192,71 @@ input:checked + .slider:before {
   background-color: #2c2c2c;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
+
+.updateStatus {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  background-color: rgba(128, 128, 128, 0.1);
+  color: var(--text-color);
+  text-align: center;
+}
+
+/* Update confirm modal styles */
+.updateConfirmContent {
+  margin: 20px 0;
+  padding: 0 12px;
+}
+
+.updateConfirmContent ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.updateConfirmContent li {
+  margin: 8px 0;
+  color: var(--text-color);
+}
+
+.updateConfirmContent p {
+  margin: 12px 0;
+  color: var(--text-color);
+}
+
+.updateConfirmButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.confirmButton {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background-color: #dc3545;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.cancelButton {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.confirmButton:hover {
+  background-color: #c82333;
+}
+
+.cancelButton:hover {
+  background-color: rgba(128, 128, 128, 0.1);
+}

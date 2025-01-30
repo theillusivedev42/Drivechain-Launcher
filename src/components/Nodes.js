@@ -1,405 +1,14 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
 import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
 import { showDownloadModal } from '../store/downloadModalSlice';
+import { setChains, updateChainStatus } from '../store/chainsSlice';
 
 function Nodes() {
-  const [chains, setChains] = useState([]);
+  const chains = useSelector(state => state.chains);
   const [walletMessage, setWalletMessage] = useState(null);
   const [bitcoinSync, setBitcoinSync] = useState(null);
   const [runningNodes, setRunningNodes] = useState([]);
@@ -424,7 +33,7 @@ function Nodes() {
             };
           })
       );
-      setChains(chainsWithStatus);
+      dispatch(setChains(chainsWithStatus));
       
       // Initialize running nodes based on initial status
       const initialRunning = chainsWithStatus
@@ -436,30 +45,25 @@ function Nodes() {
       console.error('Failed to fetch chain config:', error);
       setIsInitialized(true); // Still set initialized even on error to prevent infinite loading
     }
-  }, []);
+  }, [dispatch]);
 
   const downloadsUpdateHandler = useCallback(
     downloads => {
       console.log('Received downloads update:', downloads);
       dispatch(updateDownloads(downloads));
-      setChains(prevChains =>
-        prevChains.map(chain => {
-          const download = downloads.find(d => d.chainId === chain.id);
-          return download
-            ? { ...chain, status: download.status, progress: download.progress }
-            : chain;
-        })
-      );
+      downloads.forEach(download => {
+        dispatch(updateChainStatus({
+          chainId: download.chainId,
+          status: download.status,
+          progress: download.progress
+        }));
+      });
     },
     [dispatch]
   );
 
   const chainStatusUpdateHandler = useCallback(({ chainId, status }) => {
-    setChains(prevChains =>
-      prevChains.map(chain =>
-        chain.id === chainId ? { ...chain, status } : chain
-      )
-    );
+    dispatch(updateChainStatus({ chainId, status }));
     
     // Update running nodes list
     if (status === 'running' || status === 'ready') {
@@ -467,17 +71,15 @@ function Nodes() {
     } else if (status === 'stopped' || status === 'not_downloaded') {
       setRunningNodes(prev => prev.filter(id => id !== chainId));
     }
-  }, []);
+  }, [dispatch]);
 
   const downloadCompleteHandler = useCallback(({ chainId }) => {
-    setChains(prevChains =>
-      prevChains.map(chain =>
-        chain.id === chainId
-          ? { ...chain, status: 'downloaded', progress: 100 }
-          : chain
-      )
-    );
-  }, []);
+    dispatch(updateChainStatus({ 
+      chainId, 
+      status: 'downloaded', 
+      progress: 100 
+    }));
+  }, [dispatch]);
 
   useEffect(() => {
     fetchChains();
@@ -541,12 +143,8 @@ function Nodes() {
   }, []);
 
   const handleUpdateChain = useCallback((chainId, updates) => {
-    setChains(prevChains =>
-      prevChains.map(chain =>
-        chain.id === chainId ? { ...chain, ...updates } : chain
-      )
-    );
-  }, []);
+    dispatch(updateChainStatus({ chainId, ...updates }));
+  }, [dispatch]);
 
   const handleDownloadChain = useCallback(
     async chainId => {
@@ -581,28 +179,20 @@ function Nodes() {
       }
 
       await window.electronAPI.startChain(chainId);
-      setChains(prevChains =>
-        prevChains.map(chain =>
-          chain.id === chainId ? { ...chain, status: 'running' } : chain
-        )
-      );
+      dispatch(updateChainStatus({ chainId, status: 'running' }));
     } catch (error) {
       console.error(`Failed to start chain ${chainId}:`, error);
     }
-  }, [chains, runningNodes]);
+  }, [chains, runningNodes, dispatch]);
 
   const handleStopChain = useCallback(async chainId => {
     try {
       await window.electronAPI.stopChain(chainId);
-      setChains(prevChains =>
-        prevChains.map(chain =>
-          chain.id === chainId ? { ...chain, status: 'stopped' } : chain
-        )
-      );
+      dispatch(updateChainStatus({ chainId, status: 'stopped' }));
     } catch (error) {
       console.error(`Failed to stop chain ${chainId}:`, error);
     }
-  }, []);
+  }, [dispatch]);
 
   const handleResetChain = useCallback(
     async chainId => {

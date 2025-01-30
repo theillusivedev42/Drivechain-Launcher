@@ -16,15 +16,12 @@ import SettingsModal from './components/SettingsModal';
 import WelcomeModal from './components/WelcomeModal';
 import QuoteWidget from './components/QuoteWidget';
 import ShutdownModal from './components/ShutdownModal';
-import UpdateNotification from './components/UpdateNotification';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import { setAvailableUpdates, setIsChecking, setLastChecked, setError, dismissNotification, clearUpdate } from './store/updateSlice';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
   const dispatch = useDispatch();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const { available: updates, showNotification } = useSelector(state => state.updates);
 
   // Make cardData globally available
   useEffect(() => {
@@ -49,34 +46,10 @@ function AppContent() {
         setShowWelcomeModal(true);
       }
 
-      // Check for updates
-      try {
-        dispatch(setIsChecking(true));
-        const result = await window.electronAPI.checkForUpdates();
-        if (result.success) {
-          dispatch(setAvailableUpdates(result.updates));
-          dispatch(setLastChecked(Date.now()));
-        } else {
-          dispatch(setError(result.error));
-        }
-      } catch (error) {
-        dispatch(setError(error.message));
-      } finally {
-        dispatch(setIsChecking(false));
-      }
     };
 
     initializeApp();
   }, [dispatch]);
-
-  const handleDownloadUpdate = async (chainId) => {
-    try {
-      await window.electronAPI.downloadChain(chainId);
-      dispatch(clearUpdate(chainId));
-    } catch (error) {
-      console.error('Failed to start download:', error);
-    }
-  };
 
   return (
     <Router>
@@ -98,13 +71,6 @@ function AppContent() {
         />
         <QuoteWidget />
         <ShutdownModal />
-        {showNotification && (
-          <UpdateNotification
-            updates={updates}
-            onDownload={handleDownloadUpdate}
-            onDismiss={() => dispatch(dismissNotification())}
-          />
-        )}
       </div>
     </Router>
   );

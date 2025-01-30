@@ -5,6 +5,7 @@ const axios = require("axios");
 const AdmZip = require("adm-zip");
 const tar = require("tar");
 const { pipeline } = require('stream/promises');
+const DownloadTimestamps = require('./downloadTimestamps');
 
 class DownloadManager {
   constructor(mainWindow, config) {
@@ -12,6 +13,7 @@ class DownloadManager {
     this.config = config;
     this.activeDownloads = new Map();
     this.pausedDownloads = new Map();
+    this.timestamps = new DownloadTimestamps();
   }
 
   startDownload(chainId, url, basePath) {
@@ -50,6 +52,9 @@ class DownloadManager {
 
       await fs.promises.unlink(tempPath);
 
+      // Save download timestamp
+      this.timestamps.setTimestamp(chainId, new Date().toISOString());
+      
       this.activeDownloads.delete(chainId);
       this.sendDownloadsUpdate();
       this.mainWindow.webContents.send("download-complete", { chainId });
