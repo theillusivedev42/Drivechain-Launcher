@@ -295,6 +295,40 @@ function setupIPCHandlers() {
     }
   });
 
+  // Get wallet starter data
+  ipcMain.handle("get-wallet-starter", async (event, type) => {
+    try {
+      const walletDir = path.join(app.getPath('userData'), 'wallet_starters');
+      let filePath;
+      
+      switch (type) {
+        case 'master':
+          filePath = path.join(walletDir, 'master_starter.json');
+          break;
+        case 'layer1':
+          filePath = path.join(walletDir, 'l1_starter.json');
+          break;
+        case 'thunder':
+          filePath = path.join(walletDir, 'sidechain_9_starter.json');
+          break;
+        case 'bitnames':
+          filePath = path.join(walletDir, 'sidechain_2_starter.json');
+          break;
+        default:
+          throw new Error('Invalid wallet type');
+      }
+
+      if (await fs.pathExists(filePath)) {
+        const data = await fs.readJson(filePath);
+        return { success: true, data: data.mnemonic };
+      }
+      return { success: false, error: 'Wallet starter not found' };
+    } catch (error) {
+      console.error('Error reading wallet starter:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   // Advanced wallet handlers
   ipcMain.handle("preview-wallet", async (event, options) => {
     try {
@@ -380,28 +414,39 @@ function setupIPCHandlers() {
   });
 }
 
-app.whenReady().then(async () => {
-  await loadConfig();
-  
-  // Initialize managers
-  directoryManager = new DirectoryManager(config);
-  await directoryManager.setupChainDirectories();
-  
-  const configManager = new ConfigManager(configPath);
-  await configManager.loadConfig();
-  await configManager.setupExtractDirectories();
-  
-  createWindow();
-  
-  chainManager = new ChainManager(mainWindow, config);
-  walletManager = new WalletManager(config);
-  fastWithdrawalManager = new FastWithdrawalManager();
-  apiManager = new ApiManager();
-  updateManager = new UpdateManager(config, chainManager);
-  downloadManager = new DownloadManager(mainWindow, config);
-  
-  setupIPCHandlers();
-});
+async function initialize() {
+  try {
+    await loadConfig();
+    
+    // Initialize managers that don't depend on mainWindow
+    directoryManager = new DirectoryManager(config);
+    await directoryManager.setupChainDirectories();
+    
+    const configManager = new ConfigManager(configPath);
+    await configManager.loadConfig();
+    await configManager.setupExtractDirectories();
+    
+    walletManager = new WalletManager(config);
+    fastWithdrawalManager = new FastWithdrawalManager();
+    apiManager = new ApiManager();
+    
+    // Create window first
+    createWindow();
+    
+    // Then initialize managers that need mainWindow
+    chainManager = new ChainManager(mainWindow, config);
+    updateManager = new UpdateManager(config, chainManager);
+    downloadManager = new DownloadManager(mainWindow, config);
+    
+    // Finally setup IPC handlers after everything is initialized
+    setupIPCHandlers();
+  } catch (error) {
+    console.error('Initialization error:', error);
+    app.quit();
+  }
+}
+
+app.whenReady().then(initialize);
 
 let isShuttingDown = false;
 let forceKillTimeout;
