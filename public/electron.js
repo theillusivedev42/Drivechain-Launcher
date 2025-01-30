@@ -372,6 +372,47 @@ function setupIPCHandlers() {
     return await updateManager.checkForUpdates();
   });
 
+  ipcMain.handle("apply-updates", async (event, chainIds) => {
+    try {
+      // First stop any running chains
+      for (const chainId of chainIds) {
+        const status = await chainManager.getChainStatus(chainId);
+        if (status === 'running' || status === 'ready') {
+          await chainManager.stopChain(chainId);
+        }
+      }
+
+      // Delete existing binaries and download updates
+      for (const chainId of chainIds) {
+        const chain = config.chains.find(c => c.id === chainId);
+        if (!chain) continue;
+
+        // Get extract path
+        const platform = process.platform;
+        const extractDir = chain.extract_dir?.[platform];
+        if (!extractDir) continue;
+
+        const downloadsDir = app.getPath("downloads");
+        const extractPath = path.join(downloadsDir, extractDir);
+
+        // Delete existing binary directory
+        await fs.remove(extractPath);
+
+        // Download and extract new binary
+        const url = chain.download.urls[platform];
+        if (!url) continue;
+
+        await fs.ensureDir(extractPath);
+        downloadManager.startDownload(chainId, url, extractPath);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to apply updates:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("get-balance-btc", async (event, options) => {
     try {
       return await fastWithdrawalManager.getBalanceBTC();
