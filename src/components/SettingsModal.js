@@ -49,6 +49,10 @@ const SettingsModal = () => {
 
   const handleConfirmReset = async () => {
     try {
+      // Delete wallet starters directory first
+      await window.electronAPI.invoke('delete-wallet-starters-dir');
+
+      // Then handle chain resets
       const chains = await window.electronAPI.getConfig();
       for (const chain of chains.chains) {
         if (chain.enabled) {
