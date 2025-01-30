@@ -24,6 +24,7 @@ class DownloadManager {
       progress: 0,
       status: "downloading",
       downloadedLength: 0,
+      totalLength: 0,
     });
     this.mainWindow.webContents.send("download-started", { chainId });
     this.downloadAndExtract(chainId, url, basePath);
@@ -43,6 +44,16 @@ class DownloadManager {
 
     try {
       await this.downloadFile(chainId, url, tempPath);
+      
+      // Force progress to 100% and update status to extracting
+      const download = this.activeDownloads.get(chainId);
+      if (download) {
+        // Ensure progress is 100% before extraction starts
+        download.progress = 100;
+        download.status = "extracting";
+        // Force immediate update without throttling
+        this.sendDownloadsUpdate();
+      }
       
       if (fileExt === '.tar.gz') {
         await this.extractTarGz(chainId, tempPath, basePath);
@@ -116,13 +127,26 @@ class DownloadManager {
         });
 
         const totalLength = parseInt(headers["content-length"], 10) + downloadedLength;
+        download.totalLength = totalLength;
+        this.sendDownloadsUpdate();
 
         data.pipe(writer);
 
+        let accumulatedLength = 0;
+        const updateInterval = 250; // 250ms = 4 updates per second
+        let lastUpdate = Date.now();
+
         data.on("data", (chunk) => {
           downloadedLength += chunk.length;
-          const progress = (downloadedLength / totalLength) * 100;
-          this.updateDownloadProgress(chainId, progress, downloadedLength);
+          accumulatedLength += chunk.length;
+          
+          const now = Date.now();
+          if (now - lastUpdate >= updateInterval) {
+            const progress = (downloadedLength / totalLength) * 100;
+            this.updateDownloadProgress(chainId, progress, downloadedLength);
+            lastUpdate = now;
+            accumulatedLength = 0;
+          }
 
           if (this.pausedDownloads.has(chainId)) {
             data.pause();
@@ -138,6 +162,8 @@ class DownloadManager {
 
         writer.on("close", () => {
           if (downloadedLength === totalLength) {
+            // Force final progress update to 100% before resolving
+            this.updateDownloadProgress(chainId, 100, downloadedLength);
             resolve();
           } else if (!this.pausedDownloads.has(chainId)) {
             reject(new Error(`Incomplete download: expected ${totalLength} bytes, got ${downloadedLength} bytes`));
@@ -235,10 +261,22 @@ class DownloadManager {
   updateDownloadProgress(chainId, progress, downloadedLength, status = "downloading") {
     const download = this.activeDownloads.get(chainId) || this.pausedDownloads.get(chainId);
     if (download) {
-      download.progress = progress;
+      // If status is extracting, always keep progress at 100%
+      download.progress = status === "extracting" ? 100 : progress;
       download.status = status;
       download.downloadedLength = downloadedLength;
-      this.sendDownloadsUpdate();
+      
+      // Force update for extraction state or throttle for normal progress
+      if (status === "extracting") {
+        this.sendDownloadsUpdate();
+      } else {
+        // Throttle progress updates to max 4 times per second per download
+        const now = Date.now();
+        if (!download.lastUpdate || now - download.lastUpdate >= 250) {
+          download.lastUpdate = now;
+          this.sendDownloadsUpdate();
+        }
+      }
     }
   }
 
@@ -251,6 +289,7 @@ class DownloadManager {
           progress: download.progress,
           status: download.status,
           downloadedLength: download.downloadedLength,
+          totalLength: download.totalLength,
         }));
       this.mainWindow.webContents.send("downloads-update", downloadsArray);
     }
