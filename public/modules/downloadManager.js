@@ -14,6 +14,72 @@ class DownloadManager {
     this.activeDownloads = new Map();
     this.pausedDownloads = new Map();
     this.timestamps = new DownloadTimestamps();
+    this.extractionQueue = [];
+    this.isExtracting = false;
+  }
+
+  async processExtractionQueue() {
+    if (this.isExtracting || this.extractionQueue.length === 0) return;
+    
+    this.isExtracting = true;
+    const { chainId, zipPath, basePath, resolve, reject } = this.extractionQueue[0];
+
+    try {
+      if (process.platform === 'darwin' && chainId === 'bitwindow') {
+        await this.extractMacOSApp(chainId, zipPath, basePath);
+      } else {
+        const zip = new AdmZip(zipPath);
+        await new Promise((res, rej) => {
+          zip.extractAllToAsync(basePath, true, (error) => {
+            if (error) {
+              console.error(`Extraction error for ${chainId}: ${error.message}`);
+              rej(error);
+            } else {
+              res();
+            }
+          });
+        });
+      }
+      resolve();
+    } catch (error) {
+      console.error(`Error in extractZip for ${chainId}: ${error.message}`);
+      reject(error);
+    } finally {
+      this.extractionQueue.shift();
+      this.isExtracting = false;
+      this.processExtractionQueue();
+    }
+  }
+
+  async extractMacOSApp(chainId, zipPath, basePath) {
+    return new Promise((resolve, reject) => {
+      const { spawn } = require('child_process');
+      const ditto = spawn('ditto', ['-xk', zipPath, basePath]);
+      
+      ditto.stderr.on('data', (data) => {
+        console.error(`Ditto stderr: ${data}`);
+      });
+
+      ditto.on('close', (code) => {
+        if (code === 0) {
+          const appPath = path.join(basePath, 'bitwindow.app');
+          spawn('chmod', ['-R', '+x', appPath])
+            .on('close', (chmodCode) => {
+              if (chmodCode === 0) {
+                resolve();
+              } else {
+                reject(new Error(`Failed to set permissions: ${chmodCode}`));
+              }
+            });
+        } else {
+          reject(new Error(`Ditto extraction failed with code: ${code}`));
+        }
+      });
+
+      ditto.on('error', (error) => {
+        reject(new Error(`Ditto error: ${error.message}`));
+      });
+    });
   }
 
   startDownload(chainId, url, basePath) {
@@ -239,52 +305,8 @@ class DownloadManager {
 
   async extractZip(chainId, zipPath, basePath) {
     return new Promise((resolve, reject) => {
-      try {
-        // Special handling for macOS app bundles
-        if (process.platform === 'darwin' && chainId === 'bitwindow') {
-          const { spawn } = require('child_process');
-          const ditto = spawn('ditto', ['-xk', zipPath, basePath]);
-          
-          ditto.stderr.on('data', (data) => {
-            console.error(`Ditto stderr: ${data}`);
-          });
-
-          ditto.on('close', (code) => {
-            if (code === 0) {
-              // Set proper permissions for the .app bundle
-              const appPath = path.join(basePath, 'bitwindow.app');
-              spawn('chmod', ['-R', '+x', appPath])
-                .on('close', (chmodCode) => {
-                  if (chmodCode === 0) {
-                    resolve();
-                  } else {
-                    reject(new Error(`Failed to set permissions: ${chmodCode}`));
-                  }
-                });
-            } else {
-              reject(new Error(`Ditto extraction failed with code: ${code}`));
-            }
-          });
-
-          ditto.on('error', (error) => {
-            reject(new Error(`Ditto error: ${error.message}`));
-          });
-        } else {
-          // Use AdmZip for non-macOS or non-BitWindow extractions
-          const zip = new AdmZip(zipPath);
-          zip.extractAllToAsync(basePath, true, (error) => {
-            if (error) {
-              console.error(`Extraction error for ${chainId}: ${error.message}`);
-              reject(error);
-            } else {
-              resolve();
-            }
-          });
-        }
-      } catch (error) {
-        console.error(`Error in extractZip for ${chainId}: ${error.message}`);
-        reject(error);
-      }
+      this.extractionQueue.push({ chainId, zipPath, basePath, resolve, reject });
+      this.processExtractionQueue();
     });
   }
 
