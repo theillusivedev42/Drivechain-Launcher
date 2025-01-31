@@ -85,7 +85,15 @@
     "productName": "Drivechain Launcher",
     "files": [
       "build/**/*",
-      "public/**/*"
+      "public/**/*",
+      {
+        "from": "src/data/proto",
+        "to": "src/data/proto"
+      },
+      {
+        "from": "node_modules/@grpc/proto-loader/node_modules/google-proto-files/google",
+        "to": "src/data/proto/google"
+      }
     ],
     "directories": {
       "buildResources": "public",
