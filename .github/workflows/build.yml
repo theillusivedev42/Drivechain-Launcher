@@ -79,6 +79,7 @@ jobs:
           name: linux-artifacts
           path: dist/*.tar.gz
           if-no-files-found: error
+          compression-level: 0
 
       - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest-large'
@@ -86,6 +87,8 @@ jobs:
         with:
           name: windows-artifacts
           path: dist/*.exe
+          if-no-files-found: error
+          compression-level: 0
 
       - name: Upload macOS artifacts
         if: matrix.os == 'macos-latest'
@@ -93,3 +96,5 @@ jobs:
         with:
           name: macos-artifacts
           path: dist/*.dmg
+          if-no-files-found: error
+          compression-level: 0
