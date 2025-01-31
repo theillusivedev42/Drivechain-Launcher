@@ -4,6 +4,7 @@ import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import Tooltip from './Tooltip';
+import './StatusLight.css'; 
 
 const Card = ({
   chain,
@@ -23,7 +24,71 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [processHealth, setProcessHealth] = useState('offline'); // 'healthy', 'warning', 'error', 'offline'
+  const [blockCount, setBlockCount] = useState(-1);
+  const [startTime, setStartTime] = useState(null);
   const buttonRef = useRef(null);
+
+  // Periodic chain status / health check
+  useEffect(() => {
+    // Track when chain starts running
+    if (chain.status === 'running' && !startTime) {
+      setStartTime(Date.now());
+    } else if (chain.status !== 'running') {
+      setStartTime(null);
+    }
+
+    const fetchBlockCount = async () => {
+      console.log("chain name: ", chain)
+      try {
+        const count = await window.electronAPI.getChainBlockCount(chain.id);
+        console.log("new count: ", count)
+        setBlockCount(count);
+      } catch (error) {
+        setBlockCount(-1)
+        console.error('Failed to fetch block count:', error);
+      }
+    };
+
+    // Immediately set status based on chain state
+    if (chain.status === 'stopping' && chain.id === 'bitcoin') {
+      setProcessHealth('warning');
+    } else if (chain.status === 'not_downloaded' || 
+        chain.status === 'downloaded' || 
+        chain.status === 'stopped' ||
+        chain.status === 'stopping') {
+      setProcessHealth('offline');
+    } else if (chain.status === 'running' || 
+               chain.status === 'starting' || 
+               chain.status === 'ready') {
+      setProcessHealth('healthy');
+    } else {
+      setProcessHealth('warning');
+    }
+
+    // Then start interval for additional health checks
+    const runningTime = startTime ? Date.now() - startTime : 0;
+    const intervalTime = runningTime > 5000 ? 500 : 5000; // Start at 5 seconds, then speed up to 500ms after 5 seconds
+
+    const interval = setInterval(() => {
+      // Only do additional health checks if chain is running
+      if (chain.status === 'running' || 
+          chain.status === 'starting' || 
+          chain.status === 'ready') {
+        
+        // For non-BitWindow chains, check block count
+        if (chain.id !== 'bitwindow') {
+          fetchBlockCount();
+          if (blockCount === 0) {
+            setProcessHealth('warning');
+            return;
+          }
+        }
+      }
+    }, intervalTime);
+
+    return () => clearInterval(interval);
+  }, [chain.id, chain.status, blockCount]);
 
   const checkDependencies = () => {
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
@@ -132,6 +197,8 @@ const Card = ({
             return;
           }
           
+          setProcessHealth('offline');
+
           console.log(`Stopping chain ${chain.id}`);
           // Update UI immediately to show stopping state
           onUpdateChain(chain.id, { status: 'stopping' });
@@ -237,8 +304,18 @@ const Card = ({
     <>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
         <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-          <div className="card-header">
-            <h2>{chain.display_name}</h2>
+          <div className="card-header" style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ margin: 0, lineHeight: 1.2, textAlign: 'left' }}>{chain.display_name}</h2>
+            <div className={`status-light ${processHealth}`} title={`Process Status: ${processHealth}`} />
+          </div>
+          <div style={{ fontSize: '0.8em', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '4px', fontWeight: 400 }}>
+            {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
+              (chain.id === 'bitwindow' ? 'Running' :
+               blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
+              (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
+          </div>
+
           </div>
           <div className="card-content">
             <p>{chain.description}</p>

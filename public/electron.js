@@ -1,4 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
+
+// Disable sandbox for Linux
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-setuid-sandbox');
+  process.env.ELECTRON_DISABLE_SANDBOX = '1';
+}
 const path = require("path");
 const fs = require("fs-extra");
 const isDev = require("electron-is-dev");
@@ -42,6 +49,7 @@ function createWindow() {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, "preload.js"),
+        sandbox: false
       },
     });
     mainWindow.loadURL(
@@ -196,6 +204,15 @@ function setupIPCHandlers() {
     } catch (error) {
       console.error("Failed to get chain status:", error);
       return "error";
+    }
+  });
+
+  ipcMain.handle("get-chain-block-count", async (event, chainId) => {
+    try {
+      return await chainManager.getChainBlockCount(chainId);
+    } catch (error) {
+      console.error("Failed to get chain block count:", error);
+      return 0;
     }
   });
 
@@ -513,6 +530,9 @@ async function initialize() {
     app.quit();
   }
 }
+
+// Disable sandbox
+app.commandLine.appendSwitch('no-sandbox');
 
 app.whenReady().then(initialize);
 

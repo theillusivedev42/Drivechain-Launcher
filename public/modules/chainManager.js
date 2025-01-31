@@ -4,6 +4,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 const BitcoinMonitor = require("./bitcoinMonitor");
 const BitWindowClient = require("./bitWindowClient");
+const EnforcerClient = require("./enforcerClient");
 
 class ChainManager {
   constructor(mainWindow, config) {
@@ -16,6 +17,7 @@ class ChainManager {
     this.bitWindowClient = new BitWindowClient();
     this.logProcesses = new Map(); // Track log streaming processes
     this.processCheckers = new Map(); // Track process check intervals
+    this.enforcerClient = new EnforcerClient(); // Connect to enfocer gRPC
   }
 
   async isChainReady(chainId) {
@@ -642,6 +644,29 @@ class ChainManager {
     const downloadsDir = app.getPath("downloads");
     const basePath = path.join(downloadsDir, extractDir);
     return path.join(basePath, path.dirname(binaryPath));
+  }
+
+  async getChainBlockCount(chainId) {
+    const status = this.chainStatuses.get(chainId);
+    if (status !== 'running') return -1;
+
+    if (chainId === 'bitcoin') {
+      try {
+        return await this.bitcoinMonitor.makeRpcCall('getblockcount', [], true);
+      } catch (error) {
+        return -1;
+      }
+    }
+    else
+    if (chainId == "enforcer") {
+      try {
+        return await this.enforcerClient.getBlockCount();
+      } catch (error) {
+        return -1;
+      }
+    }
+
+    return -1;
   }
 }
 

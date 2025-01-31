@@ -1,0 +1,72 @@
+/* CUSF sidechain node service */
+
+syntax = "proto3";
+package cusf.sidechain.v1;
+
+message SequenceId {
+  uint64 sequence_id = 1;
+}
+
+message BlockHeaderInfo {
+  bytes block_hash = 1;
+  bytes prev_block_hash = 2;
+  bytes prev_main_block_hash = 3;
+  uint32 height = 4;
+}
+
+message BlockInfo {
+}
+
+service SidechainService {
+  rpc GetMempoolTxs(GetMempoolTxsRequest) returns (GetMempoolTxsResponse);
+  rpc GetUtxos(GetUtxosRequest) returns (GetUtxosResponse);
+  rpc SubmitTransaction(SubmitTransactionRequest)
+    returns (SubmitTransactionResponse);
+  rpc SubscribeEvents(SubscribeEventsRequest)
+    returns (stream SubscribeEventsResponse);
+}
+
+message GetMempoolTxsRequest {
+}
+message GetMempoolTxsResponse {
+  SequenceId sequence_id = 1;
+}
+
+message GetUtxosRequest {
+}
+message GetUtxosResponse {
+}
+
+message SubmitTransactionRequest {
+  bytes transaction = 1;
+}
+message SubmitTransactionResponse {
+}
+
+message SubscribeEventsRequest {
+}
+message SubscribeEventsResponse {
+  message Event {
+    message ConnectBlock {
+      BlockHeaderInfo header_info = 1;
+      BlockInfo block_info = 2;
+    }
+    message DisconnectBlock {
+      bytes block_hash = 1;
+    }
+    message MempoolTxAdded {
+      bytes txid = 1;
+    }
+    message MempoolTxRemoved {
+      bytes txid = 1;
+    }
+    oneof event {
+      ConnectBlock connect_block = 1;
+      DisconnectBlock disconnect_block = 2;
+      MempoolTxAdded mempool_tx_added = 3;
+      MempoolTxRemoved mempool_tx_removed = 4;
+    }
+  }
+  SequenceId sequence_id = 1;
+  Event event = 2;
+}
