@@ -1,0 +1,43 @@
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer[data-state="download"]::before,
+.btn-shimmer[data-state="start"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  left: -100%;
+  animation: shine 2s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+    transition-property: left;
+  }
+  32.5%, /* 0.65s / 2s = 32.5% */
+  100% {
+    left: 100%;
+    transition-property: left;
+  }
+}
+
+/* Hover effect enhancement */
+.btn-shimmer:hover {
+  box-shadow: 1px 1px 25px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure the shimmer doesn't interfere with disabled state */
+.btn-shimmer:disabled::before {
+  animation: none;
+}

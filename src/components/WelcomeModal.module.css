@@ -6,7 +6,7 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px); /* For Safari support */
+  -webkit-backdrop-filter: blur(15px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -25,7 +25,6 @@
   overflow-y: auto;
 }
 
-/* Wider modal for advanced mode */
 .modalContent[data-mode="advanced"] {
   max-width: 800px;
 }
@@ -136,6 +135,7 @@
   line-height: 1.5;
 }
 
+/* Generate button with shimmer effect */
 .generateButton {
   display: block;
   width: 200px;
@@ -153,12 +153,51 @@
     sans-serif;
   transition: background-color 0.2s ease, opacity 0.2s ease;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.generateButton:not(:disabled)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  left: -100%;
+  animation: shine 2s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+    transition-property: left;
+  }
+  32.5%,
+  100% {
+    left: 100%;
+    transition-property: left;
+  }
 }
 
 .generateButton:hover:not(:disabled) {
   background-color: var(--download-btn-hover);
+  box-shadow: 1px 1px 25px 10px rgba(255, 255, 255, 0.1);
 }
 
+.generateButton:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+.generateButton:disabled::before {
+  animation: none;
+}
 
 .optionToggle {
   display: flex;
@@ -279,7 +318,6 @@
   cursor: wait;
 }
 
-/* Warning Box */
 .warningBox {
   background-color: rgba(255, 193, 7, 0.1);
   border-radius: 6px;
@@ -311,7 +349,6 @@
   gap: 6px;
 }
 
-/* Mode Toggle */
 .modeToggle {
   display: flex;
   gap: 16px;
@@ -367,7 +404,6 @@
   cursor: wait;
 }
 
-/* Preview Section */
 .previewSection {
   margin-top: 16px;
   padding: 16px;
@@ -434,7 +470,6 @@
   flex: 1;
 }
 
-/* Dark Mode Adjustments */
 :global(.dark) .warningBox {
   background-color: rgba(255, 193, 7, 0.05);
 }
@@ -463,9 +498,4 @@
   margin-bottom: 16px;
   font-size: 0.9rem;
   text-align: center;
-}
-
-.generateButton:disabled {
-  opacity: 0.8;
-  cursor: wait;
 }

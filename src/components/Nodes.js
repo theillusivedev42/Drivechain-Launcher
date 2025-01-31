@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
+import styles from './QuickStartStop.module.css';
 import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
@@ -366,7 +367,7 @@ function Nodes() {
               <button
                 onClick={handleQuickStartStop}
                 disabled={isProcessing || isAnyL1ChainDownloading()}
-                className={`btn quick-start-stop-btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? 'btn-shimmer' : ''}`}
+                className={`btn quick-start-stop-btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? styles['btn-shimmer'] : ''}`}
                 data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
                 style={{
                   padding: '8px 16px',
