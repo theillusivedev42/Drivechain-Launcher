@@ -364,7 +364,7 @@ function Nodes() {
               <button
                 onClick={handleQuickStartStop}
                 disabled={isProcessing || isAnyL1ChainDownloading()}
-                className={`btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? 'btn-shimmer' : ''}`}
+                className={`btn quick-start-stop-btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? 'btn-shimmer' : ''}`}
                 data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
                 style={{
                   padding: '8px 16px',
@@ -377,7 +377,17 @@ function Nodes() {
                         : 'var(--run-btn)', // Green for start
                   cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
                   opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1,
-                  width: 'auto'  // Override fixed width from btn class
+                  width: 'auto',  // Override fixed width from btn class
+                  transition: 'background-color 0.2s ease',
+                  ':hover': {
+                    backgroundColor: isProcessing || isAnyL1ChainDownloading()
+                      ? 'var(--downloading-btn-hover)'  // Darker orange for processing/downloading
+                      : !areAllL1ChainsDownloaded()
+                        ? 'var(--download-btn-hover)'  // Darker blue for download
+                        : areAllChainsRunning()
+                          ? 'var(--stop-btn-hover)'  // Darker red for stop
+                          : 'var(--run-btn-hover)'  // Darker green for start
+                  }
                 }}
               >
                 {isProcessing

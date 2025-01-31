@@ -348,6 +348,23 @@ body {
   --current-color: var(--run-btn);
 }
 
+/* Quick Start/Stop Button */
+.quick-start-stop-btn {
+  transition: background-color 0.2s ease !important;
+}
+
+.quick-start-stop-btn:not(:disabled):hover {
+  background-color: var(--stop-btn-hover) !important;
+}
+
+.quick-start-stop-btn[data-state="start"]:not(:disabled):hover {
+  background-color: var(--run-btn-hover) !important;
+}
+
+.quick-start-stop-btn[data-state="download"]:not(:disabled):hover {
+  background-color: var(--download-btn-hover) !important;
+}
+
 /* L1 Chain Layout */
 .l1-chains {
   display: flex;
