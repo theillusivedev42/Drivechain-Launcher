@@ -297,9 +297,10 @@ const Card = ({
             <div className={`status-light ${processHealth}`} title={`Process Status: ${processHealth}`} />
           </div>
           <div style={{ fontSize: '0.8em', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '4px', fontWeight: 400 }}>
-            {chain.id === 'bitwindow' ? 
-              (processHealth === 'healthy' ? 'Running' : 'Offline') :
-              (processHealth === 'healthy' && blockCount >= 0 ? `Block Height: ${blockCount}` : 'Offline')}
+            {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
+              (chain.id === 'bitwindow' ? 'Running' :
+               blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
+              'Offline'}
           </div>
 
           </div>
