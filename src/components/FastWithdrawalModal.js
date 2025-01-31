@@ -30,7 +30,7 @@
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideFastWithdrawalModal } from '../store/fastWithdrawalModalSlice';
-import { X } from 'lucide-react';
+import { X, Clipboard } from 'lucide-react';
 import styles from './FastWithdrawalModal.module.css';
 
 const FastWithdrawalModal = () => {
@@ -176,8 +176,9 @@ const FastWithdrawalModal = () => {
                     type="button"
                     onClick={() => handlePaste(setAmount)}
                     className={styles.pasteButton}
+                    title="Paste from clipboard"
                   >
-                    Paste
+                    <Clipboard size={18} />
                   </button>
                 </div>
               </div>
@@ -195,8 +196,9 @@ const FastWithdrawalModal = () => {
                     type="button"
                     onClick={() => handlePaste(setAddress)}
                     className={styles.pasteButton}
+                    title="Paste from clipboard"
                   >
-                    Paste
+                    <Clipboard size={18} />
                   </button>
                 </div>
               </div>
@@ -291,8 +293,9 @@ const FastWithdrawalModal = () => {
                           type="button"
                           onClick={() => handlePaste(setPaymentTxid)}
                           className={styles.pasteButton}
+                          title="Paste from clipboard"
                         >
-                          Paste
+                          <Clipboard size={18} />
                         </button>
                       </div>
                     </div>
