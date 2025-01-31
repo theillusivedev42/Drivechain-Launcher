@@ -153,7 +153,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Thunder",
-            "description": "A high performance largeblock sidechain",
+            "description": "A high-performance sidechain designed to scale Bitcoin through optimized transaction formats and large blocks (up to 1GB). Part of a network of regional sidechains that together can process global transaction volumes.",
             "repo_url": "https://github.com/LayerTwo-Labs/thunder-rust",
             "released": "yes",
             "directories": {
@@ -203,7 +203,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Bitnames",
-            "description": "Bitnames sidechain",
+            "description": "A decentralized naming and identity sidechain that enables universal logins and censorship-resistant domains. Provides a single username across all platforms while maintaining privacy through separate identities.",
             "repo_url": "https://github.com/LayerTwo-Labs/bitnames",
             "released": "yes",
             "directories": {
@@ -253,7 +253,7 @@
             "enabled": true,
             "version": "",
             "display_name": "ZSide",
-            "description": "Privacy-focused sidechain",
+            "description": "A privacy-focused sidechain for confidential transactions and anonymous payments. Provides enhanced privacy features while maintaining Bitcoin's security model.",
             "repo_url": "https://github.com/LayerTwo-Labs/zcash-sidechain",
             "released": "no",
             "directories": {

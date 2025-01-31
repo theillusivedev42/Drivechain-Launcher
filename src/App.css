@@ -24,6 +24,9 @@
   --download-item-text: #555;
   --progress-bar-bg: #e0e0e0;
   --progress-bar-fill: #4caf50;
+  /* Add base scaling units */
+  --base-font-size: calc(0.7rem + 0.3vw);
+  --base-spacing: calc(0.5rem + 0.5vw);
 }
 
 .dark {
@@ -61,6 +64,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: var(--base-font-size);
 }
 
 .App {
@@ -72,21 +76,23 @@ body {
   align-items: center;
   justify-content: flex-start;
   color: var(--text-color);
-  padding-top: 36px;
+  /* Nav is 10px top/bottom padding + ~20px content = 40px total */
+  /* Add extra space for visual breathing room */
+  padding-top: max(40px, calc(40px + 1vh));
 }
 
 .App-header {
-  margin-bottom: 20px;
+  margin-bottom: var(--base-spacing);
 }
 
 .card-container {
-  width: 80%;
-  max-width: 800px;
+  width: 90%;
+  max-width: 1600px;
 }
 
 .card {
   background-color: var(--card-bg);
-  border-radius: 8px;
+  border-radius: calc(var(--base-spacing) * 0.5);
   padding: 0;
   margin-bottom: 0;
   display: flex;
@@ -110,19 +116,19 @@ body {
 }
 
 .card-header {
-  padding: 20px 20px 20px 20px;
+  padding: var(--base-spacing);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   text-align: left;
 }
 
 .card-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: calc(var(--base-font-size) * 1.2);
   font-weight: 600;
 }
 
 .card-content {
-  padding: 15px 20px;
+  padding: var(--base-spacing);
   flex-grow: 1;
   text-align: left;
   background-color: #f5f5f5;
@@ -130,7 +136,7 @@ body {
 
 .card-content p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--base-font-size);
   line-height: 1.4;
   color: var(--text-color);
 }
@@ -140,7 +146,7 @@ body {
 }
 
 .card-actions {
-  padding: 15px 20px;
+  padding: var(--base-spacing);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -148,17 +154,20 @@ body {
 }
 
 .btn {
-  width: 120px;
+  width: calc(60px + 5vw); /* Scalable button width */
   margin: 0;
-  padding: 10px;
+  padding: calc(var(--base-spacing) * 0.5) calc(var(--base-spacing));
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--base-font-size);
   text-align: center;
   color: white;
   transition: background-color 0.2s ease, opacity 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn:disabled {
@@ -169,7 +178,7 @@ body {
 .settings-icon-button {
   background: none;
   border: none;
-  padding: 8px;
+  padding: calc(var(--base-spacing) * 0.5);
   cursor: pointer;
   border-radius: 50%;
   display: flex;
@@ -194,62 +203,23 @@ body {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.download {
-  background-color: var(--download-btn);
-}
-.download:hover {
-  background-color: var(--download-btn-hover);
-}
+.download { background-color: var(--download-btn); }
+.download:hover { background-color: var(--download-btn-hover); }
+.run { background-color: var(--run-btn); }
+.run:hover { background-color: var(--run-btn-hover); }
+.downloading, .extracting { background-color: var(--downloading-btn); }
+.downloading:hover, .extracting:hover { background-color: var(--downloading-btn-hover); }
+.running { background-color: var(--running-btn); }
+.running:hover { background-color: var(--running-btn-hover); }
+.stop { background-color: var(--stop-btn); }
+.stop:hover { background-color: var(--stop-btn-hover); }
+.stopping { background-color: var(--stopping-btn); }
+.stopping:hover { background-color: var(--stopping-btn-hover); }
+.settings { background-color: var(--btn-bg); color: var(--btn-text); }
 
-.run {
-  background-color: var(--run-btn);
-}
-.run:hover {
-  background-color: var(--run-btn-hover);
-}
-
-.downloading,
-.extracting {
-  background-color: var(--downloading-btn);
-}
-.downloading:hover,
-.extracting:hover {
-  background-color: var(--downloading-btn-hover);
-}
-
-.running {
-  background-color: var(--running-btn);
-}
-.running:hover {
-  background-color: var(--running-btn-hover);
-}
-
-.stop {
-  background-color: var(--stop-btn);
-}
-.stop:hover {
-  background-color: var(--stop-btn-hover);
-}
-
-.stopping {
-  background-color: var(--stopping-btn);
-}
-.stopping:hover {
-  background-color: var(--stopping-btn-hover);
-}
-
-.settings {
-  background-color: var(--btn-bg);
-  color: var(--btn-text);
-}
-
-.Nodes,
-.Wallet,
-.Tools,
-.Settings,
-.Other {
+.Nodes, .Wallet, .Tools, .Settings, .Other {
   width: 100%;
-  padding: 20px;
+  padding: var(--base-spacing);
   box-sizing: border-box;
 }
 
@@ -259,37 +229,85 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   box-sizing: border-box;
+  padding: 0 var(--base-spacing);
 }
-
 
 .chain-heading-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--base-spacing);
 }
 
 .chain-heading {
-  font-size: 1.5rem;
+  font-size: calc(var(--base-font-size) * 1.5);
   font-weight: bold;
   text-align: left;
   margin: 0;
-  padding: 12px 0;
+  padding: calc(var(--base-spacing) * 0.75) 0;
 }
 
-.quick-start-button {
-  background-color: var(--run-btn);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+/* L1 Chain Layout */
+.l1-chains {
+  display: flex;
+  gap: var(--base-spacing);
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.quick-start-button:hover {
-  background-color: var(--run-btn-hover);
+.l1-chains::-webkit-scrollbar {
+  display: none;
+}
+
+.l1-chains > .card {
+  flex: 1;
+  min-width: 0; /* Remove min-width constraint */
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* L2 Chain Layout */
+.l2-chains {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--base-spacing);
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.l2-chains > div {
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.l2-chains > .card {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Quick Start/Stop Button */
+.quick-start-stop-btn {
+  padding: calc(var(--base-spacing) * 0.5) calc(var(--base-spacing));
+  transition: background-color 0.2s ease !important;
+  font-size: var(--base-font-size);
+}
+
+.quick-start-stop-btn:not(:disabled):hover {
+  background-color: var(--stop-btn-hover) !important;
+}
+
+.quick-start-stop-btn[data-state="start"]:not(:disabled):hover {
+  background-color: var(--run-btn-hover) !important;
+}
+
+.quick-start-stop-btn[data-state="download"]:not(:disabled):hover {
+  background-color: var(--download-btn-hover) !important;
 }
 
 /* Shimmering effect for download button */
@@ -336,82 +354,12 @@ body {
   animation: none;
 }
 
-/* Set gradient color based on button state */
 .btn-shimmer[data-state="download"] {
   --current-color: var(--download-btn);
 }
 
 .btn-shimmer[data-state="start"] {
   --current-color: var(--run-btn);
-}
-
-/* Quick Start/Stop Button */
-.quick-start-stop-btn {
-  transition: background-color 0.2s ease !important;
-}
-
-.quick-start-stop-btn:not(:disabled):hover {
-  background-color: var(--stop-btn-hover) !important;
-}
-
-.quick-start-stop-btn[data-state="start"]:not(:disabled):hover {
-  background-color: var(--run-btn-hover) !important;
-}
-
-.quick-start-stop-btn[data-state="download"]:not(:disabled):hover {
-  background-color: var(--download-btn-hover) !important;
-}
-
-/* L1 Chain Layout */
-.l1-chains {
-  display: flex;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
-
-.l1-chains::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
-
-.l1-chains > .card {
-  flex: 1;
-  min-width: 300px;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* L2 Chain Layout */
-.l2-chains {
-  display: flex;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-}
-
-.l2-chains > .card {
-  flex: 1;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* Responsive Layout */
-@media (max-width: 768px) {
-  .chain-list {
-    padding: 0 1rem;
-  }
-  
-  .l1-chains > .card,
-  .l2-chains > .card {
-    min-width: 250px; /* Slightly smaller minimum width on mobile */
-  }
-}
-
-.App > div:not(nav) {
-  /* margin-top: 20px; */
 }
 
 code {
