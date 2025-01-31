@@ -88,23 +88,22 @@
       "public/**/*"
     ],
     "directories": {
-      "buildResources": "public"
+      "buildResources": "public",
+      "output": "dist"
     },
     "linux": {
       "target": [
-        "deb",
-        "tar.gz"
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        }
       ],
       "category": "Development",
       "maintainer": "Drivechain <support@drivechain.info>",
-      "asarUnpack": [
-        "**/chrome-sandbox"
-      ],
       "executableName": "drivechain-launcher",
       "executableArgs": [
         "--no-sandbox"
-      ],
-      "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}"
+      ]
     },
     "win": {
       "target": "nsis",
