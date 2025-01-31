@@ -1,4 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
+
+// Disable sandbox for Linux
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-setuid-sandbox');
+  process.env.ELECTRON_DISABLE_SANDBOX = '1';
+}
 const path = require("path");
 const fs = require("fs-extra");
 const isDev = require("electron-is-dev");
@@ -42,6 +49,7 @@ function createWindow() {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, "preload.js"),
+        sandbox: false
       },
     });
     mainWindow.loadURL(
@@ -513,6 +521,9 @@ async function initialize() {
     app.quit();
   }
 }
+
+// Disable sandbox
+app.commandLine.appendSwitch('no-sandbox');
 
 app.whenReady().then(initialize);
 

@@ -90,14 +90,25 @@
     "linux": {
       "target": ["deb", "tar.gz"],
       "category": "Development",
-      "maintainer": "Drivechain <support@drivechain.info>"
+      "maintainer": "Drivechain <support@drivechain.info>",
+      "asarUnpack": ["**/chrome-sandbox"],
+      "executableName": "drivechain-launcher",
+      "executableArgs": ["--no-sandbox"],
+      "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "Drivechain-Launcher-Setup-${version}.${ext}"
     },
     "mac": {
-      "target": ["dmg", "pkg"],
-      "category": "public.app-category.developer-tools"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.developer-tools",
+      "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}"
     }
   },
   "devDependencies": {
