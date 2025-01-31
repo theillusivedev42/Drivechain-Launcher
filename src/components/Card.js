@@ -4,6 +4,7 @@ import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import Tooltip from './Tooltip';
+import './StatusLight.css'; 
 
 const Card = ({
   chain,
@@ -23,7 +24,61 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [processHealth, setProcessHealth] = useState('offline'); // 'healthy', 'warning', 'error', 'offline'
+  const [blockCount, setBlockCount] = useState(-1);
   const buttonRef = useRef(null);
+
+  // Periodic chain status / health check
+  useEffect(() => {
+    const fetchBlockCount = async () => {
+      console.log("chain name: ", chain)
+      try {
+        const count = await window.electronAPI.getChainBlockCount(chain.id);
+        console.log("new count: ", count)
+        setBlockCount(count);
+      } catch (error) {
+        setBlockCount(-1)
+        console.error('Failed to fetch block count:', error);
+      }
+    };
+
+    const interval = setInterval(() => {
+      // Check on the health and status of chains
+      if (chain.id === "bitwindow") {
+        // BitWindow does not return a block count, so just check if it is running
+        if (chain.status === 'stopping' || chain.status === 'stopped') {
+          setProcessHealth('offline');
+        }
+        else
+        if (chain.status === 'running') {
+          setProcessHealth('healthy');
+        }
+        else {
+          setProcessHealth('warning');
+        }
+      } else {
+        // Other chains can tell us their current block height
+        fetchBlockCount();
+        if (chain.status === 'stopping' || chain.status === 'stopped') {
+          setProcessHealth('offline');
+        } 
+        else 
+        if (blockCount === -1) {
+          setProcessHealth('offline');
+        }
+        else 
+        if (blockCount === 0) {
+          setProcessHealth('warning');
+        }
+        else
+        if (blockCount > 0) {
+          setProcessHealth('healthy');
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [chain.id, chain.status, blockCount]);
 
   const checkDependencies = () => {
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
@@ -132,6 +187,8 @@ const Card = ({
             return;
           }
           
+          setProcessHealth('offline');
+
           console.log(`Stopping chain ${chain.id}`);
           // Update UI immediately to show stopping state
           onUpdateChain(chain.id, { status: 'stopping' });
@@ -237,8 +294,17 @@ const Card = ({
     <>
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
         <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-          <div className="card-header">
-            <h2>{chain.display_name}</h2>
+          <div className="card-header" style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ margin: 0, lineHeight: 1.2, textAlign: 'left' }}>{chain.display_name}</h2>
+            <div className={`status-light ${processHealth}`} title={`Process Status: ${processHealth}`} />
+          </div>
+          <div style={{ fontSize: '0.9em', color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 51, 51, 0.7)', marginTop: '4px', fontWeight: 400 }}>
+            {chain.id === 'bitwindow' ? 
+              (processHealth === 'healthy' ? 'Running' : 'Not started') :
+              (processHealth === 'healthy' && blockCount >= 0 ? `#Blocks: ${blockCount}` : 'Not started')}
+          </div>
+
           </div>
           <div className="card-content">
             <p>{chain.description}</p>
