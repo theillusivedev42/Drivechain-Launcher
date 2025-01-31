@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './WelcomeModal.module.css';
+import { ArrowLeft } from 'lucide-react';
 
 const WelcomeModal = ({ isOpen, onClose }) => {
   const [currentPage, setCurrentPage] = useState('default'); // 'default', 'restore', or 'advanced'
@@ -184,7 +185,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
             setError('');
           }}
         >
-          ← Back
+          <ArrowLeft size={20} />
         </button>
         <h2>Restore Wallet</h2>
       </div>
@@ -237,7 +238,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
             setError('');
           }}
         >
-          ← Back
+          <ArrowLeft size={20} />
         </button>
         <h2>Advanced Wallet Creation</h2>
       </div>
