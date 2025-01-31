@@ -14,7 +14,7 @@ const ResetConfirmModal = ({ chainName, onConfirm, onClose }) => {
 
   return (
     <div
-      className={`${styles.modalOverlay} ${isDarkMode ? styles.dark : styles.light}`}
+      className={`${styles.modalOverlay} ${styles.dangerOverlay} ${isDarkMode ? styles.dark : styles.light}`}
       onClick={handleOverlayClick}
     >
       <div className={styles.modalContent}>

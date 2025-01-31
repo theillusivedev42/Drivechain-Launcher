@@ -7,9 +7,11 @@ import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 import ResetAllModal from './ResetAllModal';
 import UpdateConfirmModal from './UpdateConfirmModal';
+import WalletWarningModal from './WalletWarningModal';
 
 const SettingsModal = ({ onResetComplete }) => {
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showWalletWarning, setShowWalletWarning] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(null);
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [availableUpdates, setAvailableUpdates] = useState([]);
@@ -19,6 +21,12 @@ const SettingsModal = ({ onResetComplete }) => {
   const { showQuotes } = useSelector((state) => state.settings);
   const { isDarkMode, toggleTheme } = useTheme();
   const handleClose = () => {
+    setShowResetModal(false);
+    setShowWalletWarning(false);
+    setUpdateStatus(null);
+    setIsCheckingUpdates(false);
+    setAvailableUpdates([]);
+    setShowUpdateConfirm(false);
     dispatch(hideSettingsModal());
   };
 
@@ -64,7 +72,10 @@ const SettingsModal = ({ onResetComplete }) => {
   if (!isVisible) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
+    <div 
+      className={`${styles.modalOverlay} ${isDarkMode ? styles.dark : styles.light}`} 
+      onClick={handleOverlayClick}
+    >
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Settings</h2>
@@ -104,16 +115,7 @@ const SettingsModal = ({ onResetComplete }) => {
             <span className={styles.settingLabel}>Master Wallet Directory</span>
             <button 
               className={styles.updateButton}
-              onClick={async () => {
-                try {
-                  const result = await window.electronAPI.invoke('open-wallet-starters-dir');
-                  if (!result.success) {
-                    throw new Error(result.error);
-                  }
-                } catch (error) {
-                  console.error('Error opening master wallet directory:', error);
-                }
-              }}
+              onClick={() => setShowWalletWarning(true)}
             >
               Open
             </button>
@@ -164,9 +166,11 @@ const SettingsModal = ({ onResetComplete }) => {
           )}
         </div>
 
-        <button className={styles.resetButton} onClick={handleReset}>
-          Reset Everything
-        </button>
+        <div className={styles.buttonContainer}>
+          <button className={styles.resetButton} onClick={handleReset}>
+            Reset Everything
+          </button>
+        </div>
       </div>
       {showResetModal && (
         <ResetAllModal
@@ -201,6 +205,23 @@ const SettingsModal = ({ onResetComplete }) => {
             }
           }}
           onClose={() => setShowUpdateConfirm(false)}
+        />
+      )}
+      {showWalletWarning && (
+        <WalletWarningModal
+          onConfirm={async () => {
+            try {
+              const result = await window.electronAPI.invoke('open-wallet-starters-dir');
+              if (!result.success) {
+                throw new Error(result.error);
+              }
+            } catch (error) {
+              console.error('Error opening master wallet directory:', error);
+            } finally {
+              setShowWalletWarning(false);
+            }
+          }}
+          onClose={() => setShowWalletWarning(false)}
         />
       )}
     </div>

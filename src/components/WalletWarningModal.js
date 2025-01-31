@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChainSettingsModal.module.css';
 
-const ResetAllModal = ({ onConfirm, onClose }) => {
+const WalletWarningModal = ({ onConfirm, onClose }) => {
   const { isDarkMode } = useTheme();
   
   const handleOverlayClick = (e) => {
@@ -20,21 +20,21 @@ const ResetAllModal = ({ onConfirm, onClose }) => {
     >
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Reset All Chains</h2>
+          <h2 className={styles.modalTitle}>Warning: Wallet Directory Access</h2>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={20} />
           </button>
         </div>
         <div className={styles.modalBody}>
-          <p>Warning: This will reset all chains to their default state and delete ALL data, including:</p>
+          <p>Manually modifying wallet files can lead to:</p>
           <ul className={styles.modalBody}>
-            <li>All blockchain data</li>
-            <li>All wallet data and private keys</li>
-            <li>All transaction history</li>
-            <li>All custom chain configurations</li>
+            <li>Permanent loss of funds</li>
+            <li>Wallet data corruption</li>
+            <li>Chain synchronization issues</li>
+            <li>Security vulnerabilities</li>
           </ul>
           <p className={styles.warningText}>
-            This action cannot be undone. Make sure you have backed up any important data.
+            Only proceed if you know exactly what you're doing. Changes to wallet files cannot be undone.
           </p>
         </div>
         <div className={styles.buttonContainer}>
@@ -42,7 +42,7 @@ const ResetAllModal = ({ onConfirm, onClose }) => {
             Cancel
           </button>
           <button onClick={onConfirm} className={styles.resetBtn}>
-            Reset All
+            I Understand
           </button>
         </div>
       </div>
@@ -50,4 +50,4 @@ const ResetAllModal = ({ onConfirm, onClose }) => {
   );
 };
 
-export default ResetAllModal;
+export default WalletWarningModal;

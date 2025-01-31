@@ -14,9 +14,12 @@
 .modalContent {
   background-color: var(--background-color);
   border-radius: 8px;
-  padding: 24px;
-  width: 100%;
-  max-width: 400px;
+  padding: 20px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -24,7 +27,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .modalTitle {
@@ -126,81 +129,67 @@ input:checked + .slider:before {
   gap: 10px;
 }
 
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 8px;
+}
+
 .updateButton {
-  padding: 10px;
-  width: 120px;
-  border-radius: 4px;
-  border: none;
-  background-color: #007bff;
+  background-color: var(--secondary-color);
   color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  font-family: inherit;
+  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  transition: background-color 0.2s;
 }
 
 .updateButton:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--secondary-hover-color);
 }
 
 .updateButton:disabled {
-  background-color: #ccc;
+  background-color: var(--secondary-color);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Make update button more compact when in a setting row */
 .settingRow .updateButton {
-  padding: 6px 12px;
-  font-size: 0.85em;
+  padding: 8px 16px;
   min-width: 80px;
 }
 
 .lastChecked {
   font-size: 0.8em;
-  color: #666;
-}
-
-:global(.dark) .updateSection {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-:global(.dark) .lastChecked {
-  color: #999;
+  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .resetButton {
-  width: 160px;
-  padding: 10px;
-  margin-top: 12px;
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   color: white;
   border: none;
+  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  font-family: inherit;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  transition: background-color 0.2s;
+  width: 160px;
 }
 
 .resetButton:hover {
-  background-color: #c82333;
-}
-
-:global(.light) .modalContent {
-  background-color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-:global(.dark) .modalContent {
-  background-color: #2c2c2c;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background-color: var(--danger-hover-color);
 }
 
 .updateStatus {
@@ -242,39 +231,58 @@ input:checked + .slider:before {
 }
 
 .confirmButton {
-  padding: 10px;
-  width: 120px;
-  border-radius: 4px;
-  border: none;
-  background-color: #dc3545;
+  background-color: var(--danger-color);
   color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  font-family: inherit;
+  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  transition: background-color 0.2s;
 }
 
 .cancelButton {
-  padding: 10px;
-  width: 120px;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
   border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: transparent;
-  color: var(--text-color);
   cursor: pointer;
-  font-size: 0.9rem;
   font-weight: 600;
-  text-align: center;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
-  font-family: inherit;
+  font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  transition: background-color 0.2s;
+  margin-right: 10px;
 }
 
 .confirmButton:hover {
-  background-color: #c82333;
+  background-color: var(--danger-hover-color);
 }
 
 .cancelButton:hover {
-  background-color: rgba(128, 128, 128, 0.1);
+  background-color: var(--secondary-hover-color);
+}
+
+.dark {
+  --background-color: #2d2d2d;
+  --text-color: #ffffff;
+  --danger-color: #dc3545;
+  --danger-hover-color: #c82333;
+  --secondary-color: #6c757d;
+  --secondary-hover-color: #5a6268;
+}
+
+.light {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --danger-color: #dc3545;
+  --danger-hover-color: #c82333;
+  --secondary-color: #6c757d;
+  --secondary-hover-color: #5a6268;
 }
