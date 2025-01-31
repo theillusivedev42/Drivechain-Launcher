@@ -8,6 +8,7 @@
             "display_name": "Bitcoin (Patched)",
             "description": "Bitcoin Core with additional patches",
             "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".drivechain",
@@ -56,6 +57,7 @@
             "display_name": "BIP 300/301 Enforcer",
             "description": "Enforcer for BIP 300/301 functionality",
             "repo_url": "https://github.com/LayerTwo-Labs/mainchain",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".local/share/bip300301_enforcer",
@@ -104,6 +106,7 @@
             "display_name": "BitWindow",
             "description": "BitWindow interface",
             "repo_url": "https://github.com/LayerTwo-Labs/bitwindow",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".local/share/bitwindow",
@@ -152,6 +155,7 @@
             "display_name": "Thunder",
             "description": "A high performance largeblock sidechain",
             "repo_url": "https://github.com/LayerTwo-Labs/thunder-rust",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".local/share/thunder",
@@ -201,6 +205,7 @@
             "display_name": "Bitnames",
             "description": "Bitnames sidechain",
             "repo_url": "https://github.com/LayerTwo-Labs/bitnames",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".local/share/plain_bitnames",
@@ -242,6 +247,106 @@
             "chain_type": 2,
             "chain_layer": 2,
             "slot": "2"
+        },
+        {
+            "id": "zside",
+            "enabled": true,
+            "version": "",
+            "display_name": "ZSide",
+            "description": "Privacy-focused sidechain",
+            "repo_url": "https://github.com/LayerTwo-Labs/zcash-sidechain",
+            "released": "no",
+            "directories": {
+                "base": {
+                    "linux": ".local/share/zside",
+                    "darwin": "Library/Application Support/zside",
+                    "win32": "AppData/Roaming/zside"
+                },
+                "wallet": "wallet.dat"
+            },
+            "extract_dir": {
+                "linux": "Drivechain-Launcher-Downloads/zside",
+                "darwin": "Drivechain-Launcher-Downloads/zside",
+                "win32": "Drivechain-Launcher-Downloads/zside"
+            },
+            "download": {
+                "urls": {
+                    "linux": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-unknown-linux-gnu.zip",
+                    "darwin": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-apple-darwin.zip",
+                    "win32": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-pc-windows-gnu.zip"
+                },
+                "sizes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                },
+                "hashes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                }
+            },
+            "binary": {
+                "linux": "zside-latest-x86_64-unknown-linux-gnu",
+                "darwin": "zside-latest-x86_64-apple-darwin",
+                "win32": "zside-latest-x86_64-pc-windows-gnu.exe"
+            },
+            "network": {
+                "port": 6003
+            },
+            "chain_type": 2,
+            "chain_layer": 2,
+            "slot": "3"
+        },
+        {
+            "id": "ethside",
+            "enabled": true,
+            "version": "",
+            "display_name": "EthSide",
+            "description": "Ethereum-compatible sidechain",
+            "repo_url": "https://github.com/LayerTwo-Labs/ethereum-sidechain",
+            "released": "no",
+            "directories": {
+                "base": {
+                    "linux": ".local/share/ethside",
+                    "darwin": "Library/Application Support/ethside",
+                    "win32": "AppData/Roaming/ethside"
+                },
+                "wallet": "keystore"
+            },
+            "extract_dir": {
+                "linux": "Drivechain-Launcher-Downloads/ethside",
+                "darwin": "Drivechain-Launcher-Downloads/ethside",
+                "win32": "Drivechain-Launcher-Downloads/ethside"
+            },
+            "download": {
+                "urls": {
+                    "linux": "https://releases.drivechain.info/L2-S4-EthSide-latest-x86_64-unknown-linux-gnu.zip",
+                    "darwin": "https://releases.drivechain.info/L2-S4-EthSide-latest-x86_64-apple-darwin.zip",
+                    "win32": "https://releases.drivechain.info/L2-S4-EthSide-latest-x86_64-pc-windows-gnu.zip"
+                },
+                "sizes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                },
+                "hashes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                }
+            },
+            "binary": {
+                "linux": "ethside-latest-x86_64-unknown-linux-gnu",
+                "darwin": "ethside-latest-x86_64-apple-darwin",
+                "win32": "ethside-latest-x86_64-pc-windows-gnu.exe"
+            },
+            "network": {
+                "port": 6004
+            },
+            "chain_type": 2,
+            "chain_layer": 2,
+            "slot": "4"
         }
     ]
-  }
+}

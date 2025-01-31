@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
+import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
 import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
@@ -25,11 +26,13 @@ function Nodes() {
           .filter(chain => chain.enabled)
           .map(async chain => {
             const dependencyInfo = dependencyData.default.find(d => d.id === chain.id);
+            console.log('Loading chain:', chain.id, 'Released status:', chain.released);
             return {
               ...chain,
               dependencies: dependencyInfo?.dependencies || [],
               status: await window.electronAPI.getChainStatus(chain.id),
               progress: 0,
+              released: chain.released, // Explicitly preserve released status
             };
           })
       );
@@ -405,38 +408,54 @@ function Nodes() {
             {chains
               .filter(chain => chain.chain_type === 0)
               .map(chain => (
-                <Card
-                  key={chain.id}
-                  chain={chain}
-                  onUpdateChain={handleUpdateChain}
-                  onDownload={handleDownloadChain}
-                  onStart={handleStartChain}
-                  onStop={handleStopChain}
-                  onReset={handleResetChain}
-                  onOpenWalletDir={handleOpenWalletDir}
-                  runningNodes={runningNodes}
-                />
+                console.log('Chain:', chain.id, 'Released:', chain.released),
+                chain.released === "no" ? (
+                  <UnreleasedCard
+                    key={chain.id}
+                    chain={chain}
+                  />
+                ) : (
+                  <Card
+                    key={chain.id}
+                    chain={chain}
+                    onUpdateChain={handleUpdateChain}
+                    onDownload={handleDownloadChain}
+                    onStart={handleStartChain}
+                    onStop={handleStopChain}
+                    onReset={handleResetChain}
+                    onOpenWalletDir={handleOpenWalletDir}
+                    runningNodes={runningNodes}
+                  />
+                )
               ))}
           </div>
         </div>
-        <div className="chain-section">
+        <div className="chain-section" style={{ marginBottom: '0' }}>
           <h2 className="chain-heading" style={{ marginBottom: '10px' }}>Layer 2</h2>
-          <div className="l2-chains">
+          <div className="l2-chains" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%', marginBottom: '-10px' }}>
             {chains
               .filter(chain => chain.chain_type === 2)
-              .map(chain => (
-                <Card
-                  key={chain.id}
-                  chain={chain}
-                  onUpdateChain={handleUpdateChain}
-                  onDownload={handleDownloadChain}
-                  onStart={handleStartChain}
-                  onStop={handleStopChain}
-                  onReset={handleResetChain}
-                  onOpenWalletDir={handleOpenWalletDir}
-                  runningNodes={runningNodes}
-                />
-              ))}
+              .map(chain => {
+                console.log('Rendering L2 chain:', chain.id, 'Full chain data:', chain);
+                return (
+                  <div key={chain.id} style={{ width: 'calc(50% - 10px)' }}>
+                    {chain.released === "no" ? (
+                      <UnreleasedCard chain={chain} />
+                    ) : (
+                      <Card
+                        chain={chain}
+                        onUpdateChain={handleUpdateChain}
+                        onDownload={handleDownloadChain}
+                        onStart={handleStartChain}
+                        onStop={handleStopChain}
+                        onReset={handleResetChain}
+                        onOpenWalletDir={handleOpenWalletDir}
+                        runningNodes={runningNodes}
+                      />
+                    )}
+                  </div>
+                );
+              })}
           </div>
         </div>
       </div>

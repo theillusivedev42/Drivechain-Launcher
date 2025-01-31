@@ -304,7 +304,7 @@ const Card = ({
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '300px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
         <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
           <div className="card-header" style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -330,7 +330,7 @@ const Card = ({
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={handleMouseLeave}
               disabled={
-                chain.status === 'downloading' || 
+                chain.status === 'downloading' ||
                 chain.status === 'extracting' ||
                 chain.status === 'stopping'
               }
@@ -374,3 +374,4 @@ const Card = ({
 };
 
 export default Card;
+
