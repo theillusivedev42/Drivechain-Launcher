@@ -94,7 +94,7 @@
 .buttonContainer {
   display: flex;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .actionButton {
@@ -218,7 +218,7 @@
 }
 
 .inputGroup {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .input {
@@ -230,6 +230,9 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   font-size: 0.9rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   transition: all 0.2s;
 }
 
@@ -336,30 +339,8 @@
   margin: 0;
 }
 
-/* Entropy Input */
-.entropyInput {
-  width: 100%;
-  height: 36px;
-  min-height: 36px;
-  padding: 6px 10px;
-  box-sizing: border-box;
-  border: 1px solid var(--btn-bg);
-  border-radius: 4px;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  font-size: 0.9rem;
-  font-family: monospace;
-  resize: vertical;
-  margin-bottom: 8px;
-}
-
-.entropyInput:focus {
-  outline: none;
-  border-color: var(--download-btn);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
-}
-
 .randomButton {
+  min-width: 140px;
   padding: 10px;
   background-color: var(--download-btn);
   color: white;
@@ -375,14 +356,19 @@
   text-align: center;
 }
 
-.randomButton:hover {
+.randomButton:hover:not(:disabled) {
   background-color: var(--download-btn-hover);
+}
+
+.randomButton:disabled {
+  opacity: 0.8;
+  cursor: wait;
 }
 
 /* Preview Section */
 .previewSection {
   margin-top: 16px;
-  padding: 12px;
+  padding: 16px;
   background-color: rgba(128, 128, 128, 0.05);
   border-radius: 6px;
 }
