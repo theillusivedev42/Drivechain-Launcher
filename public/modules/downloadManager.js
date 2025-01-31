@@ -103,11 +103,15 @@ class DownloadManager {
     }
   }
 
-  async downloadFile(chainId, url, zipPath) {
+  async downloadFile(chainId, url, zipPath, retryCount = 0) {
     return new Promise(async (resolve, reject) => {
+      const MAX_RETRIES = 3;
+      const RETRY_DELAY = 2000; // 2 seconds
+
       const download = this.activeDownloads.get(chainId) || {
         progress: 0,
         downloadedLength: 0,
+        retryCount: 0,
       };
       this.activeDownloads.set(chainId, download);
 
@@ -118,7 +122,13 @@ class DownloadManager {
         const cancelSource = axios.CancelToken.source();
         download.cancelSource = cancelSource;
 
+        // Configure axios with timeout and keepalive
         const { data, headers } = await axios({
+          timeout: 30000, // 30 second timeout
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          httpAgent: new (require('http').Agent)({ keepAlive: true }),
+          httpsAgent: new (require('https').Agent)({ keepAlive: true }),
           method: "GET",
           url: url,
           responseType: "stream",
@@ -154,11 +164,43 @@ class DownloadManager {
           }
         });
 
-        data.on("error", (error) => {
-          reject(new Error(`Download error: ${error.message}`));
+        data.on("error", async (error) => {
+          writer.end();
+          
+          if (retryCount < MAX_RETRIES && !this.pausedDownloads.has(chainId)) {
+            console.log(`Retrying download for ${chainId} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            
+            try {
+              const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
+              resolve(result);
+            } catch (retryError) {
+              reject(retryError);
+            }
+          } else {
+            reject(new Error(`Download error after ${retryCount} retries: ${error.message}`));
+          }
         });
 
-        writer.on("error", reject);
+        writer.on("error", async (error) => {
+          if (retryCount < MAX_RETRIES && !this.pausedDownloads.has(chainId)) {
+            console.log(`Retrying download for ${chainId} due to write error (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            
+            try {
+              const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
+              resolve(result);
+            } catch (retryError) {
+              reject(retryError);
+            }
+          } else {
+            reject(error);
+          }
+        });
 
         writer.on("close", () => {
           if (downloadedLength === totalLength) {
@@ -166,7 +208,20 @@ class DownloadManager {
             this.updateDownloadProgress(chainId, 100, downloadedLength);
             resolve();
           } else if (!this.pausedDownloads.has(chainId)) {
-            reject(new Error(`Incomplete download: expected ${totalLength} bytes, got ${downloadedLength} bytes`));
+            // If download is incomplete and not paused, try to retry
+            if (retryCount < MAX_RETRIES) {
+              console.log(`Incomplete download for ${chainId}, retrying (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+              setTimeout(async () => {
+                try {
+                  const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
+                  resolve(result);
+                } catch (retryError) {
+                  reject(retryError);
+                }
+              }, RETRY_DELAY);
+            } else {
+              reject(new Error(`Incomplete download after ${retryCount} retries: expected ${totalLength} bytes, got ${downloadedLength} bytes`));
+            }
           } else {
             resolve();
           }
@@ -282,16 +337,29 @@ class DownloadManager {
 
   sendDownloadsUpdate() {
     if (this.mainWindow) {
-      const downloadsArray = [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
-        .map(([chainId, download]) => ({
-          chainId,
-          displayName: this.config.chains.find(c => c.id === chainId)?.display_name || chainId,
-          progress: download.progress,
-          status: download.status,
-          downloadedLength: download.downloadedLength,
-          totalLength: download.totalLength,
-        }));
-      this.mainWindow.webContents.send("downloads-update", downloadsArray);
+      try {
+        const downloadsArray = [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
+          .map(([chainId, download]) => ({
+            chainId,
+            displayName: this.config.chains.find(c => c.id === chainId)?.display_name || chainId,
+            progress: download.progress,
+            status: download.status,
+            downloadedLength: download.downloadedLength,
+            totalLength: download.totalLength,
+            retryCount: download.retryCount || 0,
+          }));
+        
+        // Wrap IPC send in try-catch to handle potential window destruction
+        try {
+          if (!this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send("downloads-update", downloadsArray);
+          }
+        } catch (error) {
+          console.error("Failed to send downloads update:", error);
+        }
+      } catch (error) {
+        console.error("Error preparing downloads update:", error);
+      }
     }
   }
 

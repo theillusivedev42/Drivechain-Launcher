@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, powerSaveBlocker } = require("electron");
 
 // Disable sandbox for Linux
 if (process.platform === 'linux') {
@@ -37,6 +37,23 @@ async function loadConfig() {
   } catch (error) {
     console.error("Failed to load config:", error);
     app.quit();
+  }
+}
+
+// Track active downloads to manage power save blocking
+let activeDownloadCount = 0;
+let powerSaveBlockerId = null;
+
+function updatePowerSaveBlocker() {
+  if (activeDownloadCount > 0 && !powerSaveBlockerId) {
+    // Start power save blocker when downloads are active
+    powerSaveBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+    console.log('Power save blocker started:', powerSaveBlockerId);
+  } else if (activeDownloadCount === 0 && powerSaveBlockerId !== null) {
+    // Stop power save blocker when no downloads are active
+    powerSaveBlocker.stop(powerSaveBlockerId);
+    console.log('Power save blocker stopped:', powerSaveBlockerId);
+    powerSaveBlockerId = null;
   }
 }
 
@@ -241,8 +258,19 @@ function setupIPCHandlers() {
     const extractPath = path.join(downloadsDir, extractDir);
 
     await fs.ensureDir(extractPath);
-    downloadManager.startDownload(chainId, url, extractPath);
-    return { success: true };
+    activeDownloadCount++;
+    updatePowerSaveBlocker();
+    
+    try {
+      await downloadManager.startDownload(chainId, url, extractPath);
+      return { success: true };
+    } catch (error) {
+      console.error(`Download failed for ${chainId}:`, error);
+      throw error;
+    } finally {
+      activeDownloadCount--;
+      updatePowerSaveBlocker();
+    }
   });
 
   ipcMain.handle("pause-download", async (event, chainId) => {
