@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest-large, windows-latest-large, macos-latest]
+        os: [ubuntu-latest-large, windows-latest, macos-latest]
 
     steps:
       - name: Checkout code
@@ -98,7 +98,7 @@ jobs:
           done
 
       - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest-large'
+        if: matrix.os == 'windows-latest'
         run: |
           cd dist
           for file in *.exe; do
