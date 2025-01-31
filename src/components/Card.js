@@ -26,10 +26,18 @@ const Card = ({
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [processHealth, setProcessHealth] = useState('offline'); // 'healthy', 'warning', 'error', 'offline'
   const [blockCount, setBlockCount] = useState(-1);
+  const [startTime, setStartTime] = useState(null);
   const buttonRef = useRef(null);
 
   // Periodic chain status / health check
   useEffect(() => {
+    // Track when chain starts running
+    if (chain.status === 'running' && !startTime) {
+      setStartTime(Date.now());
+    } else if (chain.status !== 'running') {
+      setStartTime(null);
+    }
+
     const fetchBlockCount = async () => {
       console.log("chain name: ", chain)
       try {
@@ -43,7 +51,9 @@ const Card = ({
     };
 
     // Immediately set status based on chain state
-    if (chain.status === 'not_downloaded' || 
+    if (chain.status === 'stopping' && chain.id === 'bitcoin') {
+      setProcessHealth('warning');
+    } else if (chain.status === 'not_downloaded' || 
         chain.status === 'downloaded' || 
         chain.status === 'stopped' ||
         chain.status === 'stopping') {
@@ -57,6 +67,9 @@ const Card = ({
     }
 
     // Then start interval for additional health checks
+    const runningTime = startTime ? Date.now() - startTime : 0;
+    const intervalTime = runningTime > 5000 ? 500 : 5000; // Start at 5 seconds, then speed up to 500ms after 5 seconds
+
     const interval = setInterval(() => {
       // Only do additional health checks if chain is running
       if (chain.status === 'running' || 
@@ -72,7 +85,7 @@ const Card = ({
           }
         }
       }
-    }, 1000);
+    }, intervalTime);
 
     return () => clearInterval(interval);
   }, [chain.id, chain.status, blockCount]);
@@ -300,7 +313,7 @@ const Card = ({
             {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
               (chain.id === 'bitwindow' ? 'Running' :
                blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
-              'Offline'}
+              (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
           </div>
 
           </div>
