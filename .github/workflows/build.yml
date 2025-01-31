@@ -105,38 +105,56 @@ jobs:
     needs: [build]
     if: github.event_name == 'push' && github.repository_owner == 'LayerTwo-Labs'
     steps:
-      - name: Download Linux artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: linux-build
-          path: linux-build
+          pattern: "*-build"
+          path: artifacts
 
       - name: List downloaded files
         run: |
-          echo "Current directory contents:"
-          ls -la
+          echo "Artifacts directory contents:"
+          ls -la artifacts
           echo "Linux build directory contents:"
-          ls -la linux-build
+          ls -la artifacts/linux-build
+          echo "Windows build directory contents:"
+          ls -la artifacts/windows-build
 
-      - name: Process Linux artifact
+      - name: Process artifacts
         run: |
-          cd linux-build
-          # Show what we're working with
-          echo "Files to process:"
+          # Process Linux artifact
+          cd artifacts/linux-build
+          mv drivechain-launcher-*.tar.gz ../../drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+          cd ../..
+          
+          # Process Windows artifact
+          cd artifacts/windows-build
+          echo "Windows build directory contents before processing:"
           ls -la
           
-          # Rename the tar.gz file
-          mv drivechain-launcher-*.tar.gz ../drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+          # Find the exact exe file
+          EXE_FILE=$(ls Drivechain-Launcher-Setup-*.exe 2>/dev/null || echo "")
+          if [ -z "$EXE_FILE" ]; then
+            echo "Error: No Windows exe file found"
+            exit 1
+          fi
+          echo "Found Windows exe file: $EXE_FILE"
           
-          # Verify the renamed file
-          cd ..
-          echo "Final file:"
-          ls -la drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+          # Create zip file containing the exe
+          zip ../../drivechain-launcher-latest-windows.zip "$EXE_FILE"
+          cd ../..
+          
+          echo "Final files:"
+          ls -la drivechain-launcher-*
 
-      - name: Verify file exists
+      - name: Verify files exist
         run: |
           if [ ! -f "drivechain-launcher-latest-x86_64-linux-gnu.tar.gz" ]; then
-            echo "Error: Final tar.gz file not found"
+            echo "Error: Linux tar.gz file not found"
+            exit 1
+          fi
+          if [ ! -f "drivechain-launcher-latest-windows.zip" ]; then
+            echo "Error: Windows zip file not found"
             exit 1
           fi
 
@@ -149,3 +167,4 @@ jobs:
           port: 22
           scp: |
             'drivechain-launcher-latest-x86_64-linux-gnu.tar.gz' => '/var/www/html/'
+            'drivechain-launcher-latest-windows.zip' => '/var/www/html/'
