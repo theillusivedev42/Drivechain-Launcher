@@ -77,7 +77,7 @@ const WalletModal = () => {
           </button>
         </div>
 
-        <p className={styles.description}>View and manage your wallet starters</p>
+        <p className={styles.description}>View your wallet starters</p>
 
         {error && <div className={styles.error}>{error}</div>}
         {isLoading && <div className={styles.loading}>Loading...</div>}

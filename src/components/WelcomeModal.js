@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './WelcomeModal.module.css';
 import { ArrowLeft } from 'lucide-react';
+import SuccessPopup from './SuccessPopup';
 
 const WelcomeModal = ({ isOpen, onClose }) => {
   const [currentPage, setCurrentPage] = useState('default'); // 'default', 'restore', or 'advanced'
@@ -8,6 +9,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
   const [passphrase, setPassphrase] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   
   // Advanced mode states
   const [isHexMode, setIsHexMode] = useState(false);
@@ -98,7 +100,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       if (!result.success) {
         throw new Error(result.error);
       }
-      onClose();
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        onClose();
+      }, 2500);
     } catch (error) {
       console.error('Error generating wallet:', error);
       setError(error.message || 'Failed to generate wallet');
@@ -132,12 +138,12 @@ const WelcomeModal = ({ isOpen, onClose }) => {
 
   const renderDefaultPage = () => (
     <>
-      <h2>Welcome to DC Launcher! 🚀</h2>
+      <h2 style={{ marginBottom: '20px' }}>Welcome to Drivechain Launcher!</h2>
       <div className={styles.modalBody}>
         <p>
-          DC Launcher is your all-in-one tool for managing Drivechain nodes. Start and stop nodes, 
+          Drivechain Launcher is your all-in-one tool for managing Drivechain nodes. Start and stop nodes, 
           manage wallets, and interact with both mainchain and sidechains through a simple interface. 
-          Let's begin by setting up your wallet!
+          Let's begin by setting up your wallets!
         </p>
       </div>
       
@@ -148,7 +154,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         onClick={handleGenerateWallet}
         disabled={isGenerating}
       >
-        {isGenerating ? 'Generating...' : 'Generate Wallet'}
+        {isGenerating ? 'Generating...' : 'Generate Wallets'}
       </button>
 
       <div className={styles.optionsContainer}>
@@ -409,6 +415,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         {currentPage === 'restore' && renderRestorePage()}
         {currentPage === 'advanced' && renderAdvancedPage()}
       </div>
+      {showSuccess && <SuccessPopup message="Wallets generated successfully!" />}
     </div>
   );
 };
