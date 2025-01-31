@@ -27,6 +27,23 @@ jobs:
           node-version: '18.x'
           cache: 'npm'
 
+      - name: Setup GitHub CLI
+        run: |
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Prepare Release
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # For tags, create a new release
+            VERSION=${GITHUB_REF#refs/tags/}
+            gh release create "$VERSION" --draft --title "$VERSION"
+            echo "RELEASE_TAG=$VERSION" >> $GITHUB_ENV
+          else
+            # For branches, use or create 'latest' release
+            gh release view latest || gh release create latest --draft --title "Latest Build"
+            echo "RELEASE_TAG=latest" >> $GITHUB_ENV
+          fi
+
       - name: Install dependencies
         run: npm ci
 
@@ -74,27 +91,24 @@ jobs:
           
       - name: Upload Linux artifacts
         if: matrix.os == 'ubuntu-latest-large'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-artifacts
-          path: dist/*.tar.gz
-          if-no-files-found: error
-          compression-level: 0
+        run: |
+          cd dist
+          for file in *.tar.gz; do
+            gh release upload --clobber "$RELEASE_TAG" "$file"
+          done
 
       - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest-large'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-artifacts
-          path: dist/*.exe
-          if-no-files-found: error
-          compression-level: 0
+        run: |
+          cd dist
+          for file in *.exe; do
+            gh release upload --clobber "$RELEASE_TAG" "$file"
+          done
 
       - name: Upload macOS artifacts
         if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-artifacts
-          path: dist/*.dmg
-          if-no-files-found: error
-          compression-level: 0
+        run: |
+          cd dist
+          for file in *.dmg; do
+            gh release upload --clobber "$RELEASE_TAG" "$file"
+          done
