@@ -76,25 +76,76 @@ jobs:
         if: matrix.os == 'ubuntu-latest-large'
         uses: actions/upload-artifact@v4
         with:
-          name: linux-artifacts
-          path: dist/*.tar.gz
+          name: linux-build
+          path: |
+            dist/*.tar.gz
           if-no-files-found: error
-          compression-level: 0
 
       - name: Upload Windows artifacts
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: windows-artifacts
-          path: dist/*.exe
+          name: windows-build
+          path: |
+            dist/*.exe
           if-no-files-found: error
-          compression-level: 0
 
       - name: Upload macOS artifacts
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: macos-artifacts
-          path: dist/*.dmg
+          name: macos-build
+          path: |
+            dist/*.dmg
           if-no-files-found: error
-          compression-level: 0
+
+  upload-to-releases:
+    name: Upload to releases.drivechain.info
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'push' && github.repository_owner == 'LayerTwo-Labs'
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-build
+          path: linux-build
+
+      - name: List downloaded files
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          echo "Linux build directory contents:"
+          ls -la linux-build
+
+      - name: Process Linux artifact
+        run: |
+          cd linux-build
+          # Show what we're working with
+          echo "Files to process:"
+          ls -la
+          
+          # Rename the tar.gz file
+          mv drivechain-launcher-*.tar.gz ../drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+          
+          # Verify the renamed file
+          cd ..
+          echo "Final file:"
+          ls -la drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+
+      - name: Verify file exists
+        run: |
+          if [ ! -f "drivechain-launcher-latest-x86_64-linux-gnu.tar.gz" ]; then
+            echo "Error: Final tar.gz file not found"
+            exit 1
+          fi
+
+      - name: Upload to releases.drivechain.info
+        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
+        with:
+          host: 45.33.96.47
+          user: root
+          pass: ${{ secrets.RELEASES_SERVER_PW }}
+          port: 22
+          scp: |
+            'drivechain-launcher-latest-x86_64-linux-gnu.tar.gz' => '/var/www/html/'
