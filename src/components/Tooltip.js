@@ -1,10 +1,11 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import './Tooltip.css';
 
 const Tooltip = ({ text, visible, position }) => {
   if (!visible) return null;
   
-  return (
+  return createPortal(
     <div 
       className="tooltip" 
       style={{ 
@@ -13,7 +14,8 @@ const Tooltip = ({ text, visible, position }) => {
       }}
     >
       {text}
-    </div>
+    </div>,
+    document.body
   );
 };
 
