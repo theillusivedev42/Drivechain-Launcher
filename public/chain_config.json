@@ -6,7 +6,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Bitcoin (Patched)",
-            "description": "Bitcoin Core with additional patches",
+            "description": "Bitcoin Core modified with Drivechain functionality for sidechain support. Enables secure two-way pegging and communication between Bitcoin and its layer-2 sidechains.",
             "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
             "released": "yes",
             "directories": {
@@ -55,7 +55,7 @@
             "enabled": true,
             "version": "",
             "display_name": "BIP 300/301 Enforcer",
-            "description": "Enforcer for BIP 300/301 functionality",
+            "description": "A critical component that enforces BIP 300/301 sidechain protocols on the Bitcoin mainchain. Ensures secure two-way pegging between Bitcoin and its sidechains.",
             "repo_url": "https://github.com/LayerTwo-Labs/mainchain",
             "released": "yes",
             "directories": {
@@ -104,7 +104,7 @@
             "enabled": true,
             "version": "",
             "display_name": "BitWindow",
-            "description": "BitWindow interface",
+            "description": "A desktop interface for managing and interacting with Bitcoin sidechains. BitWindow enables users to create, monitor, and activate sidechains.",
             "repo_url": "https://github.com/LayerTwo-Labs/bitwindow",
             "released": "yes",
             "directories": {
