@@ -249,7 +249,7 @@ const FastWithdrawalModal = () => {
               {paymentMessage && (
                 <div className={styles.messageDisplay}>
                   <div className={styles.messageRow}>
-                    Please send <span>{paymentMessage.amount}</span> BTC
+                    Please send <span>{paymentMessage.amount}</span> {layer2Chain} Coins
                     <button
                       type="button"
                       onClick={() => handleCopy(paymentMessage.amount)}
