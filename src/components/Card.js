@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
+import GitHubIcon from './GitHubIcon';
 import Tooltip from './Tooltip';
 import './StatusLight.css'; 
 
@@ -338,9 +339,20 @@ const Card = ({
             >
               {getButtonText()}
             </button>
-            <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
-              <SettingsIcon />
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <a 
+                href={chain.repo_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="settings-icon-button"
+                aria-label="View GitHub Repository"
+              >
+                <GitHubIcon />
+              </a>
+              <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
+                <SettingsIcon />
+              </button>
+            </div>
           </div>
           <Tooltip 
             text={getTooltipText()}
@@ -374,4 +386,3 @@ const Card = ({
 };
 
 export default Card;
-

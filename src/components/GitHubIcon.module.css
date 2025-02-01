@@ -1,0 +1,13 @@
+.icon {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  color: #333;
+}
+
+:global(.dark) .icon {
+  color: #fff;
+}
+
+.icon:hover {
+  opacity: 1;
+}

@@ -5,9 +5,9 @@
             "id": "bitcoin",
             "enabled": true,
             "version": "",
-            "display_name": "Bitcoin (Patched)",
-            "description": "Bitcoin Core modified with Drivechain functionality for sidechain support. Enables secure two-way pegging and communication between Bitcoin and its layer-2 sidechains.",
-            "repo_url": "https://github.com/LayerTwo-Labs/bitcoin",
+            "display_name": "Bitcoin Core 28.1",
+            "description": "The latest version of Bitcoin Core. (Run in signet mode — \"play money\".)",
+            "repo_url": "https://github.com/bitcoin/bitcoin",
             "released": "yes",
             "directories": {
                 "base": {
@@ -55,8 +55,8 @@
             "enabled": true,
             "version": "",
             "display_name": "BIP 300/301 Enforcer",
-            "description": "A critical component that enforces BIP 300/301 sidechain protocols on the Bitcoin mainchain. Ensures secure two-way pegging between Bitcoin and its sidechains.",
-            "repo_url": "https://github.com/LayerTwo-Labs/mainchain",
+            "description": "Activates Bip300, without changing Bitcoin's code.",
+            "repo_url": "https://github.com/LayerTwo-Labs/bip300301_enforcer",
             "released": "yes",
             "directories": {
                 "base": {
@@ -104,7 +104,7 @@
             "enabled": true,
             "version": "",
             "display_name": "BitWindow",
-            "description": "A desktop interface for managing and interacting with Bitcoin sidechains. BitWindow enables users to create, monitor, and activate sidechains.",
+            "description": "A GUI for interacting with Bitcoin. Run this!",
             "repo_url": "https://github.com/LayerTwo-Labs/bitwindow",
             "released": "yes",
             "directories": {
