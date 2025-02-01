@@ -1,45 +1,42 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChainSettingsModal.module.css';
-import { X } from 'lucide-react';
 
-const ResetConfirmModal = ({ chainName, onConfirm, onClose }) => {
+const DownloadInProgressModal = ({ downloads, onClose, onForceQuit, isOpen }) => {
   const { isDarkMode } = useTheme();
+  
+  if (!isOpen) return null;
 
-  const handleOverlayClick = e => {
+  const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
-
+  
   return (
-    <div
+    <div 
       className={`${styles.modalOverlay} ${styles.dangerOverlay} ${isDarkMode ? styles.dark : styles.light}`}
       onClick={handleOverlayClick}
     >
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Reset {chainName}</h2>
+          <h2 className={styles.modalTitle}>Downloads in Progress</h2>
           <button className={styles.closeButton} onClick={onClose}>
             <X size={20} />
           </button>
         </div>
         <div className={styles.modalBody}>
-          <p>Are you sure you want to reset this chain? This will:</p>
-          <ol>
-            <li>Stop the chain if it's running</li>
-            <li>Cancel and clean up any active downloads</li>
-            <li>Delete all chain data</li>
-            <li>Remove any downloaded binaries</li>
-          </ol>
-          <p><strong>This action cannot be undone.</strong></p>
+          <p className={styles.warningText}>
+            Quitting now will cancel all active downloads. Are you sure you want to proceed?
+          </p>
         </div>
         <div className={styles.buttonContainer}>
-          <button onClick={onClose} className={`btn ${styles.cancelBtn}`}>
+          <button onClick={onClose} className={styles.cancelBtn}>
             Cancel
           </button>
-          <button onClick={onConfirm} className={`btn ${styles.resetBtn}`}>
-            Reset Chain
+          <button onClick={onForceQuit} className={styles.resetBtn}>
+            Force Quit
           </button>
         </div>
       </div>
@@ -47,4 +44,4 @@ const ResetConfirmModal = ({ chainName, onConfirm, onClose }) => {
   );
 };
 
-export default ResetConfirmModal;
+export default DownloadInProgressModal;

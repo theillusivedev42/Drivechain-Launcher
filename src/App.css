@@ -154,7 +154,7 @@ body {
 }
 
 .btn {
-  width: calc(60px + 5vw); /* Scalable button width */
+  min-width: calc(60px + 5vw); /* Minimum button width */
   margin: 0;
   padding: calc(var(--base-spacing) * 0.5) calc(var(--base-spacing));
   border: none;
@@ -167,10 +167,25 @@ body {
     sans-serif;
   text-align: center;
   color: white;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease, width 0.2s ease;
   white-space: nowrap;
+}
+
+/* Fixed width for most states */
+.btn.download,
+.btn.run,
+.btn.running,
+.btn.stop,
+.btn.stopping {
+  width: calc(60px + 5vw);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Allow width to grow for downloading/extracting states */
+.btn.downloading,
+.btn.extracting {
+  width: auto;
 }
 
 .btn:disabled {

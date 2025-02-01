@@ -7,9 +7,10 @@ const BitWindowClient = require("./bitWindowClient");
 const EnforcerClient = require("./enforcerClient");
 
 class ChainManager {
-  constructor(mainWindow, config) {
+  constructor(mainWindow, config, downloadManager) {
     this.mainWindow = mainWindow;
     this.config = config;
+    this.downloadManager = downloadManager;
     this.runningProcesses = {};
     this.chainStatuses = new Map(); // Tracks detailed chain statuses
     this.bitcoinMonitor = new BitcoinMonitor(mainWindow);
@@ -546,12 +547,25 @@ class ChainManager {
       const baseDir = chain.directories.base[platform];
       if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
 
-      this.chainStatuses.set(chainId, 'resetting');
+      // Set status to stopped immediately to avoid yellow flash
+      this.chainStatuses.set(chainId, 'stopped');
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
-        status: "resetting",
+        status: "stopped",
       });
 
+      // Aggressively clean up any active downloads first
+      if (this.downloadManager) {
+        const platform = process.platform;
+        const extractDir = chain.extract_dir?.[platform];
+        if (extractDir) {
+          const downloadsDir = app.getPath("downloads");
+          const extractPath = path.join(downloadsDir, extractDir);
+          await this.downloadManager.cleanupChainDownloads(chainId, extractPath);
+        }
+      }
+
+      // Stop the chain if running
       if (this.runningProcesses[chainId]) {
         await this.stopChain(chainId);
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -575,6 +589,7 @@ class ChainManager {
 
       await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Now set to not_downloaded for final state
       this.chainStatuses.set(chainId, 'not_downloaded');
       this.mainWindow.webContents.send("chain-status-update", {
         chainId,
@@ -667,6 +682,59 @@ class ChainManager {
     }
 
     return -1;
+  }
+
+  async resetAllChains() {
+    try {
+      // First clean up all downloads
+      if (this.downloadManager) {
+        await this.downloadManager.cleanupAllDownloads();
+      }
+
+      // Stop all running chains
+      const runningChains = Object.keys(this.runningProcesses);
+      for (const chainId of runningChains) {
+        await this.stopChain(chainId);
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Reset each chain's data
+      for (const chain of this.config.chains) {
+        const chainId = chain.id;
+        const platform = process.platform;
+        
+        // Remove data directory
+        const baseDir = chain.directories.base[platform];
+        if (baseDir) {
+          const homeDir = app.getPath("home");
+          const fullPath = path.join(homeDir, baseDir);
+          await fs.remove(fullPath);
+          await fs.ensureDir(fullPath);
+          console.log(`Reset chain ${chainId}: removed and recreated data directory ${fullPath}`);
+        }
+
+        // Remove binaries directory
+        const extractDir = chain.extract_dir?.[platform];
+        if (extractDir) {
+          const downloadsDir = app.getPath("downloads");
+          const binariesPath = path.join(downloadsDir, extractDir);
+          await fs.remove(binariesPath);
+          console.log(`Reset chain ${chainId}: removed binaries directory ${binariesPath}`);
+        }
+
+        // Update chain status
+        this.chainStatuses.set(chainId, 'not_downloaded');
+        this.mainWindow.webContents.send("chain-status-update", {
+          chainId,
+          status: "not_downloaded",
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Failed to reset all chains:", error);
+      return { success: false, error: error.message };
+    }
   }
 }
 

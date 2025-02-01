@@ -18,7 +18,6 @@ const ApiManager = require("./modules/apiManager");
 const DirectoryManager = require("./modules/directoryManager");
 const UpdateManager = require("./modules/updateManager");
 
-
 const configPath = path.join(__dirname, "chain_config.json");
 let config;
 let mainWindow = null;
@@ -78,6 +77,20 @@ function createWindow() {
     mainWindow.on('close', (event) => {
       if (!isShuttingDown) {
         event.preventDefault();
+        // Check for active downloads before initiating shutdown
+        const activeDownloads = downloadManager?.getDownloads() || [];
+        if (activeDownloads.length > 0) {
+          // Serialize download data to ensure it can be sent through IPC
+          const serializedDownloads = activeDownloads.map(download => ({
+            chainId: download.chainId,
+            progress: download.progress,
+            status: download.status,
+            downloadedLength: download.downloadedLength,
+            totalLength: download.totalLength
+          }));
+          mainWindow.webContents.send("downloads-in-progress", serializedDownloads);
+          return;
+        }
         performGracefulShutdown();
       }
     });
@@ -525,6 +538,25 @@ function setupIPCHandlers() {
   ipcMain.handle('force-kill', () => {
     forceKillAllProcesses();
   });
+
+  // Add handler for force quit with active downloads
+  ipcMain.handle('force-quit-with-downloads', async () => {
+    try {
+      // Cancel all downloads first
+      if (downloadManager) {
+        const activeDownloads = downloadManager.getDownloads();
+        for (const download of activeDownloads) {
+          await downloadManager.pauseDownload(download.chainId);
+        }
+      }
+      // Then force quit
+      isShuttingDown = true;
+      app.exit(0);
+    } catch (error) {
+      console.error('Error during force quit:', error);
+      app.exit(1);
+    }
+  });
 }
 
 async function initialize() {
@@ -547,9 +579,9 @@ async function initialize() {
     createWindow();
     
     // Then initialize managers that need mainWindow
-    chainManager = new ChainManager(mainWindow, config);
-    updateManager = new UpdateManager(config, chainManager);
     downloadManager = new DownloadManager(mainWindow, config);
+    chainManager = new ChainManager(mainWindow, config, downloadManager);
+    updateManager = new UpdateManager(config, chainManager);
     
     // Finally setup IPC handlers after everything is initialized
     setupIPCHandlers();
@@ -582,6 +614,20 @@ async function performGracefulShutdown() {
   }, SHUTDOWN_TIMEOUT);
 
   try {
+    // First handle any active downloads
+    if (downloadManager) {
+      const activeDownloads = downloadManager.getDownloads();
+      for (const download of activeDownloads) {
+        try {
+          console.log(`Canceling download for ${download.chainId}`);
+          await downloadManager.pauseDownload(download.chainId);
+        } catch (error) {
+          console.error(`Error canceling download for ${download.chainId}:`, error);
+        }
+      }
+    }
+
+    // Then stop running chains
     if (chainManager) {
       const runningChains = Object.keys(chainManager.runningProcesses);
       await Promise.all(runningChains.map(chainId => 
@@ -600,6 +646,20 @@ async function performGracefulShutdown() {
 }
 
 function forceKillAllProcesses() {
+  // First cancel all downloads
+  if (downloadManager) {
+    const activeDownloads = downloadManager.getDownloads();
+    for (const download of activeDownloads) {
+      try {
+        console.log(`Force canceling download for ${download.chainId}`);
+        downloadManager.pauseDownload(download.chainId);
+      } catch (error) {
+        console.error(`Error force canceling download for ${download.chainId}:`, error);
+      }
+    }
+  }
+
+  // Then kill chain processes
   if (chainManager) {
     Object.entries(chainManager.runningProcesses).forEach(([chainId, process]) => {
       try {

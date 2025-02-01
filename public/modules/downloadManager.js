@@ -136,15 +136,20 @@ class DownloadManager {
       this.sendDownloadsUpdate();
       this.mainWindow.webContents.send("download-complete", { chainId });
     } catch (error) {
-      console.error(`Error processing ${chainId}:`, error);
+      // Don't report cancellation errors during reset
+      if (!axios.isCancel(error) || error.message !== 'Reset chain requested') {
+        console.error(`Error processing ${chainId}:`, error);
+        this.mainWindow.webContents.send("download-error", {
+          chainId,
+          error: error.message,
+          stack: error.stack,
+        });
+      }
+
+      // Clean up regardless of error type
       this.activeDownloads.delete(chainId);
       this.pausedDownloads.delete(chainId);
       this.sendDownloadsUpdate();
-      this.mainWindow.webContents.send("download-error", {
-        chainId,
-        error: error.message,
-        stack: error.stack,
-      });
 
       try {
         await fs.promises.unlink(tempPath);
@@ -169,15 +174,11 @@ class DownloadManager {
     }
   }
 
-  async downloadFile(chainId, url, zipPath, retryCount = 0) {
+  async downloadFile(chainId, url, zipPath) {
     return new Promise(async (resolve, reject) => {
-      const MAX_RETRIES = 3;
-      const RETRY_DELAY = 2000; // 2 seconds
-
       const download = this.activeDownloads.get(chainId) || {
         progress: 0,
         downloadedLength: 0,
-        retryCount: 0,
       };
       this.activeDownloads.set(chainId, download);
 
@@ -187,6 +188,7 @@ class DownloadManager {
       try {
         const cancelSource = axios.CancelToken.source();
         download.cancelSource = cancelSource;
+        download.writer = writer; // Store writer reference for cleanup
 
         // Configure axios with timeout and keepalive
         const { data, headers } = await axios({
@@ -232,65 +234,17 @@ class DownloadManager {
 
         data.on("error", async (error) => {
           writer.end();
-          
-          if (retryCount < MAX_RETRIES && !this.pausedDownloads.has(chainId)) {
-            console.log(`Retrying download for ${chainId} (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-            
-            try {
-              const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
-              resolve(result);
-            } catch (retryError) {
-              reject(retryError);
-            }
-          } else {
-            reject(new Error(`Download error after ${retryCount} retries: ${error.message}`));
-          }
+          reject(error);
         });
 
         writer.on("error", async (error) => {
-          if (retryCount < MAX_RETRIES && !this.pausedDownloads.has(chainId)) {
-            console.log(`Retrying download for ${chainId} due to write error (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-            
-            try {
-              const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
-              resolve(result);
-            } catch (retryError) {
-              reject(retryError);
-            }
-          } else {
-            reject(error);
-          }
+          reject(error);
         });
 
         writer.on("close", () => {
-          if (downloadedLength === totalLength) {
-            // Force final progress update to 100% before resolving
-            this.updateDownloadProgress(chainId, 100, downloadedLength);
-            resolve();
-          } else if (!this.pausedDownloads.has(chainId)) {
-            // If download is incomplete and not paused, try to retry
-            if (retryCount < MAX_RETRIES) {
-              console.log(`Incomplete download for ${chainId}, retrying (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-              setTimeout(async () => {
-                try {
-                  const result = await this.downloadFile(chainId, url, zipPath, retryCount + 1);
-                  resolve(result);
-                } catch (retryError) {
-                  reject(retryError);
-                }
-              }, RETRY_DELAY);
-            } else {
-              reject(new Error(`Incomplete download after ${retryCount} retries: expected ${totalLength} bytes, got ${downloadedLength} bytes`));
-            }
-          } else {
-            resolve();
-          }
+          // Force final progress update to 100% before resolving
+          this.updateDownloadProgress(chainId, 100, downloadedLength);
+          resolve();
         });
       } catch (error) {
         if (axios.isCancel(error)) {
@@ -360,16 +314,33 @@ class DownloadManager {
   sendDownloadsUpdate() {
     if (this.mainWindow) {
       try {
+        // Ensure we only send serializable data
         const downloadsArray = [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
-          .map(([chainId, download]) => ({
-            chainId,
-            displayName: this.config.chains.find(c => c.id === chainId)?.display_name || chainId,
-            progress: download.progress,
-            status: download.status,
-            downloadedLength: download.downloadedLength,
-            totalLength: download.totalLength,
-            retryCount: download.retryCount || 0,
-          }));
+          .map(([chainId, download]) => {
+            // Extract only the serializable properties we need
+            const serializedDownload = {
+              chainId,
+              displayName: this.config.chains.find(c => c.id === chainId)?.display_name || chainId,
+              progress: download.progress || 0,
+              status: download.status || 'unknown',
+              downloadedLength: typeof download.downloadedLength === 'number' ? download.downloadedLength : 0,
+              totalLength: typeof download.totalLength === 'number' ? download.totalLength : 0,
+              retryCount: download.retryCount || 0
+            };
+            
+            // Ensure all numeric values are finite
+            if (!Number.isFinite(serializedDownload.progress)) {
+              serializedDownload.progress = 0;
+            }
+            if (!Number.isFinite(serializedDownload.downloadedLength)) {
+              serializedDownload.downloadedLength = 0;
+            }
+            if (!Number.isFinite(serializedDownload.totalLength)) {
+              serializedDownload.totalLength = 0;
+            }
+            
+            return serializedDownload;
+          });
         
         // Wrap IPC send in try-catch to handle potential window destruction
         try {
@@ -389,8 +360,75 @@ class DownloadManager {
     return [...this.activeDownloads.entries(), ...this.pausedDownloads.entries()]
       .map(([chainId, download]) => ({
         chainId,
-        ...download,
+        progress: download.progress || 0,
+        status: download.status || 'unknown',
+        downloadedLength: typeof download.downloadedLength === 'number' ? download.downloadedLength : 0,
+        totalLength: typeof download.totalLength === 'number' ? download.totalLength : 0,
+        retryCount: download.retryCount || 0
       }));
+  }
+
+  async cleanupChainDownloads(chainId, basePath) {
+    // Cancel any active downloads
+    const download = this.activeDownloads.get(chainId) || this.pausedDownloads.get(chainId);
+    if (download && download.cancelSource) {
+      // Force cancel the download and prevent retries
+      download.cancelSource.cancel('Reset chain requested');
+      download.writer?.end?.();
+    }
+
+    // Immediately remove from tracking maps to prevent any retry attempts
+    this.activeDownloads.delete(chainId);
+    this.pausedDownloads.delete(chainId);
+
+    // Force a small delay to ensure cancellation is processed
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Clean up any temp files that might exist
+    try {
+      const tempFiles = [
+        path.join(basePath, `temp_${chainId}.zip`),
+        path.join(basePath, `temp_${chainId}.tar.gz`)
+      ];
+
+      for (const tempFile of tempFiles) {
+        try {
+          await fs.remove(tempFile);
+        } catch (err) {
+          // Ignore errors for individual temp files
+          console.log(`Could not remove temp file ${tempFile}:`, err.message);
+        }
+      }
+    } catch (err) {
+      console.error(`Error cleaning up downloads for ${chainId}:`, err);
+    }
+
+    // Force UI update
+    this.sendDownloadsUpdate();
+  }
+
+  async cleanupAllDownloads() {
+    // Get all chains with active or paused downloads
+    const activeChains = [...this.activeDownloads.keys(), ...this.pausedDownloads.keys()];
+    
+    for (const chainId of activeChains) {
+      const chain = this.config.chains.find(c => c.id === chainId);
+      if (!chain) continue;
+
+      const platform = process.platform;
+      const extractDir = chain.extract_dir?.[platform];
+      if (!extractDir) continue;
+
+      const downloadsDir = app.getPath("downloads");
+      const extractPath = path.join(downloadsDir, extractDir);
+
+      await this.cleanupChainDownloads(chainId, extractPath);
+    }
+
+    // Double check all maps are cleared
+    this.activeDownloads.clear();
+    this.pausedDownloads.clear();
+    this.sendDownloadsUpdate();
   }
 }
 

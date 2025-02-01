@@ -126,7 +126,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("shutdown-started", subscription);
     };
   },
+  onDownloadsInProgress: (callback) => {
+    const subscription = (event, data) => callback(data);
+    ipcRenderer.on("downloads-in-progress", subscription);
+    return () => {
+      ipcRenderer.removeListener("downloads-in-progress", subscription);
+    };
+  },
   forceKill: () => ipcRenderer.invoke("force-kill"),
+  forceQuitWithDownloads: () => ipcRenderer.invoke("force-quit-with-downloads"),
   checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
 
   // Chain logs

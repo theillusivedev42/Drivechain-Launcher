@@ -16,12 +16,15 @@ import SettingsModal from './components/SettingsModal';
 import WelcomeModal from './components/WelcomeModal';
 import QuoteWidget from './components/QuoteWidget';
 import ShutdownModal from './components/ShutdownModal';
+import DownloadInProgressModal from './components/DownloadInProgressModal';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 function AppContent() {
   const { isDarkMode } = useTheme();
   const dispatch = useDispatch();
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [activeDownloads, setActiveDownloads] = useState([]);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Make cardData globally available
   useEffect(() => {
@@ -31,6 +34,19 @@ function AppContent() {
   useEffect(() => {
     document.body.className = isDarkMode ? 'dark' : 'light';
   }, [isDarkMode]);
+
+  // Listen for downloads-in-progress event
+  useEffect(() => {
+    const unsubscribe = window.electronAPI.onDownloadsInProgress((downloads) => {
+      setActiveDownloads(downloads);
+      setShowDownloadModal(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleForceQuit = () => {
+    window.electronAPI.forceQuitWithDownloads();
+  };
 
   // Check for updates and master wallet on startup
   useEffect(() => {
@@ -71,6 +87,12 @@ function AppContent() {
         />
         <QuoteWidget />
         <ShutdownModal />
+        <DownloadInProgressModal
+          downloads={activeDownloads}
+          onClose={() => setShowDownloadModal(false)}
+          onForceQuit={handleForceQuit}
+          isOpen={showDownloadModal}
+        />
       </div>
     </Router>
   );
