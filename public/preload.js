@@ -136,6 +136,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   forceKill: () => ipcRenderer.invoke("force-kill"),
   forceQuitWithDownloads: () => ipcRenderer.invoke("force-quit-with-downloads"),
   checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  notifyReady: () => ipcRenderer.invoke("notify-ready"),
 
   // Chain logs
   onChainLog: (chainId, callback) => {

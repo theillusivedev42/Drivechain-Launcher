@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import './App.css';
 import './scrollbar.css';
 import NavBar from './components/NavBar';
@@ -25,6 +25,7 @@ function AppContent() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [activeDownloads, setActiveDownloads] = useState([]);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Make cardData globally available
   useEffect(() => {
@@ -51,7 +52,6 @@ function AppContent() {
   // Check for updates and master wallet on startup
   useEffect(() => {
     const initializeApp = async () => {
-      // Check for master wallet
       try {
         const result = await window.electronAPI.getMasterWallet();
         if (!result.success || !result.data) {
@@ -60,12 +60,19 @@ function AppContent() {
       } catch (error) {
         console.error('Error checking master wallet:', error);
         setShowWelcomeModal(true);
+      } finally {
+        setIsInitialized(true);
+        // Signal that app is fully initialized
+        window.electronAPI.notifyReady();
       }
-
     };
 
     initializeApp();
   }, [dispatch]);
+
+  if (!isInitialized) {
+    return null; // Show nothing until initialization is complete
+  }
 
   return (
     <Router>

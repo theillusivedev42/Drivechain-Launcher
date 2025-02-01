@@ -21,6 +21,7 @@ const UpdateManager = require("./modules/updateManager");
 const configPath = path.join(__dirname, "chain_config.json");
 let config;
 let mainWindow = null;
+let loadingWindow = null;
 let chainManager;
 let downloadManager;
 let directoryManager;
@@ -56,11 +57,36 @@ function updatePowerSaveBlocker() {
   }
 }
 
+function createLoadingWindow() {
+  loadingWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    transparent: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    show: false
+  });
+
+  loadingWindow.loadFile('public/loading.html');
+  loadingWindow.once('ready-to-show', () => {
+    loadingWindow.show();
+    loadingWindow.focus();
+  });
+  loadingWindow.center();
+}
+
 function createWindow() {
   if (mainWindow === null) {
+    // Create main window completely hidden
     mainWindow = new BrowserWindow({
       width: 1024,
       height: 768,
+      show: false,
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -68,11 +94,26 @@ function createWindow() {
         sandbox: false
       },
     });
+
+    // Load the URL
     mainWindow.loadURL(
       isDev
         ? "http://localhost:3000"
         : `file://${path.join(__dirname, "../build/index.html")}`
     );
+
+    // Wait for window content to be ready
+    mainWindow.once('ready-to-show', () => {
+      // Add handler for app ready notification
+      ipcMain.handle("notify-ready", () => {
+        if (loadingWindow) {
+          loadingWindow.destroy();
+          loadingWindow = null;
+        }
+        mainWindow.show();
+        mainWindow.focus();
+      });
+    });
 
     mainWindow.on('close', (event) => {
       if (!isShuttingDown) {
@@ -594,7 +635,18 @@ async function initialize() {
 // Disable sandbox
 app.commandLine.appendSwitch('no-sandbox');
 
-app.whenReady().then(initialize);
+async function startApp() {
+  // Show loading window first
+  createLoadingWindow();
+  
+  // Wait a bit to ensure loading window is visible
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Then start initialization
+  await initialize();
+}
+
+app.whenReady().then(startApp);
 
 let isShuttingDown = false;
 let forceKillTimeout;

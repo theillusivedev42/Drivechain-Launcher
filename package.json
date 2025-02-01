@@ -52,7 +52,8 @@
     "react-eject": "react-scripts eject",
     "electron-build": "electron-builder",
     "build": "npm run react-build && npm run electron-build",
-    "start": "concurrently \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron --no-sandbox .\""
+    "start": "concurrently \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron --no-sandbox .\"",
+    "start:prod": "concurrently \"cross-env NODE_ENV=production BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=production electron --no-sandbox .\""
   },
   "eslintConfig": {
     "extends": [
