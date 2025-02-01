@@ -127,7 +127,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
       if (!result.success) {
         throw new Error(result.error);
       }
-      onClose();
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        onClose();
+      }, 2500);
     } catch (error) {
       console.error('Error restoring wallet:', error);
       setError(error.message || 'Failed to restore wallet');
@@ -389,7 +393,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
               });
 
               if (result.success) {
-                onClose();
+                setShowSuccess(true);
+                setTimeout(() => {
+                  setShowSuccess(false);
+                  onClose();
+                }, 2500);
               } else {
                 throw new Error(result.error);
               }
