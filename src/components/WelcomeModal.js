@@ -255,7 +255,6 @@ const WelcomeModal = ({ isOpen, onClose }) => {
 
       <p style={{ marginBottom: '20px', color: 'var(--text-color)' }}>
         Advanced mode provides more control over wallet generation with custom entropy and real-time BIP39 preview.
-        ⚠️ Only use this if you understand HD wallets and BIP39.
       </p>
 
       <div className={styles.modeToggle}>
