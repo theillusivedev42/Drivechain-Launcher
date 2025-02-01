@@ -16,7 +16,7 @@
   padding: 24px;
   border-radius: 8px;
   width: 90%;
-  max-width: 500px;
+  max-width: 600px;
   color: var(--modal-text);
   margin: 20px;
   max-height: 90vh;
@@ -39,7 +39,7 @@
 
 .modalDescription {
   color: var(--modal-text);
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   line-height: 1.5;
 }
 
@@ -190,75 +190,83 @@ select.input {
   opacity: 1;
 }
 
-.paymentSection {
-  margin-top: 16px;
-  padding: 15px;
+.hashDisplay {
+  margin: 8px 0;
+  padding: 8px 12px;
   border-radius: 8px;
   background-color: rgba(128, 128, 128, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.messageDisplay {
-  margin-bottom: 16px;
-  padding: 16px;
-  background-color: var(--bg-color);
-  border-radius: 4px;
-  color: var(--text-color);
+.hashDisplay label {
+  font-weight: 600;
+  display: block;
+}
+
+.paymentInstructions {
+  margin: 16px 0;
+  text-align: center;
 }
 
 .messageRow {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  position: relative;
 }
 
 .messageRow:last-child {
   margin-bottom: 0;
 }
 
-.messageRow span {
+.copyableText {
   font-family: monospace;
   word-break: break-all;
-}
-
-.hashDisplay {
-  margin-bottom: 16px;
-  padding: 16px;
-  background-color: var(--bg-color);
+  cursor: pointer;
+  padding: 4px 8px;
   border-radius: 4px;
-  color: var(--text-color);
-}
-
-.hashDisplay label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.hashDisplay span {
-  font-family: monospace;
-  word-break: break-all;
-}
-
-.successMessage {
-  margin-top: 16px;
-  padding: 16px;
+  transition: background-color 0.2s;
+  position: relative;
   background-color: var(--bg-color);
+  font-size: 0.85rem;
+}
+
+.copyableText:hover {
+  background-color: var(--btn-bg);
+}
+
+.copyableText.copied {
+  background-color: var(--btn-bg);
+}
+
+.copyTooltip {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
   border-radius: 4px;
-  color: var(--text-color);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
 }
 
-.hashWithCopy {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.hashWithCopy span {
-  font-family: monospace;
-  word-break: break-all;
-  flex: 1;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .copyButton {
@@ -290,4 +298,32 @@ select.input {
   margin-bottom: 16px;
   font-size: 0.9rem;
   text-align: center;
+}
+
+.txInputSection {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+.successMessage {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: var(--bg-color);
+  border-radius: 4px;
+  color: var(--text-color);
+}
+
+.hashWithCopy {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.hashWithCopy span {
+  font-family: monospace;
+  word-break: break-all;
+  flex: 1;
 }
