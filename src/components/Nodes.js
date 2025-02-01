@@ -15,10 +15,12 @@ function Nodes() {
   const [bitcoinSync, setBitcoinSync] = useState(null);
   const [runningNodes, setRunningNodes] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
 
   const fetchChains = useCallback(async () => {
     try {
+      setIsLoading(true);
       const config = await window.electronAPI.getConfig();
       const dependencyData = await import('../CardData.json');
       
@@ -48,6 +50,8 @@ function Nodes() {
     } catch (error) {
       console.error('Failed to fetch chain config:', error);
       setIsInitialized(true); // Still set initialized even on error to prevent infinite loading
+    } finally {
+      setIsLoading(false);
     }
   }, [dispatch]);
 
@@ -356,6 +360,45 @@ function Nodes() {
       console.error('Quick start/stop failed:', error);
     }
   }, [areAllL1ChainsDownloaded, areAllChainsRunning, downloadMissingL1Chains, handleStartSequence, handleStopSequence]);
+
+  // Show loading screen while data is being fetched
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: 'var(--background-color)',
+        color: 'var(--text-color)'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          borderRadius: '8px'
+        }}>
+          <h2>Loading Drivechain Launcher...</h2>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '5px solid var(--border-color)',
+            borderTop: '5px solid var(--primary-color)',
+            borderRadius: '50%',
+            margin: '20px auto',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <style>
+            {`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}
+          </style>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="Nodes">
