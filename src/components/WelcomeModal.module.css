@@ -436,6 +436,13 @@
   color: rgba(128, 128, 128, 0.8);
 }
 
+.decimal {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #0088cc;
+  margin-top: 2px;
+}
+
 .checksum {
   color: #28a745;
 }

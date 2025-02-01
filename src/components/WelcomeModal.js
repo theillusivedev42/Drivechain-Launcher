@@ -147,7 +147,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         <p>
           Drivechain Launcher is your all-in-one tool for managing Drivechain nodes. Start and stop nodes, 
           manage wallets, and interact with both mainchain and sidechains through a simple interface. 
-          Let's begin by setting up your wallets!
+          Let's begin by setting up your wallet!
         </p>
       </div>
       
@@ -158,7 +158,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         onClick={handleGenerateWallet}
         disabled={isGenerating}
       >
-        {isGenerating ? 'Generating...' : 'Generate Wallets'}
+        {isGenerating ? 'Generating...' : 'Generate Wallet'}
       </button>
 
       <div className={styles.optionsContainer}>
@@ -179,7 +179,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
             setError('');
           }}
         >
-          Advanced options
+          Paranoid mode
         </span>
       </div>
     </>
@@ -250,11 +250,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         >
           <ArrowLeft size={20} />
         </button>
-        <h2>Advanced Wallet Creation</h2>
+        <h2>Paranoid Wallet Creation</h2>
       </div>
 
       <p style={{ marginBottom: '20px', color: 'var(--text-color)' }}>
-        Advanced mode provides more control over wallet generation with custom entropy and real-time BIP39 preview.
+        Paranoid mode provides more control over wallet generation with custom entropy and real-time BIP39 preview.
       </p>
 
       <div className={styles.modeToggle}>
@@ -349,6 +349,12 @@ const WelcomeModal = ({ isOpen, onClose }) => {
                       preview.binaryStrings[i]
                     )}
                   </div>
+                  <div className={styles.decimal}>
+                    {i === preview.words.length - 1 
+                      ? parseInt(preview.lastWordBinary, 2)
+                      : parseInt(preview.binaryStrings[i], 2)
+                    }
+                  </div>
                 </div>
               ))}
             </div>
@@ -409,7 +415,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           }}
           disabled={isGenerating || !entropyInput || !preview}
         >
-          {isGenerating ? 'Generating...' : 'Create Advanced Wallet'}
+          {isGenerating ? 'Generating...' : 'Create Paranoid Wallet'}
         </button>
       </div>
     </>
@@ -422,7 +428,7 @@ const WelcomeModal = ({ isOpen, onClose }) => {
         {currentPage === 'restore' && renderRestorePage()}
         {currentPage === 'advanced' && renderAdvancedPage()}
       </div>
-      {showSuccess && <SuccessPopup message="Wallets generated successfully!" />}
+      {showSuccess && <SuccessPopup message="Wallet generated successfully!" />}
     </div>
   );
 };
