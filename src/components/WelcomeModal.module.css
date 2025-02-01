@@ -121,7 +121,7 @@
 
 .actionButton:disabled {
   opacity: 0.8;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .modalBody {
@@ -315,7 +315,7 @@
 .restoreButton:disabled,
 .advancedButton:disabled {
   opacity: 0.8;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .warningBox {
