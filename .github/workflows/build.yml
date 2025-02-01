@@ -119,6 +119,8 @@ jobs:
           ls -la artifacts/linux-build
           echo "Windows build directory contents:"
           ls -la artifacts/windows-build
+          echo "macOS build directory contents:"
+          ls -la artifacts/macos-build
 
       - name: Process artifacts
         run: |
@@ -144,6 +146,28 @@ jobs:
           zip ../../drivechain-launcher-latest-windows.zip "$EXE_FILE"
           cd ../..
           
+          # Process macOS artifacts
+          cd artifacts/macos-build
+          echo "macOS build directory contents before processing:"
+          ls -la
+          
+          # Process arm64 DMG
+          ARM64_DMG=$(ls *-arm64.dmg 2>/dev/null || echo "")
+          if [ -z "$ARM64_DMG" ]; then
+            echo "Error: No arm64 DMG file found"
+            exit 1
+          fi
+          mv "$ARM64_DMG" ../../drivechain-launcher-latest-osx-arm64.dmg
+          
+          # Process x64 DMG
+          X64_DMG=$(ls *-x64.dmg 2>/dev/null || echo "")
+          if [ -z "$X64_DMG" ]; then
+            echo "Error: No x64 DMG file found"
+            exit 1
+          fi
+          mv "$X64_DMG" ../../drivechain-launcher-latest-osx-x64.dmg
+          cd ../..
+          
           echo "Final files:"
           ls -la drivechain-launcher-*
 
@@ -157,6 +181,14 @@ jobs:
             echo "Error: Windows zip file not found"
             exit 1
           fi
+          if [ ! -f "drivechain-launcher-latest-osx-arm64.dmg" ]; then
+            echo "Error: macOS arm64 DMG file not found"
+            exit 1
+          fi
+          if [ ! -f "drivechain-launcher-latest-osx-x64.dmg" ]; then
+            echo "Error: macOS x64 DMG file not found"
+            exit 1
+          fi
 
       - name: Upload to releases.drivechain.info
         uses: cross-the-world/ssh-scp-ssh-pipelines@latest
@@ -168,3 +200,5 @@ jobs:
           scp: |
             'drivechain-launcher-latest-x86_64-linux-gnu.tar.gz' => '/var/www/html/'
             'drivechain-launcher-latest-windows.zip' => '/var/www/html/'
+            'drivechain-launcher-latest-osx-arm64.dmg' => '/var/www/html/'
+            'drivechain-launcher-latest-osx-x64.dmg' => '/var/www/html/'
