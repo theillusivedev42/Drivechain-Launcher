@@ -339,7 +339,7 @@ const Card = ({
             >
               {getButtonText()}
             </button>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '4px' }}>
               <a 
                 href={chain.repo_url}
                 target="_blank"

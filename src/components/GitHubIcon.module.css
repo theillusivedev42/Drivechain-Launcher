@@ -1,13 +1,28 @@
-.icon {
-  opacity: 0.6;
-  transition: opacity 0.2s;
+.iconWrapper {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.iconWrapper:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.light) .iconWrapper:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:global(.light) .iconWrapper {
   color: #333;
 }
 
-:global(.dark) .icon {
+:global(.dark) .iconWrapper {
   color: #fff;
-}
-
-.icon:hover {
-  opacity: 1;
 }
