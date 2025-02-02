@@ -115,11 +115,13 @@
       "executableName": "drivechain-launcher",
       "executableArgs": [
         "--no-sandbox"
-      ]
+      ],
+      "icon": "public/linux.png"
     },
     "win": {
       "target": "nsis",
-      "artifactName": "Drivechain-Launcher-Setup-${version}.${ext}"
+      "artifactName": "Drivechain-Launcher-Setup-${version}.${ext}",
+      "icon": "public/windows.png"
     },
     "mac": {
       "target": [
@@ -132,7 +134,8 @@
         }
       ],
       "category": "public.app-category.developer-tools",
-      "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}"
+      "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}",
+      "icon": "public/mac.png"
     }
   },
   "devDependencies": {
