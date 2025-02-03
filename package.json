@@ -124,6 +124,11 @@
       "artifactName": "Drivechain-Launcher-Setup-${version}.${ext}",
       "icon": "public/icon.ico"
     },
+    "nsis": {
+      "oneClick": true,
+      "createDesktopShortcut": "optional",
+      "openFolderOnFinish": true
+    },
     "mac": {
       "target": [
         {
