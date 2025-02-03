@@ -127,7 +127,8 @@
     "nsis": {
       "oneClick": true,
       "createDesktopShortcut": false,
-      "runAfterFinish": false
+      "runAfterFinish": false,
+      "include": "build/installer.nsh"
     },
     "mac": {
       "target": [
