@@ -98,6 +98,8 @@ npm run build
 
 This will create a production-ready build in the `build/` directory.
 
+Built releases can be downloaded at [releases.drivechain.info](https://releases.drivechain.info) under the "drivechain-launcher" section.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
