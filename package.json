@@ -98,7 +98,7 @@
       }
     ],
     "directories": {
-      "buildResources": "build",
+      "buildResources": "public",
       "output": "dist"
     },
     "linux": {
@@ -116,14 +116,7 @@
       "executableArgs": [
         "--no-sandbox"
       ],
-      "icon": "build/icons",
-      "artifactName": "drivechain-launcher-${version}.${ext}",
-      "desktop": {
-        "Name": "Drivechain Launcher",
-        "Comment": "Drivechain Launcher Application",
-        "Categories": "Development",
-        "Icon": "drivechain-launcher"
-      }
+      "icon": "public/512.png"
     },
     "win": {
       "target": "nsis",
