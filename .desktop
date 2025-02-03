@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Drivechain Launcher
+Comment=Drivechain Launcher Application
+Exec=drivechain-launcher
+Icon=drivechain-launcher
+Type=Application
+Categories=Development;
+Terminal=false
