@@ -51,7 +51,6 @@ npm start
 This will start the Electron app and the React dev server.
 
 ### Linux-specific Instructions
-git s
 When running on Linux from the command line, you might need to run the application with the `--no-sandbox` flag if you encounter sandbox-related errors:
 
 ```sh
