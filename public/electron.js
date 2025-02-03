@@ -87,6 +87,7 @@ function createWindow() {
       width: 1024,
       height: 768,
       show: false,
+      icon: path.join(__dirname, '512.png'),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
