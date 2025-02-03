@@ -83,18 +83,25 @@ function createLoadingWindow() {
 function createWindow() {
   if (mainWindow === null) {
     // Create main window completely hidden
-    mainWindow = new BrowserWindow({
+    const options = {
       width: 1024,
       height: 768,
       show: false,
-      icon: path.join(__dirname, '512.png'),
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
         preload: path.join(__dirname, "preload.js"),
         sandbox: false
-      },
-    });
+      }
+    };
+
+    if (process.platform === 'linux') {
+      options.icon = path.join(__dirname, 'icon/icon.png');
+    } else {
+      options.icon = path.join(__dirname, '512.png');
+    }
+
+    mainWindow = new BrowserWindow(options);
 
     // Load the URL
     mainWindow.loadURL(
