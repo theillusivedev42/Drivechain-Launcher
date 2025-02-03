@@ -54,7 +54,8 @@
     "electron-build": "electron-builder",
     "build": "npm run react-build && npm run electron-build",
     "start": "concurrently \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron --no-sandbox .\"",
-    "start:prod": "concurrently \"cross-env NODE_ENV=production BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=production electron --no-sandbox .\""
+    "start:prod": "concurrently \"cross-env NODE_ENV=production BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=production electron --no-sandbox .\"",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "eslintConfig": {
     "extends": [
@@ -116,12 +117,12 @@
       "executableArgs": [
         "--no-sandbox"
       ],
-      "icon": "public/512.png"
+      "icon": "public"
     },
     "win": {
       "target": "nsis",
       "artifactName": "Drivechain-Launcher-Setup-${version}.${ext}",
-      "icon": "public/512.png"
+      "icon": "public/icon.ico"
     },
     "mac": {
       "target": [
@@ -135,7 +136,7 @@
       ],
       "category": "public.app-category.developer-tools",
       "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}",
-      "icon": "public/512.png"
+      "icon": "public/icon.icns"
     }
   },
   "devDependencies": {
@@ -145,6 +146,7 @@
     "babel-jest": "^29.7.0",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
+    "png2icons": "^2.0.1",
     "prettier": "^3.3.3"
   }
 }
