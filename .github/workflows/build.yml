@@ -55,7 +55,7 @@ jobs:
           ls -la
           
           # Run build with verbose logging
-          npx electron-builder --linux tar.gz --x64
+          npx electron-builder --linux AppImage --x64
           
           # Show build output directory
           echo "Build output directory contents:"
@@ -70,7 +70,7 @@ jobs:
             echo "Error: dist directory not found"
             exit 1
           fi
-          find dist -type f -name "*.tar.gz" || echo "No tar.gz files found in dist/"
+          find dist -type f -name "*.AppImage" || echo "No AppImage files found in dist/"
           
       - name: Upload Linux artifacts
         if: matrix.os == 'ubuntu-latest-large'
@@ -78,7 +78,7 @@ jobs:
         with:
           name: linux-build
           path: |
-            dist/*.tar.gz
+            dist/*.AppImage
           if-no-files-found: error
 
       - name: Upload Windows artifacts
@@ -126,7 +126,7 @@ jobs:
         run: |
           # Process Linux artifact
           cd artifacts/linux-build
-          mv drivechain-launcher-*.tar.gz ../../drivechain-launcher-latest-x86_64-linux-gnu.tar.gz
+          mv *.AppImage ../../drivechain-launcher-latest-x86_64-linux.AppImage
           cd ../..
           
           # Process Windows artifact
@@ -173,8 +173,8 @@ jobs:
 
       - name: Verify files exist
         run: |
-          if [ ! -f "drivechain-launcher-latest-x86_64-linux-gnu.tar.gz" ]; then
-            echo "Error: Linux tar.gz file not found"
+          if [ ! -f "drivechain-launcher-latest-x86_64-linux.AppImage" ]; then
+            echo "Error: Linux AppImage file not found"
             exit 1
           fi
           if [ ! -f "drivechain-launcher-latest-windows.zip" ]; then
@@ -198,7 +198,7 @@ jobs:
           pass: ${{ secrets.RELEASES_SERVER_PW }}
           port: 22
           scp: |
-            'drivechain-launcher-latest-x86_64-linux-gnu.tar.gz' => '/var/www/html/'
+            'drivechain-launcher-latest-x86_64-linux.AppImage' => '/var/www/html/'
             'drivechain-launcher-latest-windows.zip' => '/var/www/html/'
             'drivechain-launcher-latest-osx-arm64.dmg' => '/var/www/html/'
             'drivechain-launcher-latest-osx-x64.dmg' => '/var/www/html/'
