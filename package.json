@@ -126,7 +126,7 @@
     },
     "nsis": {
       "oneClick": true,
-      "createDesktopShortcut": "optional",
+      "createDesktopShortcut": false,
       "openFolderOnFinish": true
     },
     "mac": {
