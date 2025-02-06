@@ -128,7 +128,7 @@
       "oneClick": true,
       "createDesktopShortcut": false,
       "runAfterFinish": false,
-      "include": "build/installer.nsh"
+      "include": "installer.nsh"
     },
     "mac": {
       "target": [

@@ -232,8 +232,7 @@ const FastWithdrawalModal = () => {
                           className={styles.input}
                         >
                           <option value="localhost">Localhost</option>
-                          <option value="192.168.1.100">192.168.1.100</option>
-                          <option value="192.168.1.101">192.168.1.101</option>
+                          <option value="172.105.148.135">172.105.148.135</option>
                         </select>
                       </div>
                       <div className={styles.inputGroup}>
