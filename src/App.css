@@ -24,11 +24,15 @@
   --download-item-text: #555;
   --progress-bar-bg: #e0e0e0;
   --progress-bar-fill: #4caf50;
-  /* Add base scaling units */
-  --base-font-size: calc(0.7rem + 0.3vw);
-  --base-spacing: calc(0.5rem + 0.5vw);
+  /* Base sizing */
+  --base-font-size: 0.95rem;
+  --base-spacing: 0.5rem;
+  /* Fixed window dimensions */
+  --window-width: 400px;
+  --window-height: 500px;
 }
 
+/* Rest of the dark theme variables remain unchanged */
 .dark {
   --bg-color: #333333;
   --text-color: #ffffff;
@@ -70,15 +74,18 @@ body {
 .App {
   text-align: center;
   background-color: var(--bg-color);
-  min-height: 100vh;
+  width: var(--window-width);
+  height: var(--window-height);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   color: var(--text-color);
-  /* Nav is 10px top/bottom padding + ~20px content = 40px total */
-  /* Add extra space for visual breathing room */
-  padding-top: max(40px, calc(40px + 1vh));
+  padding-top: 30px;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .App-header {
@@ -86,25 +93,20 @@ body {
 }
 
 .card-container {
-  width: 90%;
-  max-width: 1600px;
+  width: 100%;
+  max-width: var(--window-width);
+  padding: 0 var(--base-spacing);
 }
 
 .card {
   background-color: var(--card-bg);
-  border-radius: calc(var(--base-spacing) * 0.5);
+  border-radius: 4px;
   padding: 0;
-  margin-bottom: 0;
+  margin-bottom: var(--base-spacing);
   display: flex;
   flex-direction: column;
   color: var(--text-color);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dark .card {
@@ -123,7 +125,7 @@ body {
 
 .card-header h2 {
   margin: 0;
-  font-size: calc(var(--base-font-size) * 1.2);
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
@@ -154,9 +156,9 @@ body {
 }
 
 .btn {
-  min-width: calc(60px + 5vw); /* Minimum button width */
+  min-width: 70px;
   margin: 0;
-  padding: calc(var(--base-spacing) * 0.5) calc(var(--base-spacing));
+  padding: 0.4rem 0.75rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -177,7 +179,7 @@ body {
 .btn.running,
 .btn.stop,
 .btn.stopping {
-  width: calc(60px + 5vw);
+  width: 85px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -244,7 +246,7 @@ body {
 /* Chain List Layout */
 .chain-list {
   width: 100%;
-  max-width: 1600px;
+  max-width: var(--window-width);
   margin: 0 auto;
   box-sizing: border-box;
   padding: 0 var(--base-spacing);
@@ -258,7 +260,7 @@ body {
 }
 
 .chain-heading {
-  font-size: calc(var(--base-font-size) * 1.5);
+  font-size: calc(var(--base-font-size) * 1.3);
   font-weight: bold;
   text-align: left;
   margin: 0;
@@ -268,29 +270,23 @@ body {
 /* L1 Chain Layout */
 .l1-chains {
   display: flex;
+  flex-direction: column;
   gap: var(--base-spacing);
   margin: 0;
   padding: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.l1-chains::-webkit-scrollbar {
-  display: none;
+  width: 100%;
 }
 
 .l1-chains > .card {
-  flex: 1;
-  min-width: 0; /* Remove min-width constraint */
+  width: 100%;
   margin: 0;
   box-sizing: border-box;
 }
 
 /* L2 Chain Layout */
 .l2-chains {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: var(--base-spacing);
   margin: 0;
   padding: 0;
@@ -298,7 +294,7 @@ body {
 }
 
 .l2-chains > div {
-  min-width: 0;
+  width: 100%;
   margin: 0;
   box-sizing: border-box;
 }
@@ -311,9 +307,10 @@ body {
 
 /* Quick Start/Stop Button */
 .quick-start-stop-btn {
-  padding: calc(var(--base-spacing) * 0.5) calc(var(--base-spacing));
+  padding: calc(var(--base-spacing) * 0.75) var(--base-spacing);
   transition: background-color 0.2s ease !important;
   font-size: var(--base-font-size);
+  min-width: 110px;
 }
 
 .quick-start-stop-btn:not(:disabled):hover {

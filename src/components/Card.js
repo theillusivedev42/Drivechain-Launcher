@@ -305,62 +305,60 @@ const Card = ({
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
-        <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-          <div className="card-header" style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, lineHeight: 1.2, textAlign: 'left' }}>{chain.display_name}</h2>
-            <div className={`status-light ${processHealth}`} title={`Process Status: ${processHealth}`} />
+      <div className={`card ${isDarkMode ? 'dark' : 'light'}`} style={{ margin: 0 }}>
+        <div className="card-header" style={{ padding: '0.25rem 0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <div className={`status-light ${processHealth}`} style={{ width: '8px', height: '8px' }} title={`Process Status: ${processHealth}`} />
+            <h2 style={{ margin: 0, fontSize: '0.8rem', lineHeight: 1 }}>{chain.display_name}</h2>
           </div>
-          <div style={{ fontSize: '0.8em', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '4px', fontWeight: 400 }}>
+          <div style={{ fontSize: '0.7rem', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '2px', fontWeight: 400 }}>
             {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
               (chain.id === 'bitwindow' ? 'Running' :
                blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
               (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
           </div>
-
-          </div>
-          <div className="card-content">
-            <p>{chain.description}</p>
-          </div>
-          <div className="card-actions">
-            <button
-              ref={buttonRef}
-              className={`btn ${getButtonClass()}`}
-              onClick={handleAction}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={handleMouseLeave}
-              disabled={
-                chain.status === 'downloading' ||
-                chain.status === 'extracting' ||
-                chain.status === 'stopping'
-              }
-              id={`download-button-${chain.id}`}
+        </div>
+        <div className="card-content" style={{ padding: '0.25rem 0.5rem', minHeight: '1.5rem' }}>
+          <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.2 }}>{chain.description}</p>
+        </div>
+        <div className="card-actions" style={{ padding: '0.25rem 0.5rem', gap: '0.25rem' }}>
+          <button
+            ref={buttonRef}
+            className={`btn ${getButtonClass()}`}
+            onClick={handleAction}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={handleMouseLeave}
+            disabled={
+              chain.status === 'downloading' ||
+              chain.status === 'extracting' ||
+              chain.status === 'stopping'
+            }
+            id={`download-button-${chain.id}`}
+            style={{ fontSize: '0.75rem', padding: '2px 8px', height: '20px', minWidth: 'auto' }}
+          >
+            {getButtonText()}
+          </button>
+          <div style={{ display: 'flex', gap: '2px' }}>
+            <a 
+              href={chain.repo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="settings-icon-button"
+              aria-label="View GitHub Repository"
             >
-              {getButtonText()}
+              <GitHubIcon />
+            </a>
+            <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
+              <SettingsIcon />
             </button>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <a 
-                href={chain.repo_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="settings-icon-button"
-                aria-label="View GitHub Repository"
-              >
-                <GitHubIcon />
-              </a>
-              <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
-                <SettingsIcon />
-              </button>
-            </div>
           </div>
-          <Tooltip 
-            text={getTooltipText()}
-            visible={tooltipVisible}
-            position={tooltipPosition}
-          />
         </div>
       </div>
+      <Tooltip 
+        text={getTooltipText()}
+        visible={tooltipVisible}
+        position={tooltipPosition}
+      />
       {showSettings && (
         <ChainSettingsModal
           chain={fullChainData}
