@@ -231,8 +231,7 @@ const FastWithdrawalModal = () => {
                           onChange={(e) => setSelectedServer(e.target.value)}
                           className={styles.input}
                         >
-                          <option value="localhost">Localhost</option>
-                          <option value="172.105.148.135">172.105.148.135</option>
+                          <option value="172.105.148.135">172.105.148.135 (L2L #1)</option>
                         </select>
                       </div>
                       <div className={styles.inputGroup}>
