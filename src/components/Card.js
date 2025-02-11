@@ -307,15 +307,17 @@ const Card = ({
     <>
       <div className={`card ${isDarkMode ? 'dark' : 'light'}`} style={{ margin: 0 }}>
         <div className="card-header" style={{ padding: 'var(--base-spacing)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <div className={`status-light ${processHealth}`} style={{ width: '10px', height: '10px' }} title={`Process Status: ${processHealth}`} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ margin: 0, fontSize: 'var(--base-font-size)', lineHeight: 1.2 }}>{chain.display_name}</h2>
-          </div>
-          <div style={{ fontSize: 'calc(var(--base-font-size) * 0.9)', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '2px', fontWeight: 400 }}>
-            {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
-              (chain.id === 'bitwindow' ? 'Running' :
-               blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
-              (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ fontSize: 'calc(var(--base-font-size) * 0.9)', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', fontWeight: 400 }}>
+                {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
+                  (chain.id === 'bitwindow' ? 'Running' :
+                   blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
+                  (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
+              </div>
+              <div className={`status-light ${processHealth}`} style={{ width: '10px', height: '10px' }} title={`Process Status: ${processHealth}`} />
+            </div>
           </div>
         </div>
         <div className="card-content" style={{ padding: 'var(--base-spacing)', minHeight: '2rem' }}>

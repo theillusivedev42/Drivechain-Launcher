@@ -84,8 +84,8 @@ function createWindow() {
   if (mainWindow === null) {
     // Create main window completely hidden
     const options = {
-      width: 400,
-      height: 500,
+      width: 450,
+      height: 550,
       show: false,
       frame: true,
       resizable: false,

@@ -2,7 +2,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 384px; /* 400px - 16px to account for window frame */
+  width: calc(100% - 16px); /* Account for window frame */
   background-color: rgba(44, 44, 44, 0.95);
   backdrop-filter: blur(5px);
   padding: 6px 12px 6px 12px;

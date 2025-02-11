@@ -28,8 +28,8 @@
   --base-font-size: 0.95rem;
   --base-spacing: 0.5rem;
   /* Fixed window dimensions */
-  --window-width: 400px;
-  --window-height: 500px;
+  --window-width: 450px;
+  --window-height: 550px;
 }
 
 /* Rest of the dark theme variables remain unchanged */
