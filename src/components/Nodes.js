@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
 import styles from './Nodes.module.css';
+import buttonStyles from './Button.module.css';
 import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
@@ -354,19 +355,21 @@ function Nodes() {
             <button
               onClick={handleQuickStartStop}
               disabled={isProcessing || isAnyL1ChainDownloading()}
-              className={`btn ${styles.quickStartBtn} ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? styles['btn-shimmer'] : ''}`}
-              data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
-              style={{
-                backgroundColor: isProcessing || isAnyL1ChainDownloading()
-                  ? 'var(--downloading-btn)'
+              className={`${buttonStyles.quickStartBtn} ${
+                !isProcessing && !isAnyL1ChainDownloading() && 
+                (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded())) 
+                  ? buttonStyles.shimmer 
+                  : ''
+              } ${
+                isProcessing || isAnyL1ChainDownloading()
+                  ? buttonStyles.downloading
                   : !areAllL1ChainsDownloaded()
-                    ? 'var(--download-btn)'
+                    ? buttonStyles.download
                     : areAllChainsRunning()
-                      ? 'var(--stop-btn)'
-                      : 'var(--run-btn)',
-                cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
-                opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1
-              }}
+                      ? buttonStyles.stop
+                      : buttonStyles.run
+              }`}
+              data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
             >
               {isProcessing
                 ? (isStoppingSequence ? 'Stopping...' : 'Starting...')

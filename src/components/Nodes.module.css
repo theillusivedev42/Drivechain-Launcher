@@ -1,3 +1,4 @@
+/* Main container */
 .container {
   width: 100%;
   height: calc(var(--window-height) - 24px);
@@ -6,40 +7,46 @@
   box-sizing: border-box;
 }
 
+/* Chain sections */
 .chainSection {
-  margin-bottom: 0.5rem;
+  width: 100%;
+  max-width: var(--window-width);
+  margin: 0 auto var(--base-spacing);
+  box-sizing: border-box;
 }
 
 .chainHeading {
-  font-size: 0.85rem;
-  margin: 0 0 0.25rem 0;
+  font-size: calc(var(--base-font-size) * 1.1);
+  font-weight: bold;
+  margin: 0 0 var(--base-spacing) 0;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.l1Chains {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
-}
-
+/* Chain lists */
+.l1Chains,
 .l2Chains {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--base-spacing);
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
-.quickStartBtn {
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  height: 20px;
-  min-width: auto;
-  border-radius: 2px;
+.l1Chains {
+  margin-bottom: var(--base-spacing);
 }
 
+.l2Chains > div {
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Loading state */
 .loadingContainer {
   display: flex;
   justify-content: center;
@@ -51,7 +58,7 @@
 
 .loadingContent {
   text-align: center;
-  padding: 0.5rem;
+  padding: var(--base-spacing);
 }
 
 .loadingSpinner {
@@ -60,7 +67,7 @@
   border: 3px solid var(--card-bg);
   border-top: 3px solid var(--download-btn);
   border-radius: 50%;
-  margin: 0.5rem auto;
+  margin: var(--base-spacing) auto;
   animation: spin 1s linear infinite;
 }
 

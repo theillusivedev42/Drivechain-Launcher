@@ -1,0 +1,128 @@
+/* Card structure */
+.card {
+  margin: 0;
+  background-color: var(--card-bg);
+  border-radius: 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--text-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Card header */
+.cardHeader {
+  padding: var(--base-spacing);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .cardHeader {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--base-font-size);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+/* Status section */
+.statusGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusText {
+  font-size: calc(var(--base-font-size) * 0.9);
+  font-weight: 400;
+}
+
+:global(.light) .statusText {
+  color: rgba(51, 51, 51, 0.6);
+}
+
+:global(.dark) .statusText {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Status light */
+.statusLight {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.statusLight:global(.healthy) {
+  background-color: #4caf50;
+  box-shadow: 0 0 4px #4caf50;
+}
+
+.statusLight:global(.warning) {
+  background-color: #ff9800;
+  box-shadow: 0 0 4px #ff9800;
+}
+
+.statusLight:global(.error) {
+  background-color: #f44336;
+  box-shadow: 0 0 4px #f44336;
+}
+
+.statusLight:global(.offline) {
+  background-color: #9e9e9e;
+  box-shadow: none;
+}
+
+/* Card content */
+.cardContent {
+  padding: var(--base-spacing);
+  min-height: 2rem;
+  flex-grow: 1;
+  text-align: left;
+  background-color: #f5f5f5;
+}
+
+:global(.dark) .cardContent {
+  background-color: #2a2a2a;
+}
+
+.description {
+  font-size: var(--base-font-size);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Card actions */
+.cardActions {
+  padding: var(--base-spacing);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  gap: calc(var(--base-spacing) * 0.5);
+}
+
+:global(.dark) .cardActions {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.iconGroup {
+  display: flex;
+  gap: calc(var(--base-spacing) * 0.5);
+}
