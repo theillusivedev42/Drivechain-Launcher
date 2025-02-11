@@ -305,62 +305,62 @@ const Card = ({
 
   return (
     <>
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
-        <div className={`card ${isDarkMode ? 'dark' : 'light'}`}>
-          <div className="card-header" style={{ position: 'relative' }}>
+      <div className={`card ${isDarkMode ? 'dark' : 'light'}`} style={{ margin: 0 }}>
+        <div className="card-header" style={{ padding: 'var(--base-spacing)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, lineHeight: 1.2, textAlign: 'left' }}>{chain.display_name}</h2>
-            <div className={`status-light ${processHealth}`} title={`Process Status: ${processHealth}`} />
-          </div>
-          <div style={{ fontSize: '0.8em', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', marginTop: '4px', fontWeight: 400 }}>
-            {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
-              (chain.id === 'bitwindow' ? 'Running' :
-               blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
-              (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
-          </div>
-
-          </div>
-          <div className="card-content">
-            <p>{chain.description}</p>
-          </div>
-          <div className="card-actions">
-            <button
-              ref={buttonRef}
-              className={`btn ${getButtonClass()}`}
-              onClick={handleAction}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={handleMouseLeave}
-              disabled={
-                chain.status === 'downloading' ||
-                chain.status === 'extracting' ||
-                chain.status === 'stopping'
-              }
-              id={`download-button-${chain.id}`}
-            >
-              {getButtonText()}
-            </button>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <a 
-                href={chain.repo_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="settings-icon-button"
-                aria-label="View GitHub Repository"
-              >
-                <GitHubIcon />
-              </a>
-              <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
-                <SettingsIcon />
-              </button>
+            <h2 style={{ margin: 0, fontSize: 'var(--base-font-size)', lineHeight: 1.2 }}>{chain.display_name}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ fontSize: 'calc(var(--base-font-size) * 0.9)', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', fontWeight: 400 }}>
+                {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
+                  (chain.id === 'bitwindow' ? 'Running' :
+                   blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
+                  (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
+              </div>
+              <div className={`status-light ${processHealth}`} style={{ width: '10px', height: '10px' }} title={`Process Status: ${processHealth}`} />
             </div>
           </div>
-          <Tooltip 
-            text={getTooltipText()}
-            visible={tooltipVisible}
-            position={tooltipPosition}
-          />
+        </div>
+        <div className="card-content" style={{ padding: 'var(--base-spacing)', minHeight: '2rem' }}>
+          <p style={{ fontSize: 'var(--base-font-size)', margin: 0, lineHeight: 1.4 }}>{chain.description}</p>
+        </div>
+        <div className="card-actions" style={{ padding: 'var(--base-spacing)', gap: 'calc(var(--base-spacing) * 0.5)' }}>
+          <button
+            ref={buttonRef}
+            className={`btn ${getButtonClass()}`}
+            onClick={handleAction}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={handleMouseLeave}
+            disabled={
+              chain.status === 'downloading' ||
+              chain.status === 'extracting' ||
+              chain.status === 'stopping'
+            }
+            id={`download-button-${chain.id}`}
+            style={{ fontSize: 'var(--base-font-size)', padding: '4px 10px', height: '24px', minWidth: 'auto' }}
+          >
+            {getButtonText()}
+          </button>
+          <div style={{ display: 'flex', gap: 'calc(var(--base-spacing) * 0.5)' }}>
+            <a 
+              href={chain.repo_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="settings-icon-button"
+              aria-label="View GitHub Repository"
+            >
+              <GitHubIcon />
+            </a>
+            <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
+              <SettingsIcon />
+            </button>
+          </div>
         </div>
       </div>
+      <Tooltip 
+        text={getTooltipText()}
+        visible={tooltipVisible}
+        position={tooltipPosition}
+      />
       {showSettings && (
         <ChainSettingsModal
           chain={fullChainData}

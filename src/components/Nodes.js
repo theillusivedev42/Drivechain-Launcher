@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
-import styles from './QuickStartStop.module.css';
+import styles from './Nodes.module.css';
 import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
@@ -35,13 +35,12 @@ function Nodes() {
               dependencies: dependencyInfo?.dependencies || [],
               status: await window.electronAPI.getChainStatus(chain.id),
               progress: 0,
-              released: chain.released, // Explicitly preserve released status
+              released: chain.released,
             };
           })
       );
       dispatch(setChains(chainsWithStatus));
       
-      // Initialize running nodes based on initial status
       const initialRunning = chainsWithStatus
         .filter(chain => chain.status === 'running' || chain.status === 'ready')
         .map(chain => chain.id);
@@ -49,7 +48,7 @@ function Nodes() {
       setIsInitialized(true);
     } catch (error) {
       console.error('Failed to fetch chain config:', error);
-      setIsInitialized(true); // Still set initialized even on error to prevent infinite loading
+      setIsInitialized(true);
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +72,6 @@ function Nodes() {
   const chainStatusUpdateHandler = useCallback(({ chainId, status }) => {
     dispatch(updateChainStatus({ chainId, status }));
     
-    // Update running nodes list
     if (status === 'running' || status === 'ready') {
       setRunningNodes(prev => [...new Set([...prev, chainId])]);
     } else if (status === 'stopped' || status === 'not_downloaded') {
@@ -104,7 +102,6 @@ function Nodes() {
     const unsubscribeBitcoinSync = window.electronAPI.onBitcoinSyncStatus(
       (status) => {
         setBitcoinSync(status);
-        // Update IBD status in downloads slice
         dispatch(updateIBDStatus({ chainId: 'bitcoin', status }));
       }
     );
@@ -170,14 +167,12 @@ function Nodes() {
 
   const handleStartChain = useCallback(async chainId => {
     try {
-      // Find the chain and check its dependencies
       const chain = chains.find(c => c.id === chainId);
       if (!chain) {
         console.error(`Chain ${chainId} not found`);
         return;
       }
 
-      // Check if all dependencies are running
       if (chain.dependencies && chain.dependencies.length > 0) {
         const missingDeps = chain.dependencies.filter(dep => !runningNodes.includes(dep));
         if (missingDeps.length > 0) {
@@ -223,24 +218,6 @@ function Nodes() {
     [chains, handleStopChain]
   );
 
-  const waitForChainRunning = useCallback((chainId) => {
-    return new Promise((resolve) => {
-      const checkRunning = () => {
-        if (runningNodes.includes(chainId)) {
-          resolve();
-        } else {
-          setTimeout(checkRunning, 500); // Check every 500ms
-        }
-      };
-      checkRunning();
-    });
-  }, [runningNodes]);
-
-  const isBitcoinStopped = useCallback(() => {
-    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
-    return bitcoinChain?.status === 'stopped';
-  }, [chains]);
-
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStoppingSequence, setIsStoppingSequence] = useState(false);
 
@@ -285,7 +262,6 @@ function Nodes() {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      // Start chains with fixed delays between each
       if (!runningNodes.includes('bitcoin')) {
         await window.electronAPI.startChain('bitcoin');
         await new Promise(resolve => setTimeout(resolve, 3000));
@@ -306,7 +282,6 @@ function Nodes() {
     }
   }, [runningNodes]);
 
-  // Reset processing state when bitcoin status changes to stopped
   useEffect(() => {
     const bitcoinChain = chains.find(c => c.id === 'bitcoin');
     if (bitcoinChain?.status === 'stopped' && isStoppingSequence) {
@@ -320,7 +295,6 @@ function Nodes() {
       setIsProcessing(true);
       setIsStoppingSequence(true);
       
-      // First stop any running L2 chains
       for (const chainId of L2_CHAINS) {
         if (runningNodes.includes(chainId)) {
           await window.electronAPI.stopChain(chainId);
@@ -328,7 +302,6 @@ function Nodes() {
         }
       }
       
-      // Then stop L1 chains in reverse order
       if (runningNodes.includes('bitwindow')) {
         await window.electronAPI.stopChain('bitwindow');
         await new Promise(resolve => setTimeout(resolve, 3000));
@@ -361,106 +334,88 @@ function Nodes() {
     }
   }, [areAllL1ChainsDownloaded, areAllChainsRunning, downloadMissingL1Chains, handleStartSequence, handleStopSequence]);
 
-  // Show loading screen while data is being fetched
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: 'var(--background-color)',
-        color: 'var(--text-color)'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          borderRadius: '8px'
-        }}>
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
           <h2>Loading Drivechain Launcher...</h2>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            border: '5px solid var(--border-color)',
-            borderTop: '5px solid var(--primary-color)',
-            borderRadius: '50%',
-            margin: '20px auto',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <style>
-            {`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}
-          </style>
+          <div className={styles.loadingSpinner} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="Nodes">
-      <div className="chain-list">
-        <div className="chain-section">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <h2 className="chain-heading" style={{ margin: 0 }}>Layer 1</h2>
-            {isInitialized && (
-              <button
-                onClick={handleQuickStartStop}
-                disabled={isProcessing || isAnyL1ChainDownloading()}
-                className={`btn quick-start-stop-btn ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? styles['btn-shimmer'] : ''}`}
-                data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: isProcessing || isAnyL1ChainDownloading()
-                    ? 'var(--downloading-btn)'  // Orange for processing/downloading
-                    : !areAllL1ChainsDownloaded()
-                      ? 'var(--download-btn)'  // Blue for download
-                      : areAllChainsRunning()
-                        ? 'var(--stop-btn)'  // Red for stop
-                        : 'var(--run-btn)', // Green for start
-                  cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
-                  opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1,
-                  width: 'auto',  // Override fixed width from btn class
-                  transition: 'background-color 0.2s ease',
-                  ':hover': {
-                    backgroundColor: isProcessing || isAnyL1ChainDownloading()
-                      ? 'var(--downloading-btn-hover)'  // Darker orange for processing/downloading
-                      : !areAllL1ChainsDownloaded()
-                        ? 'var(--download-btn-hover)'  // Darker blue for download
-                        : areAllChainsRunning()
-                          ? 'var(--stop-btn-hover)'  // Darker red for stop
-                          : 'var(--run-btn-hover)'  // Darker green for start
-                  }
-                }}
-              >
-                {isProcessing
-                  ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
-                  : isAnyL1ChainDownloading()
-                    ? 'Downloading...'
-                    : !areAllL1ChainsDownloaded() 
-                      ? 'Download L1' 
-                      : !areAllChainsRunning() 
-                        ? 'Quick Start' 
-                        : 'Safe Stop'}
-              </button>
-            )}
-          </div>
-          <div className="l1-chains">
-            {chains
-              .filter(chain => chain.chain_type === 0)
-              .map(chain => (
-                console.log('Chain:', chain.id, 'Released:', chain.released),
-                chain.released === "no" ? (
-                  <UnreleasedCard
-                    key={chain.id}
-                    chain={chain}
-                  />
+    <div className={styles.container}>
+      <div className={styles.chainSection}>
+        <div className={styles.chainHeading}>
+          <h2>Layer 1</h2>
+          {isInitialized && (
+            <button
+              onClick={handleQuickStartStop}
+              disabled={isProcessing || isAnyL1ChainDownloading()}
+              className={`btn ${styles.quickStartBtn} ${(!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded()))) ? styles['btn-shimmer'] : ''}`}
+              data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
+              style={{
+                backgroundColor: isProcessing || isAnyL1ChainDownloading()
+                  ? 'var(--downloading-btn)'
+                  : !areAllL1ChainsDownloaded()
+                    ? 'var(--download-btn)'
+                    : areAllChainsRunning()
+                      ? 'var(--stop-btn)'
+                      : 'var(--run-btn)',
+                cursor: (isProcessing || isAnyL1ChainDownloading()) ? 'wait' : 'pointer',
+                opacity: (isProcessing || isAnyL1ChainDownloading()) ? 0.8 : 1
+              }}
+            >
+              {isProcessing
+                ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
+                : isAnyL1ChainDownloading()
+                  ? 'Downloading...'
+                  : !areAllL1ChainsDownloaded() 
+                    ? 'Download L1' 
+                    : !areAllChainsRunning() 
+                      ? 'Quick Start' 
+                      : 'Safe Stop'}
+            </button>
+          )}
+        </div>
+        <div className={styles.l1Chains}>
+          {chains
+            .filter(chain => chain.chain_type === 0)
+            .map(chain => (
+              chain.released === "no" ? (
+                <UnreleasedCard
+                  key={chain.id}
+                  chain={chain}
+                />
+              ) : (
+                <Card
+                  key={chain.id}
+                  chain={chain}
+                  onUpdateChain={handleUpdateChain}
+                  onDownload={handleDownloadChain}
+                  onStart={handleStartChain}
+                  onStop={handleStopChain}
+                  onReset={handleResetChain}
+                  onOpenWalletDir={handleOpenWalletDir}
+                  runningNodes={runningNodes}
+                />
+              )
+            ))}
+        </div>
+      </div>
+      <div className={styles.chainSection}>
+        <h2 className={styles.chainHeading}>Layer 2</h2>
+        <div className={styles.l2Chains}>
+          {chains
+            .filter(chain => chain.chain_type === 2)
+            .map(chain => (
+              <div key={chain.id}>
+                {chain.released === "no" ? (
+                  <UnreleasedCard chain={chain} />
                 ) : (
                   <Card
-                    key={chain.id}
                     chain={chain}
                     onUpdateChain={handleUpdateChain}
                     onDownload={handleDownloadChain}
@@ -470,37 +425,9 @@ function Nodes() {
                     onOpenWalletDir={handleOpenWalletDir}
                     runningNodes={runningNodes}
                   />
-                )
-              ))}
-          </div>
-        </div>
-        <div className="chain-section" style={{ marginBottom: '0' }}>
-          <h2 className="chain-heading" style={{ marginBottom: '10px' }}>Layer 2</h2>
-          <div className="l2-chains" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', width: '100%', marginBottom: '-10px' }}>
-            {chains
-              .filter(chain => chain.chain_type === 2)
-              .map(chain => {
-                console.log('Rendering L2 chain:', chain.id, 'Full chain data:', chain);
-                return (
-                  <div key={chain.id} style={{ width: 'calc(50% - 10px)' }}>
-                    {chain.released === "no" ? (
-                      <UnreleasedCard chain={chain} />
-                    ) : (
-                      <Card
-                        chain={chain}
-                        onUpdateChain={handleUpdateChain}
-                        onDownload={handleDownloadChain}
-                        onStart={handleStartChain}
-                        onStop={handleStopChain}
-                        onReset={handleResetChain}
-                        onOpenWalletDir={handleOpenWalletDir}
-                        runningNodes={runningNodes}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-          </div>
+                )}
+              </div>
+            ))}
         </div>
       </div>
       <DownloadModal />
