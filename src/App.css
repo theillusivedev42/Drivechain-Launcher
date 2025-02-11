@@ -1,4 +1,5 @@
 :root {
+  /* Colors */
   --bg-color: #ffffff;
   --text-color: #333333;
   --card-bg: #f0f0f0;
@@ -6,6 +7,8 @@
   --btn-text: #333333;
   --nav-bg: #f8f8f8;
   --nav-text: #333333;
+  
+  /* Button colors */
   --download-btn: #007bff;
   --download-btn-hover: #0056b3;
   --run-btn: #28a745;
@@ -18,21 +21,25 @@
   --downloading-btn-hover: #cc8400;
   --stopping-btn: #ff6b6b;
   --stopping-btn-hover: #ff4f4f;
+  
+  /* Modal colors */
   --modal-bg: #f0f0f0;
   --modal-text: #333;
   --download-item-bg: #fff;
   --download-item-text: #555;
   --progress-bar-bg: #e0e0e0;
   --progress-bar-fill: #4caf50;
+  
   /* Base sizing */
   --base-font-size: 0.95rem;
   --base-spacing: 0.5rem;
+  
   /* Fixed window dimensions */
   --window-width: 450px;
   --window-height: 550px;
 }
 
-/* Rest of the dark theme variables remain unchanged */
+/* Dark theme variables */
 .dark {
   --bg-color: #333333;
   --text-color: #ffffff;
@@ -59,6 +66,7 @@
   --progress-bar-fill: #4caf50;
 }
 
+/* Base styles */
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
@@ -71,6 +79,12 @@ body {
   font-size: var(--base-font-size);
 }
 
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* App container */
 .App {
   text-align: center;
   background-color: var(--bg-color);
@@ -90,294 +104,4 @@ body {
 
 .App-header {
   margin-bottom: var(--base-spacing);
-}
-
-.card-container {
-  width: 100%;
-  max-width: var(--window-width);
-  padding: 0 var(--base-spacing);
-}
-
-.card {
-  background-color: var(--card-bg);
-  border-radius: 4px;
-  padding: 0;
-  margin-bottom: var(--base-spacing);
-  display: flex;
-  flex-direction: column;
-  color: var(--text-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.dark .card {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.dark .card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
-.card-header {
-  padding: var(--base-spacing);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  text-align: left;
-}
-
-.card-header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.card-content {
-  padding: var(--base-spacing);
-  flex-grow: 1;
-  text-align: left;
-  background-color: #f5f5f5;
-}
-
-.card-content p {
-  margin: 0;
-  font-size: var(--base-font-size);
-  line-height: 1.4;
-  color: var(--text-color);
-}
-
-.dark .card-content {
-  background-color: #2a2a2a;
-}
-
-.card-actions {
-  padding: var(--base-spacing);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.btn {
-  min-width: 70px;
-  margin: 0;
-  padding: 0.4rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: var(--base-font-size);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  text-align: center;
-  color: white;
-  transition: background-color 0.2s ease, opacity 0.2s ease, width 0.2s ease;
-  white-space: nowrap;
-}
-
-/* Fixed width for most states */
-.btn.download,
-.btn.run,
-.btn.running,
-.btn.stop,
-.btn.stopping {
-  width: 85px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Allow width to grow for downloading/extracting states */
-.btn.downloading,
-.btn.extracting {
-  width: auto;
-}
-
-.btn:disabled {
-  cursor: wait;
-  opacity: 0.8;
-}
-
-.settings-icon-button {
-  background: none;
-  border: none;
-  padding: calc(var(--base-spacing) * 0.5);
-  cursor: pointer;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-color);
-  opacity: 0.7;
-  transition: all 0.2s ease;
-}
-
-.settings-icon-button:hover {
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .settings-icon-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .card-header,
-.dark .card-actions {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.download { background-color: var(--download-btn); }
-.download:hover { background-color: var(--download-btn-hover); }
-.run { background-color: var(--run-btn); }
-.run:hover { background-color: var(--run-btn-hover); }
-.downloading, .extracting { background-color: var(--downloading-btn); }
-.downloading:hover, .extracting:hover { background-color: var(--downloading-btn-hover); }
-.running { background-color: var(--running-btn); }
-.running:hover { background-color: var(--running-btn-hover); }
-.stop { background-color: var(--stop-btn); }
-.stop:hover { background-color: var(--stop-btn-hover); }
-.stopping { background-color: var(--stopping-btn); }
-.stopping:hover { background-color: var(--stopping-btn-hover); }
-.settings { background-color: var(--btn-bg); color: var(--btn-text); }
-
-.Nodes, .Wallet, .Tools, .Settings, .Other {
-  width: 100%;
-  padding: var(--base-spacing);
-  box-sizing: border-box;
-}
-
-/* Chain List Layout */
-.chain-list {
-  width: 100%;
-  max-width: var(--window-width);
-  margin: 0 auto;
-  box-sizing: border-box;
-  padding: 0 var(--base-spacing);
-}
-
-.chain-heading-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--base-spacing);
-}
-
-.chain-heading {
-  font-size: calc(var(--base-font-size) * 1.3);
-  font-weight: bold;
-  text-align: left;
-  margin: 0;
-  padding: calc(var(--base-spacing) * 0.75) 0;
-}
-
-/* L1 Chain Layout */
-.l1-chains {
-  display: flex;
-  flex-direction: column;
-  gap: var(--base-spacing);
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
-
-.l1-chains > .card {
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* L2 Chain Layout */
-.l2-chains {
-  display: flex;
-  flex-direction: column;
-  gap: var(--base-spacing);
-  margin: 0;
-  padding: 0;
-  width: 100%;
-}
-
-.l2-chains > div {
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.l2-chains > .card {
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* Quick Start/Stop Button */
-.quick-start-stop-btn {
-  padding: calc(var(--base-spacing) * 0.75) var(--base-spacing);
-  transition: background-color 0.2s ease !important;
-  font-size: var(--base-font-size);
-  min-width: 110px;
-}
-
-.quick-start-stop-btn:not(:disabled):hover {
-  background-color: var(--stop-btn-hover) !important;
-}
-
-.quick-start-stop-btn[data-state="start"]:not(:disabled):hover {
-  background-color: var(--run-btn-hover) !important;
-}
-
-.quick-start-stop-btn[data-state="download"]:not(:disabled):hover {
-  background-color: var(--download-btn-hover) !important;
-}
-
-/* Shimmering effect for download button */
-.btn-shimmer {
-  --border-width: 1px;
-  --border-radius: 4px;
-  position: relative;
-  border: var(--border-width) solid transparent;
-  isolation: isolate;
-}
-
-.btn-shimmer::before {
-  content: "";
-  position: absolute;
-  inset: calc(var(--border-width) * -1);
-  z-index: -1;
-  border: inherit;
-  border-radius: inherit;
-  background: linear-gradient(90deg,
-    var(--current-color, var(--download-btn)) 0%,
-    rgba(255, 255, 255, 0.9) 25%,
-    var(--current-color, var(--download-btn)) 50%,
-    var(--current-color, var(--download-btn)) 100%
-  );
-  background-size: 200% 100%;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask: 
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: shine 1s linear infinite;
-}
-
-@keyframes shine {
-  to {
-    background-position: -200% 0;
-  }
-}
-
-.btn-shimmer:disabled::before {
-  animation: none;
-}
-
-.btn-shimmer[data-state="download"] {
-  --current-color: var(--download-btn);
-}
-
-.btn-shimmer[data-state="start"] {
-  --current-color: var(--run-btn);
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
 }

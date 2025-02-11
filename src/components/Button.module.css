@@ -1,0 +1,152 @@
+.btn {
+  min-width: 70px;
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--base-font-size);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  text-align: center;
+  color: white;
+  transition: background-color 0.2s ease, opacity 0.2s ease, width 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Fixed width states */
+.download,
+.run,
+.running,
+.stop,
+.stopping {
+  composes: btn;
+  width: 85px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Variable width states */
+.downloading,
+.extracting {
+  composes: btn;
+  width: auto;
+}
+
+.btn:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+/* Button colors */
+.download { background-color: var(--download-btn); }
+.download:hover { background-color: var(--download-btn-hover); }
+.run { background-color: var(--run-btn); }
+.run:hover { background-color: var(--run-btn-hover); }
+.downloading, .extracting { background-color: var(--downloading-btn); }
+.downloading:hover, .extracting:hover { background-color: var(--downloading-btn-hover); }
+.running { background-color: var(--running-btn); }
+.running:hover { background-color: var(--running-btn-hover); }
+.stop { background-color: var(--stop-btn); }
+.stop:hover { background-color: var(--stop-btn-hover); }
+.stopping { background-color: var(--stopping-btn); }
+.stopping:hover { background-color: var(--stopping-btn-hover); }
+
+/* Quick Start/Stop Button */
+.quickStartBtn {
+  composes: btn;
+  padding: calc(var(--base-spacing) * 0.75) var(--base-spacing);
+  transition: background-color 0.2s ease !important;
+  font-size: var(--base-font-size);
+  min-width: 110px;
+}
+
+.quickStartBtn:not(:disabled):hover {
+  background-color: var(--stop-btn-hover) !important;
+}
+
+.quickStartBtn[data-state="start"]:not(:disabled):hover {
+  background-color: var(--run-btn-hover) !important;
+}
+
+.quickStartBtn[data-state="download"]:not(:disabled):hover {
+  background-color: var(--download-btn-hover) !important;
+}
+
+/* Settings icon button */
+.iconButton {
+  background: none;
+  border: none;
+  padding: calc(var(--base-spacing) * 0.5);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .iconButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Shimmer effect */
+.shimmer {
+  --border-width: 1px;
+  --border-radius: 4px;
+  position: relative;
+  border: var(--border-width) solid transparent;
+  isolation: isolate;
+}
+
+.shimmer::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--border-width) * -1);
+  z-index: -1;
+  border: inherit;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+    var(--current-color, var(--download-btn)) 0%,
+    rgba(255, 255, 255, 0.9) 25%,
+    var(--current-color, var(--download-btn)) 50%,
+    var(--current-color, var(--download-btn)) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask: 
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: shine 1s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer:disabled::before {
+  animation: none;
+}
+
+.shimmer[data-state="download"] {
+  --current-color: var(--download-btn);
+}
+
+.shimmer[data-state="start"] {
+  --current-color: var(--run-btn);
+}

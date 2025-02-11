@@ -5,7 +5,9 @@ import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import GitHubIcon from './GitHubIcon';
 import Tooltip from './Tooltip';
-import './StatusLight.css'; 
+import './StatusLight.css';
+import styles from './Card.module.css';
+import buttonStyles from './Button.module.css';
 
 const Card = ({
   chain,
@@ -305,28 +307,28 @@ const Card = ({
 
   return (
     <>
-      <div className={`card ${isDarkMode ? 'dark' : 'light'}`} style={{ margin: 0 }}>
-        <div className="card-header" style={{ padding: 'var(--base-spacing)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ margin: 0, fontSize: 'var(--base-font-size)', lineHeight: 1.2 }}>{chain.display_name}</h2>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ fontSize: 'calc(var(--base-font-size) * 0.9)', color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(51, 51, 51, 0.6)', fontWeight: 400 }}>
+      <div className={`card ${styles.card} ${isDarkMode ? 'dark' : 'light'}`}>
+        <div className={`card-header ${styles.cardHeader}`}>
+          <div className={styles.headerContent}>
+            <h2 className={styles.title}>{chain.display_name}</h2>
+            <div className={styles.statusGroup}>
+              <div className={styles.statusText}>
                 {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
                   (chain.id === 'bitwindow' ? 'Running' :
                    blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
                   (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
               </div>
-              <div className={`status-light ${processHealth}`} style={{ width: '10px', height: '10px' }} title={`Process Status: ${processHealth}`} />
+              <div className={`status-light ${processHealth} ${styles.statusLight}`} title={`Process Status: ${processHealth}`} />
             </div>
           </div>
         </div>
-        <div className="card-content" style={{ padding: 'var(--base-spacing)', minHeight: '2rem' }}>
-          <p style={{ fontSize: 'var(--base-font-size)', margin: 0, lineHeight: 1.4 }}>{chain.description}</p>
+        <div className={`card-content ${styles.cardContent}`}>
+          <p className={styles.description}>{chain.description}</p>
         </div>
-        <div className="card-actions" style={{ padding: 'var(--base-spacing)', gap: 'calc(var(--base-spacing) * 0.5)' }}>
+        <div className={`card-actions ${styles.cardActions}`}>
           <button
             ref={buttonRef}
-            className={`btn ${getButtonClass()}`}
+            className={`${buttonStyles.btn} ${buttonStyles[getButtonClass()]}`}
             onClick={handleAction}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={handleMouseLeave}
@@ -336,21 +338,20 @@ const Card = ({
               chain.status === 'stopping'
             }
             id={`download-button-${chain.id}`}
-            style={{ fontSize: 'var(--base-font-size)', padding: '4px 10px', height: '24px', minWidth: 'auto' }}
           >
             {getButtonText()}
           </button>
-          <div style={{ display: 'flex', gap: 'calc(var(--base-spacing) * 0.5)' }}>
+          <div className={styles.iconGroup}>
             <a 
               href={chain.repo_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="settings-icon-button"
+              className={buttonStyles.iconButton}
               aria-label="View GitHub Repository"
             >
               <GitHubIcon />
             </a>
-            <button className="settings-icon-button" onClick={handleOpenSettings} aria-label="Chain Settings">
+            <button className={buttonStyles.iconButton} onClick={handleOpenSettings} aria-label="Chain Settings">
               <SettingsIcon />
             </button>
           </div>
