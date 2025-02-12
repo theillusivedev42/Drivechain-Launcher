@@ -661,7 +661,7 @@ app.whenReady().then(startApp);
 
 let isShuttingDown = false;
 let forceKillTimeout;
-const SHUTDOWN_TIMEOUT = 30000;
+const SHUTDOWN_TIMEOUT = 10000; // Reduced to 10 seconds
 
 async function performGracefulShutdown() {
   if (isShuttingDown) return;
@@ -671,12 +671,19 @@ async function performGracefulShutdown() {
     mainWindow.webContents.send("shutdown-started");
   }
 
+  // Start force kill timeout immediately
   forceKillTimeout = setTimeout(() => {
     console.log("Shutdown timeout reached, forcing quit...");
     forceKillAllProcesses();
   }, SHUTDOWN_TIMEOUT);
 
   try {
+    // Clean up power save blocker if active
+    if (powerSaveBlockerId !== null) {
+      powerSaveBlocker.stop(powerSaveBlockerId);
+      powerSaveBlockerId = null;
+    }
+
     // First handle any active downloads
     if (downloadManager) {
       const activeDownloads = downloadManager.getDownloads();
@@ -690,18 +697,21 @@ async function performGracefulShutdown() {
       }
     }
 
-    // Then stop running chains
+    // Then stop running chains with a timeout
     if (chainManager) {
       const runningChains = Object.keys(chainManager.runningProcesses);
-      await Promise.all(runningChains.map(chainId => 
-        chainManager.stopChain(chainId).catch(err => 
-          console.error(`Error stopping ${chainId}:`, err)
-        )
-      ));
+      await Promise.race([
+        Promise.all(runningChains.map(chainId => 
+          chainManager.stopChain(chainId).catch(err => 
+            console.error(`Error stopping ${chainId}:`, err)
+          )
+        )),
+        new Promise(resolve => setTimeout(resolve, 5000)) // 5 second timeout for chain stopping
+      ]);
     }
 
     clearTimeout(forceKillTimeout);
-    app.quit();
+    process.nextTick(() => app.exit(0)); // Force exit on next tick
   } catch (error) {
     console.error("Error during graceful shutdown:", error);
     forceKillAllProcesses();
@@ -709,6 +719,16 @@ async function performGracefulShutdown() {
 }
 
 function forceKillAllProcesses() {
+  // Clean up power save blocker if active
+  if (powerSaveBlockerId !== null) {
+    try {
+      powerSaveBlocker.stop(powerSaveBlockerId);
+      powerSaveBlockerId = null;
+    } catch (error) {
+      console.error("Error stopping power save blocker:", error);
+    }
+  }
+
   // First cancel all downloads
   if (downloadManager) {
     const activeDownloads = downloadManager.getDownloads();
@@ -727,6 +747,7 @@ function forceKillAllProcesses() {
     Object.entries(chainManager.runningProcesses).forEach(([chainId, process]) => {
       try {
         if (process.kill) {
+          console.log(`Force killing process for ${chainId}`);
           process.kill('SIGKILL');
         }
       } catch (error) {
@@ -738,7 +759,20 @@ function forceKillAllProcesses() {
   if (forceKillTimeout) {
     clearTimeout(forceKillTimeout);
   }
-  app.quit();
+
+  // Force exit the app
+  process.nextTick(() => {
+    try {
+      // On Linux/Windows, ensure all child processes are terminated
+      if (process.platform !== 'darwin') {
+        process.kill(-process.pid, 'SIGKILL');
+      }
+      app.exit(0);
+    } catch (error) {
+      console.error("Error during force exit:", error);
+      process.exit(1);
+    }
+  });
 }
 
 app.on("window-all-closed", () => {
