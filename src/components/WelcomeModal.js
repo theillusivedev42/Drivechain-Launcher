@@ -299,15 +299,11 @@ const WelcomeModal = ({ isOpen, onClose }) => {
             }
           }}
           placeholder={isHexMode
-            ? "Enter hex (16/32/64 chars) or use Generate Random for valid entropy"
-            : "Enter text to be hashed into entropy"
+            ? "Enter hex or use Generate Random"
+            : "Enter text for entropy"
           }
           className={styles.input}
         />
-      </div>
-
-      <div className={styles.buttonContainer}>
-        {error && <div className={styles.error} style={{ margin: 0, textAlign: 'left', flex: 1 }}>{error}</div>}
         <button
           className={styles.randomButton}
           onClick={async () => {
@@ -329,6 +325,8 @@ const WelcomeModal = ({ isOpen, onClose }) => {
           Generate Random
         </button>
       </div>
+
+      {error && <div className={styles.error} style={{ margin: 0, textAlign: 'left', flex: 1 }}>{error}</div>}
 
       <div className={styles.previewSection}>
         {preview ? (
