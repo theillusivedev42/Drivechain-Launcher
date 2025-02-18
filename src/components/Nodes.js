@@ -349,7 +349,7 @@ function Nodes() {
   return (
     <div className={styles.container}>
       <div className={styles.chainSection}>
-        <div className={styles.chainHeading}>
+        <div className={styles.l1ChainHeading}>
           <h2>Layer 1</h2>
           {isInitialized && (
             <button
@@ -409,7 +409,9 @@ function Nodes() {
         </div>
       </div>
       <div className={styles.chainSection}>
-        <h2 className={styles.chainHeading}>Layer 2</h2>
+        <div className={styles.l2ChainHeading}>
+          <h2>Layer 2</h2>
+        </div>
         <div className={styles.l2Chains}>
           {chains
             .filter(chain => chain.chain_type === 2)

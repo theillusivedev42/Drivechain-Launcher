@@ -171,8 +171,19 @@ class WalletService extends EventEmitter {
   }
 
   async saveL1Starter(walletData) {
+    // Save full wallet data
     const l1Path = path.join(this.walletDir, 'l1_starter.json');
     await fs.writeJson(l1Path, walletData, { spaces: 2 });
+
+    // Save mnemonic only for L1 if it doesn't exist
+    const mnemonicPath = path.join(this.mnemonicsDir, 'l1.txt');
+    if (!(await fs.pathExists(mnemonicPath))) {
+      console.log('Creating new mnemonic file for L1');
+      await fs.writeFile(mnemonicPath, walletData.mnemonic);
+    } else {
+      console.log('Mnemonic file already exists for L1, skipping creation');
+    }
+    
     this.emit('wallet-updated');
   }
 

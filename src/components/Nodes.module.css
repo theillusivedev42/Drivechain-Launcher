@@ -23,11 +23,20 @@
 .chainHeading {
   font-size: calc(var(--base-font-size) * 1.1);
   font-weight: bold;
-  margin: 0 0 var(--base-spacing) 0;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.l1ChainHeading {
+  composes: chainHeading;
+  margin: var(--base-spacing) 0 0 0;
+}
+
+.l2ChainHeading {
+  composes: chainHeading;
+  margin: calc(var(--base-spacing) * 0.25) 0;
 }
 
 /* Chain lists */
