@@ -1,32 +1,3 @@
-/**
- * FastWithdrawalModal handles the process of withdrawing L2 coins to L1 bitcoin address.
- * 
- * The modal has three main stages:
- * 
- * 1. Initial Withdrawal Request:
- *    - User enters withdrawal amount
- *    - User enters withdrawal address
- *    - User selects fast withdrawal server
- *    - User selects L2 chain (Thunder/BitNames)
- *    - "Request Withdrawal" button initiates the process
- * 
- * 2. Payment Stage (after request):
- *    - Shows withdrawal hash
- *    - Displays amount to send with copy button
- *    - Shows L2 address to send to with copy button
- *    - User enters payment transaction ID
- *    - "Complete Withdrawal" button confirms payment
- * 
- * 3. Success Stage:
- *    - Shows success message
- *    - Displays L1 payout transaction with copy button
- *    - "Start new withdrawal" button resets the form
- * 
- * The modal can be closed at any time:
- * - If closed after completion, state is reset
- * - If closed before completion, state is preserved
- */
-
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideFastWithdrawalModal } from '../store/fastWithdrawalModalSlice';
@@ -221,32 +192,30 @@ const FastWithdrawalModal = () => {
                     </div>
                   </div>
                   <div className={styles.formGroup}>
-                    <div className={styles.horizontalInputs}>
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>
-                          Select fast withdrawal server
-                        </label>
-                        <select
-                          value={selectedServer}
-                          onChange={(e) => setSelectedServer(e.target.value)}
-                          className={styles.input}
-                        >
-                          <option value="172.105.148.135">172.105.148.135 (L2L #1)</option>
-                        </select>
-                      </div>
-                      <div className={styles.inputGroup}>
-                        <label className={styles.inputLabel}>
-                          Select L2 to withdraw from
-                        </label>
-                        <select
-                          value={layer2Chain}
-                          onChange={(e) => setLayer2Chain(e.target.value)}
-                          className={styles.input}
-                        >
-                          <option value="Thunder">Thunder</option>
-                          <option value="BitNames">BitNames</option>
-                        </select>
-                      </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.inputLabel}>
+                        Select fast withdrawal server
+                      </label>
+                      <select
+                        value={selectedServer}
+                        onChange={(e) => setSelectedServer(e.target.value)}
+                        className={styles.input}
+                      >
+                        <option value="172.105.148.135">172.105.148.135 (L2L #1)</option>
+                      </select>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.inputLabel}>
+                        Select L2 to withdraw from
+                      </label>
+                      <select
+                        value={layer2Chain}
+                        onChange={(e) => setLayer2Chain(e.target.value)}
+                        className={styles.input}
+                      >
+                        <option value="Thunder">Thunder</option>
+                        <option value="BitNames">BitNames</option>
+                      </select>
                     </div>
                   </div>
                   <div className={styles.buttonGroup}>
