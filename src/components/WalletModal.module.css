@@ -4,21 +4,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background-color: var(--modal-bg);
   z-index: 1000;
+  overflow: hidden;
 }
 
 .modalContent {
-  background-color: var(--modal-bg);
-  border-radius: 8px;
-  padding: 24px;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
+  height: 100%;
+  color: var(--modal-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 16px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .modalHeader {
@@ -27,6 +28,8 @@
   align-items: center;
   margin-bottom: 16px;
   position: relative;
+  width: 100%;
+  max-width: 800px;
 }
 
 .modalTitle {
@@ -34,6 +37,7 @@
   font-size: 24px;
   font-weight: 600;
   text-align: center;
+  flex: 1;
 }
 
 .closeButton {
@@ -42,18 +46,23 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   color: var(--modal-text);
+  border-radius: 4px;
+  transition: opacity 0.2s;
+  opacity: 0.7;
+}
+
+.closeButton:hover {
+  opacity: 1;
 }
 
 .description {
   color: var(--text-secondary);
-  margin-bottom: 24px;
-  text-align: left;
-}
-
-.closeButton:hover {
-  opacity: 0.7;
+  margin-bottom: 16px;
+  text-align: center;
+  width: 100%;
+  max-width: 800px;
 }
 
 .error {
@@ -62,12 +71,17 @@
   padding: 12px;
   border-radius: 4px;
   margin-bottom: 16px;
+  width: 100%;
+  max-width: 800px;
+  text-align: center;
 }
 
 .loading {
   text-align: center;
-  padding: 20px;
+  padding: 16px;
   color: var(--modal-text);
+  width: 100%;
+  max-width: 800px;
 }
 
 .starterTable {
@@ -75,6 +89,8 @@
   margin: 0;
   border-radius: 8px;
   border: 1px solid var(--btn-bg);
+  width: 100%;
+  max-width: 800px;
 }
 
 :global(.dark) .starterTable {
@@ -135,7 +151,7 @@
 
 .starterCol {
   text-align: left;
-  padding: 12px 8px;
+  padding: 10px 8px;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
@@ -145,9 +161,9 @@
   text-align: left;
   font-family: monospace;
   word-break: break-word;
-  padding: 12px 8px;
-  font-size: 14px;
-  line-height: 1;
+  padding: 10px 8px;
+  font-size: 13px;
+  line-height: 1.2;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
@@ -169,7 +185,7 @@
 .sectionHeader .starterCol,
 .sectionHeader .mnemonicCol {
   font-family: inherit;
-  padding: 12px 8px;
+  padding: 10px 8px;
   display: flex;
   align-items: center;
 }
@@ -178,15 +194,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .iconButton, .deleteIconButton {
   background: none;
   border: none;
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,12 +236,14 @@
 }
 
 .emptyState {
-  padding: 32px;
+  padding: 24px;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  width: 100%;
+  max-width: 800px;
 }
 
 .submitButton {
