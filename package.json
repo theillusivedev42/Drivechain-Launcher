@@ -142,7 +142,21 @@
       ],
       "category": "public.app-category.developer-tools",
       "artifactName": "Drivechain-Launcher-${version}-${arch}.${ext}",
-      "icon": "public/icon.icns"
+      "icon": "public/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "notarize": {
+        "teamId": "$APPLE_TEAM_ID"
+      },
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect drivechain nodes.",
+        "NSCameraUsageDescription": "Application requests access to the device's camera.",
+        "NSMicrophoneUsageDescription": "Application requests access to the device's microphone.",
+        "NSDocumentsFolderUsageDescription": "Application requests access to the user's Documents folder.",
+        "NSDownloadsFolderUsageDescription": "Application requests access to the user's Downloads folder."
+      }
     }
   },
   "devDependencies": {
