@@ -35,33 +35,60 @@ jobs:
         run: npm run react-build
 
       # ---------------------------------
-      # macOS Build & Notarization (API Key)
+      # macOS Build (Sign only, no auto-notarize)
       # ---------------------------------
       - name: Print environment for debugging
         if: matrix.os == 'macos-latest'
         run: printenv | sort
-      - name: Build Electron app (macOS)
+
+      - name: Build & Sign Electron app (macOS)
         if: matrix.os == 'macos-latest'
         env:
-          # Use Apple API key for notarization:
-          APPLE_API_KEY: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }}
-
-          # Developer ID certificate & password for code signing:
+          # Provide ONLY the .p12 certificate for code signing.
           CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
-          # If your package.json notarize block references teamId:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-          # Debug logging for electron-builder
+          # Remove or omit the Apple API key vars from electron-builder,
+          # so it doesn't attempt notarization internally.
           DEBUG: electron-builder
-
-          # GitHub token (only if needed for publishing)
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Remove any "notarize" block from package.json or set "notarize": false
+          # to ensure electron-builder won't attempt notarization automatically.
+          npm run electron-build
 
-        run: npm run electron-build
+      - name: Submit app for notarization
+        if: matrix.os == 'macos-latest'
+        run: |
+          # We'll assume your DMG name matches something like:
+          #   dist/Drivechain-Launcher-<version>-x64.dmg
+          # If you produce multiple DMGs (x64, arm64), pick the correct one or do both.
+          DMG_FILE=$(ls dist/*-x64.dmg | head -n 1)
+          if [ -z "$DMG_FILE" ]; then
+            echo "No x64 DMG found to notarize!"
+            exit 1
+          fi
+          echo "Submitting $DMG_FILE for notarization..."
+
+          xcrun notarytool submit "$DMG_FILE" \
+            --key ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }} \
+            --key-id ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }} \
+            --issuer ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }} \
+            --output notarize_output.json --wait --timeout 20m
+
+          # This command automatically does the upload and waits up to 20 minutes.
+          # If you prefer a two-step process, omit "--wait" here and do a separate "wait" step.
+
+      - name: Staple notarization
+        if: matrix.os == 'macos-latest'
+        run: |
+          DMG_FILE=$(ls dist/*-x64.dmg | head -n 1)
+          if [ -z "$DMG_FILE" ]; then
+            echo "No x64 DMG found to staple!"
+            exit 1
+          fi
+          echo "Stapling $DMG_FILE..."
+          xcrun stapler staple "$DMG_FILE"
 
       # ---------------------------------
       # Windows Build
@@ -89,7 +116,7 @@ jobs:
           ls -la dist/
 
       # ---------------------------------
-      # Upload Artifacts (Same as before)
+      # Upload Artifacts
       # ---------------------------------
       - name: Check Linux build output
         if: matrix.os == 'ubuntu-latest-large'
@@ -126,7 +153,7 @@ jobs:
           if-no-files-found: error
 
   # -------------------------------------
-  # (Optional) Separate upload-to-releases job
+  # Separate upload-to-releases job
   # -------------------------------------
   upload-to-releases:
     name: Upload to releases.drivechain.info
