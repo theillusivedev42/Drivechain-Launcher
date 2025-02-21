@@ -92,7 +92,10 @@ jobs:
           request_uuid=$(echo "$submit_output" | grep 'id:' | awk '{print $2}')
           
           echo "Extracted UUID: $request_uuid"
-          echo "NOTARIZATION_UUID=$request_uuid" >> $GITHUB_ENV
+          # Use GitHub's special environment file syntax
+          echo "NOTARIZATION_UUID<<EOF" >> $GITHUB_ENV
+          echo "$request_uuid" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Wait for notarization to finish
         if: matrix.os == 'macos-latest'
