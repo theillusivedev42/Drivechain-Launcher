@@ -78,39 +78,20 @@ jobs:
             exit 1
           fi
           echo "Submitting $DMG_FILE for notarization..."
-          echo "DMG_FILE_PATH=$DMG_FILE" >> $GITHUB_ENV
 
           echo "Running notarytool submit..."
-          submit_output=$(xcrun notarytool submit "$DMG_FILE" \
+          request_uuid=$(xcrun notarytool submit "$DMG_FILE" \
             --key $GODOT_MACOS_NOTARIZATION_API_KEY \
             --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
-            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID)
+            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID | grep 'id:' | awk '{print $2}')
           
-          echo "Raw notarytool output:"
-          echo "$submit_output"
+          echo "Notarization UUID: $request_uuid"
           
-          request_uuid=$(echo "$submit_output" | grep 'id:' | awk '{print $2}')
-          
-          echo "Extracted UUID: $request_uuid"
-          # Use GitHub's special environment file syntax
-          echo "NOTARIZATION_UUID<<EOF" >> $GITHUB_ENV
-          echo "$request_uuid" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-      - name: Wait for notarization to finish
-        if: matrix.os == 'macos-latest'
-        env:
-          GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
-          GODOT_MACOS_NOTARIZATION_API_KEY: ./notarization_api_key.p8
-          GODOT_MACOS_NOTARIZATION_API_UUID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }}
-        run: |
-          xcrun notarytool wait ${{ env.NOTARIZATION_UUID }} \
+          echo "Waiting for notarization to complete..."
+          xcrun notarytool wait "$request_uuid" \
             --key $GODOT_MACOS_NOTARIZATION_API_KEY \
             --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
             --issuer $GODOT_MACOS_NOTARIZATION_API_UUID
 
-      - name: Staple notarization
-        if: matrix.os == 'macos-latest'
-        run: |
-          echo "Stapling ${{ env.DMG_FILE_PATH }}..."
-          xcrun stapler staple "${{ env.DMG_FILE_PATH }}"
+          echo "Stapling notarization..."
+          xcrun stapler staple "$DMG_FILE"
