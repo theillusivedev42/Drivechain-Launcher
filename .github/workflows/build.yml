@@ -78,187 +78,30 @@ jobs:
             exit 1
           fi
           echo "Submitting $DMG_FILE for notarization..."
+          echo "DMG_FILE_PATH=$DMG_FILE" >> $GITHUB_ENV
 
-          xcrun notarytool submit "$DMG_FILE" \
+          request_uuid=$(xcrun notarytool submit "$DMG_FILE" \
             --key $GODOT_MACOS_NOTARIZATION_API_KEY \
             --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
-            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID \
-            --output notarize_output.json
+            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID | grep -o 'id: [^[:space:]]*' | cut -d' ' -f2)
+
+          echo "Notarization Request UUID: $request_uuid"
+          echo "NOTARIZATION_UUID=$request_uuid" >> $GITHUB_ENV
 
       - name: Wait for notarization to finish
         if: matrix.os == 'macos-latest'
+        env:
+          GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
+          GODOT_MACOS_NOTARIZATION_API_KEY: ./notarization_api_key.p8
+          GODOT_MACOS_NOTARIZATION_API_UUID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }}
         run: |
-          request_id=$(grep 'Notarization request UUID' notarize_output.json | rev | cut -d ' ' -f 1 | rev | tr -d '"')
-
-          xcrun notarytool wait $request_id \
-            --issuer ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }} \
-            --key-id ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }} \
-            --key ./notarization_api_key.p8
+          xcrun notarytool wait ${{ env.NOTARIZATION_UUID }} \
+            --key $GODOT_MACOS_NOTARIZATION_API_KEY \
+            --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
+            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID
 
       - name: Staple notarization
         if: matrix.os == 'macos-latest'
         run: |
-          DMG_FILE=$(ls dist/*-x64.dmg | head -n 1)
-          if [ -z "$DMG_FILE" ]; then
-            echo "No x64 DMG found to staple!"
-            exit 1
-          fi
-          echo "Stapling $DMG_FILE..."
-          xcrun stapler staple "$DMG_FILE"
-
-      # ---------------------------------
-      # Windows Build
-      # ---------------------------------
-      - name: Build Electron app (Windows)
-        if: matrix.os == 'windows-latest'
-        env:
-          DEBUG: electron-builder
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run electron-build
-
-      # ---------------------------------
-      # Linux Build
-      # ---------------------------------
-      - name: Build Electron app (Linux)
-        if: matrix.os == 'ubuntu-latest-large'
-        env:
-          DEBUG: electron-builder
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npx electron-builder --version
-          ls -la
-          npx electron-builder --linux AppImage --x64
-          echo "Build output directory contents:"
-          ls -la dist/
-
-      # ---------------------------------
-      # Upload Artifacts
-      # ---------------------------------
-      - name: Check Linux build output
-        if: matrix.os == 'ubuntu-latest-large'
-        run: |
-          echo "Checking build output..."
-          if [ ! -d "dist" ]; then
-            echo "Error: dist directory not found"
-            exit 1
-          fi
-          find dist -type f -name "*.AppImage" || echo "No AppImage files found in dist/"
-
-      - name: Upload Linux artifacts
-        if: matrix.os == 'ubuntu-latest-large'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-build
-          path: dist/*.AppImage
-          if-no-files-found: error
-
-      - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: dist/*.exe
-          if-no-files-found: error
-
-      - name: Upload macOS artifacts
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: dist/*.dmg
-          if-no-files-found: error
-
-  # -------------------------------------
-  # Separate upload-to-releases job
-  # -------------------------------------
-  upload-to-releases:
-    name: Upload to releases.drivechain.info
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.event_name == 'push' && github.repository_owner == 'LayerTwo-Labs'
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: "*-build"
-          path: artifacts
-
-      - name: List downloaded files
-        run: |
-          echo "Artifacts directory contents:"
-          ls -la artifacts
-          echo "Linux build directory contents:"
-          ls -la artifacts/linux-build
-          echo "Windows build directory contents:"
-          ls -la artifacts/windows-build
-          echo "macOS build directory contents:"
-          ls -la artifacts/macos-build
-
-      - name: Process artifacts
-        run: |
-          # Linux
-          cd artifacts/linux-build
-          mv *.AppImage ../../drivechain-launcher-latest-x86_64-linux.AppImage
-          cd ../..
-          
-          # Windows
-          cd artifacts/windows-build
-          EXE_FILE=$(ls Drivechain-Launcher-Setup-*.exe 2>/dev/null || echo "")
-          if [ -z "$EXE_FILE" ]; then
-            echo "Error: No Windows exe file found"
-            exit 1
-          fi
-          zip ../../drivechain-launcher-latest-windows.zip "$EXE_FILE"
-          cd ../..
-          
-          # macOS
-          cd artifacts/macos-build
-          ARM64_DMG=$(ls *-arm64.dmg 2>/dev/null || echo "")
-          if [ -z "$ARM64_DMG" ]; then
-            echo "Error: No arm64 DMG file found"
-            exit 1
-          fi
-          mv "$ARM64_DMG" ../../drivechain-launcher-latest-osx-arm64.dmg
-          
-          X64_DMG=$(ls *-x64.dmg 2>/dev/null || echo "")
-          if [ -z "$X64_DMG" ]; then
-            echo "Error: No x64 DMG file found"
-            exit 1
-          fi
-          mv "$X64_DMG" ../../drivechain-launcher-latest-osx-x64.dmg
-          cd ../..
-          
-          echo "Final files:"
-          ls -la drivechain-launcher-*
-
-      - name: Verify files exist
-        run: |
-          if [ ! -f "drivechain-launcher-latest-x86_64-linux.AppImage" ]; then
-            echo "Error: Linux AppImage file not found"
-            exit 1
-          fi
-          if [ ! -f "drivechain-launcher-latest-windows.zip" ]; then
-            echo "Error: Windows zip file not found"
-            exit 1
-          fi
-          if [ ! -f "drivechain-launcher-latest-osx-arm64.dmg" ]; then
-            echo "Error: macOS arm64 DMG file not found"
-            exit 1
-          fi
-          if [ ! -f "drivechain-launcher-latest-osx-x64.dmg" ]; then
-            echo "Error: macOS x64 DMG file not found"
-            exit 1
-          fi
-
-      - name: Upload to releases.drivechain.info
-        uses: cross-the-world/ssh-scp-ssh-pipelines@latest
-        with:
-          host: 45.33.96.47
-          user: root
-          pass: ${{ secrets.RELEASES_SERVER_PW }}
-          port: 22
-          scp: |
-            'drivechain-launcher-latest-x86_64-linux.AppImage' => '/var/www/html/'
-            'drivechain-launcher-latest-windows.zip' => '/var/www/html/'
-            'drivechain-launcher-latest-osx-arm64.dmg' => '/var/www/html/'
-            'drivechain-launcher-latest-osx-x64.dmg' => '/var/www/html/'
+          echo "Stapling ${{ env.DMG_FILE_PATH }}..."
+          xcrun stapler staple "${{ env.DMG_FILE_PATH }}"
