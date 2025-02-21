@@ -57,8 +57,17 @@ jobs:
           # to ensure electron-builder won't attempt notarization automatically.
           npm run electron-build
 
+      - name: Setup notarization credentials
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }} | base64 --decode > notarization_api_key.p8
+
       - name: Submit app for notarization
         if: matrix.os == 'macos-latest'
+        env:
+          GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
+          GODOT_MACOS_NOTARIZATION_API_KEY: ./notarization_api_key.p8
+          GODOT_MACOS_NOTARIZATION_API_UUID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }}
         run: |
           # We'll assume your DMG name matches something like:
           #   dist/Drivechain-Launcher-<version>-x64.dmg
@@ -71,13 +80,20 @@ jobs:
           echo "Submitting $DMG_FILE for notarization..."
 
           xcrun notarytool submit "$DMG_FILE" \
-            --key ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }} \
-            --key-id ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }} \
-            --issuer ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }} \
-            --output notarize_output.json --wait --timeout 20m
+            --key $GODOT_MACOS_NOTARIZATION_API_KEY \
+            --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
+            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID \
+            --output notarize_output.json
 
-          # This command automatically does the upload and waits up to 20 minutes.
-          # If you prefer a two-step process, omit "--wait" here and do a separate "wait" step.
+      - name: Wait for notarization to finish
+        if: matrix.os == 'macos-latest'
+        run: |
+          request_id=$(grep 'Notarization request UUID' notarize_output.json | rev | cut -d ' ' -f 1 | rev | tr -d '"')
+
+          xcrun notarytool wait $request_id \
+            --issuer ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }} \
+            --key-id ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }} \
+            --key ./notarization_api_key.p8
 
       - name: Staple notarization
         if: matrix.os == 'macos-latest'
