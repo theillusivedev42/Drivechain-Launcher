@@ -12,7 +12,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest-large, windows-latest, macos-latest]
@@ -35,40 +34,63 @@ jobs:
           CI: false
         run: npm run react-build
 
-      - name: Build Electron app
-        if: matrix.os != 'ubuntu-latest-large'
+      # ---------------------------------
+      # macOS Build & Notarization (API Key)
+      # ---------------------------------
+      - name: Print environment for debugging
+        if: matrix.os == 'macos-latest'
+        run: printenv | sort
+      - name: Build Electron app (macOS)
+        if: matrix.os == 'macos-latest'
+        env:
+          # Use Apple API key for notarization:
+          APPLE_API_KEY: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_UUID }}
+
+          # Developer ID certificate & password for code signing:
+          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
+          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+
+          # If your package.json notarize block references teamId:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+          # Debug logging for electron-builder
+          DEBUG: electron-builder
+
+          # GitHub token (only if needed for publishing)
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: npm run electron-build
+
+      # ---------------------------------
+      # Windows Build
+      # ---------------------------------
+      - name: Build Electron app (Windows)
+        if: matrix.os == 'windows-latest'
         env:
           DEBUG: electron-builder
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS signing environment variables
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
         run: npm run electron-build
 
+      # ---------------------------------
+      # Linux Build
+      # ---------------------------------
       - name: Build Electron app (Linux)
         if: matrix.os == 'ubuntu-latest-large'
         env:
           DEBUG: electron-builder
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Show electron-builder version
           npx electron-builder --version
-          
-          # List contents before build
           ls -la
-          
-          # Run build with verbose logging
           npx electron-builder --linux AppImage --x64
-          
-          # Show build output directory
           echo "Build output directory contents:"
           ls -la dist/
 
-      # Upload artifacts based on platform
+      # ---------------------------------
+      # Upload Artifacts (Same as before)
+      # ---------------------------------
       - name: Check Linux build output
         if: matrix.os == 'ubuntu-latest-large'
         run: |
@@ -78,14 +100,13 @@ jobs:
             exit 1
           fi
           find dist -type f -name "*.AppImage" || echo "No AppImage files found in dist/"
-          
+
       - name: Upload Linux artifacts
         if: matrix.os == 'ubuntu-latest-large'
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: |
-            dist/*.AppImage
+          path: dist/*.AppImage
           if-no-files-found: error
 
       - name: Upload Windows artifacts
@@ -93,8 +114,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: |
-            dist/*.exe
+          path: dist/*.exe
           if-no-files-found: error
 
       - name: Upload macOS artifacts
@@ -102,10 +122,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: |
-            dist/*.dmg
+          path: dist/*.dmg
           if-no-files-found: error
 
+  # -------------------------------------
+  # (Optional) Separate upload-to-releases job
+  # -------------------------------------
   upload-to-releases:
     name: Upload to releases.drivechain.info
     runs-on: ubuntu-latest
@@ -131,34 +153,23 @@ jobs:
 
       - name: Process artifacts
         run: |
-          # Process Linux artifact
+          # Linux
           cd artifacts/linux-build
           mv *.AppImage ../../drivechain-launcher-latest-x86_64-linux.AppImage
           cd ../..
           
-          # Process Windows artifact
+          # Windows
           cd artifacts/windows-build
-          echo "Windows build directory contents before processing:"
-          ls -la
-          
-          # Find the exact exe file
           EXE_FILE=$(ls Drivechain-Launcher-Setup-*.exe 2>/dev/null || echo "")
           if [ -z "$EXE_FILE" ]; then
             echo "Error: No Windows exe file found"
             exit 1
           fi
-          echo "Found Windows exe file: $EXE_FILE"
-          
-          # Create zip file containing the exe
           zip ../../drivechain-launcher-latest-windows.zip "$EXE_FILE"
           cd ../..
           
-          # Process macOS artifacts
+          # macOS
           cd artifacts/macos-build
-          echo "macOS build directory contents before processing:"
-          ls -la
-          
-          # Process arm64 DMG
           ARM64_DMG=$(ls *-arm64.dmg 2>/dev/null || echo "")
           if [ -z "$ARM64_DMG" ]; then
             echo "Error: No arm64 DMG file found"
@@ -166,7 +177,6 @@ jobs:
           fi
           mv "$ARM64_DMG" ../../drivechain-launcher-latest-osx-arm64.dmg
           
-          # Process x64 DMG
           X64_DMG=$(ls *-x64.dmg 2>/dev/null || echo "")
           if [ -z "$X64_DMG" ]; then
             echo "Error: No x64 DMG file found"
