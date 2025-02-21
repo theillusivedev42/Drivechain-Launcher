@@ -80,11 +80,18 @@ jobs:
           echo "Submitting $DMG_FILE for notarization..."
           echo "DMG_FILE_PATH=$DMG_FILE" >> $GITHUB_ENV
 
-          request_uuid=$(xcrun notarytool submit "$DMG_FILE" \
+          echo "Running notarytool submit..."
+          submit_output=$(xcrun notarytool submit "$DMG_FILE" \
             --key $GODOT_MACOS_NOTARIZATION_API_KEY \
             --key-id $GODOT_MACOS_NOTARIZATION_API_KEY_ID \
-            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID | tail -n1)
-
+            --issuer $GODOT_MACOS_NOTARIZATION_API_UUID)
+          
+          echo "Raw notarytool output:"
+          echo "$submit_output"
+          
+          request_uuid=$(echo "$submit_output" | grep 'id:' | awk '{print $2}')
+          
+          echo "Extracted UUID: $request_uuid"
           echo "NOTARIZATION_UUID=$request_uuid" >> $GITHUB_ENV
 
       - name: Wait for notarization to finish
