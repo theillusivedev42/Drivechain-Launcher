@@ -109,9 +109,19 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "category": "Development",
+      "artifactName": "Drivechain-Launcher-${version}.${ext}",
+      "asarUnpack": [
+        "node_modules/@grpc"
+      ],
       "maintainer": "Drivechain <support@drivechain.info>",
       "executableName": "drivechain-launcher",
       "executableArgs": [

@@ -59,8 +59,10 @@ jobs:
           # List contents before build
           ls -la
           
-          # Run build with verbose logging
-          npx electron-builder --linux AppImage --x64
+          # Run build with verbose logging for Linux formats
+          # AppImage - Universal portable format
+          # DEB - Debian/Ubuntu systems
+          npx electron-builder --linux AppImage deb --x64
           
           # Show build output directory
           echo "Build output directory contents:"
@@ -146,6 +148,7 @@ jobs:
           name: linux-build
           path: |
             dist/*.AppImage
+            dist/*.deb
           if-no-files-found: error
 
       - name: Upload Windows artifacts
@@ -194,9 +197,10 @@ jobs:
 
       - name: Process artifacts
         run: |
-          # Process Linux artifact
+          # Process Linux artifacts
           cd artifacts/linux-build
           mv *.AppImage ../../drivechain-launcher-latest-x86_64-linux.AppImage
+          mv *.deb ../../drivechain-launcher-latest-x86_64-linux.deb
           cd ../..
           
           # Process Windows artifact
@@ -247,6 +251,10 @@ jobs:
             echo "Error: Linux AppImage file not found"
             exit 1
           fi
+          if [ ! -f "drivechain-launcher-latest-x86_64-linux.deb" ]; then
+            echo "Error: Linux DEB file not found"
+            exit 1
+          fi
           if [ ! -f "drivechain-launcher-latest-windows.zip" ]; then
             echo "Error: Windows zip file not found"
             exit 1
@@ -269,6 +277,7 @@ jobs:
           port: 22
           scp: |
             'drivechain-launcher-latest-x86_64-linux.AppImage' => '/var/www/html/'
+            'drivechain-launcher-latest-x86_64-linux.deb' => '/var/www/html/'
             'drivechain-launcher-latest-windows.zip' => '/var/www/html/'
             'drivechain-launcher-latest-osx-arm64.dmg' => '/var/www/html/'
             'drivechain-launcher-latest-osx-x64.dmg' => '/var/www/html/'
