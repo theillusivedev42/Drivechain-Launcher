@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useSelector } from 'react-redux';
 import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
@@ -8,6 +9,18 @@ import Tooltip from './Tooltip';
 import './StatusLight.css';
 import styles from './Card.module.css';
 import buttonStyles from './Button.module.css';
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = bytes;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex++;
+  }
+  return `${Math.round(size * 10) / 10} ${units[unitIndex]}`;
+};
 
 const Card = ({
   chain,
@@ -19,6 +32,7 @@ const Card = ({
   onReset,
   runningNodes,
 }) => {
+  const downloadInfo = useSelector(state => state.downloads[chain.id]);
   const { isDarkMode } = useTheme();
   const [showSettings, setShowSettings] = useState(false);
   const [showForceStop, setShowForceStop] = useState(false);
@@ -326,21 +340,38 @@ const Card = ({
           <p className={styles.description}>{chain.description}</p>
         </div>
         <div className={`card-actions ${styles.cardActions}`}>
-          <button
-            ref={buttonRef}
-            className={`${buttonStyles.btn} ${buttonStyles[getButtonClass()]}`}
-            onClick={handleAction}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={handleMouseLeave}
-            disabled={
-              chain.status === 'downloading' ||
-              chain.status === 'extracting' ||
-              chain.status === 'stopping'
-            }
-            id={`download-button-${chain.id}`}
-          >
-            {getButtonText()}
-          </button>
+          <div className={styles.downloadSection}>
+            <button
+              ref={buttonRef}
+              className={`${buttonStyles.btn} ${buttonStyles[getButtonClass()]}`}
+              onClick={handleAction}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={handleMouseLeave}
+              disabled={
+                chain.status === 'downloading' ||
+                chain.status === 'extracting' ||
+                chain.status === 'stopping'
+              }
+              id={`download-button-${chain.id}`}
+            >
+              {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
+                <div 
+                  className={buttonStyles.progressBar}
+                  style={{ transform: `scaleX(${downloadInfo.progress / 100})` }}
+                />
+              )}
+              <span>{getButtonText()}</span>
+            </button>
+            {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
+              <div className={styles.downloadInfo}>
+                {downloadInfo.totalLength ? (
+                  <span>{formatFileSize(downloadInfo.downloadedLength)} / {formatFileSize(downloadInfo.totalLength)}</span>
+                ) : (
+                  <span>{formatFileSize(downloadInfo.downloadedLength)}</span>
+                )}
+              </div>
+            )}
+          </div>
           <div className={styles.iconGroup}>
             <a 
               href={chain.repo_url}

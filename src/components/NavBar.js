@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 // import ThemeToggle from './ThemeToggle';
-import DownloadIcon from './DownloadIcon';
 import NavSettingsIcon from './NavSettingsIcon';
 import ToolsDropdown from './ToolsDropdown';
 import styles from './NavBar.module.css';
@@ -47,7 +46,6 @@ const NavBar = () => {
         </li> */}
       </ul>
       <div className={styles.iconContainer}>
-        <DownloadIcon />
         {/* <ThemeToggle /> */}
         <NavSettingsIcon />
       </div>

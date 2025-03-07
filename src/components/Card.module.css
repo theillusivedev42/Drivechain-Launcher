@@ -118,6 +118,19 @@
   gap: calc(var(--base-spacing) * 0.5);
 }
 
+.downloadSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.downloadInfo {
+  font-size: 0.7rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
 :global(.dark) .cardActions {
   border-color: rgba(255, 255, 255, 0.1);
 }
