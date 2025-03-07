@@ -10,7 +10,6 @@ const UnreleasedCard = ({ chain }) => {
       <div className={styles.cardHeader}>
         <div className={styles.headerContent}>
           <h2 className={styles.title}>{chain.display_name}</h2>
-          <div className={styles.badge}>Coming Soon</div>
         </div>
       </div>
       <div className={styles.cardContent}>

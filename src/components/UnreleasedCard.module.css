@@ -42,16 +42,3 @@
 .link:hover {
   opacity: 1;
 }
-
-/* Coming soon badge */
-.badge {
-  position: absolute;
-  top: var(--base-spacing);
-  right: var(--base-spacing);
-  background-color: var(--downloading-btn);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  font-weight: 500;
-}
