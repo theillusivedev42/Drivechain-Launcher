@@ -4,8 +4,14 @@
   height: calc(var(--window-height) - 24px);
   overflow-y: auto;
   padding-left: 10px;
-  padding-top: 30px;
+  padding-top: 25px;
+  padding-bottom: 5px;
   box-sizing: border-box;
+}
+
+.containerWithQuotes {
+  composes: container;
+  padding-bottom: 60px; /* Add padding for quote ribbon */
 }
 
 /* Chain sections */
@@ -16,10 +22,10 @@
   box-sizing: border-box;
 }
 
-/* Add margin to the last chain section */
+/* Add margin to the last chain section
 .chainSection:last-child {
   margin-bottom: calc(var(--base-spacing) * 2);
-}
+} */
 
 .chainHeading {
   font-size: calc(var(--base-font-size) * 1.1);

@@ -11,6 +11,7 @@ import { setChains, updateChainStatus } from '../store/chainsSlice';
 
 function Nodes() {
   const chains = useSelector(state => state.chains);
+  const showQuotes = useSelector(state => state.settings.showQuotes);
   const [walletMessage, setWalletMessage] = useState(null);
   const [bitcoinSync, setBitcoinSync] = useState(null);
   const [runningNodes, setRunningNodes] = useState([]);
@@ -230,7 +231,7 @@ function Nodes() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className={showQuotes ? styles.containerWithQuotes : styles.container}>
       <div className={styles.chainSection}>
         <div className={styles.l1Chains}>
           {chains

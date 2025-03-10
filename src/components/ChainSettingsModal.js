@@ -107,6 +107,20 @@ const ChainSettingsModal = ({
             <button
               onClick={handleResetChain}
               className={`btn ${styles.resetBtn}`}
+              disabled={
+                chain.status === 'not_downloaded' ||
+                chain.status === 'downloading' ||
+                chain.status === 'extracting' ||
+                chain.status === 'stopping'
+              }
+              style={{
+                cursor: chain.status === 'not_downloaded' ||
+                        chain.status === 'downloading' ||
+                        chain.status === 'extracting' ||
+                        chain.status === 'stopping' 
+                  ? 'not-allowed' 
+                  : 'pointer'
+              }}
             >
               Reset Chain
             </button>

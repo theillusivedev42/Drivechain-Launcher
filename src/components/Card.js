@@ -3,6 +3,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSelector } from 'react-redux';
 import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
+import ResetConfirmModal from './ResetConfirmModal';
 import SettingsIcon from './SettingsIcon';
 import GitHubIcon from './GitHubIcon';
 import TrashIcon from './TrashIcon';
@@ -42,6 +43,7 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [processHealth, setProcessHealth] = useState('offline');
   const [blockCount, setBlockCount] = useState(-1);
   const [startTime, setStartTime] = useState(null);
@@ -359,8 +361,22 @@ const Card = ({
             </button>
             <button 
               className={buttonStyles.iconButton} 
-              onClick={() => onReset(chain.id)} 
+              onClick={() => setShowResetConfirm(true)} 
               aria-label="Reset Chain"
+              disabled={
+                chain.status === 'not_downloaded' ||
+                chain.status === 'downloading' ||
+                chain.status === 'extracting' ||
+                chain.status === 'stopping'
+              }
+              style={{
+                cursor: chain.status === 'not_downloaded' ||
+                        chain.status === 'downloading' ||
+                        chain.status === 'extracting' ||
+                        chain.status === 'stopping' 
+                  ? 'not-allowed' 
+                  : 'pointer'
+              }}
             >
               <TrashIcon />
             </button>
@@ -389,7 +405,12 @@ const Card = ({
           onClose={() => setShowSettings(false)}
           onOpenDataDir={handleOpenDataDir}
           onOpenWalletDir={onOpenWalletDir}
-          onReset={onReset}
+          onReset={chain.status === 'not_downloaded' ||
+                  chain.status === 'downloading' ||
+                  chain.status === 'extracting' ||
+                  chain.status === 'stopping'
+            ? undefined 
+            : onReset}
         />
       )}
 
@@ -402,6 +423,17 @@ const Card = ({
             const chainData = window.cardData.find(c => c.id === id);
             return chainData?.display_name || id;
           })}
+        />
+      )}
+
+      {showResetConfirm && (
+        <ResetConfirmModal
+          chainName={chain.display_name}
+          onConfirm={() => {
+            onReset(chain.id);
+            setShowResetConfirm(false);
+          }}
+          onClose={() => setShowResetConfirm(false)}
         />
       )}
     </>
