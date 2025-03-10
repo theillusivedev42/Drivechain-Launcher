@@ -4,6 +4,7 @@
   height: calc(var(--window-height) - 24px);
   overflow-y: auto;
   padding-left: 10px;
+  padding-top: 30px;
   box-sizing: border-box;
 }
 

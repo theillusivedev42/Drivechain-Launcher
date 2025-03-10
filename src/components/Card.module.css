@@ -3,11 +3,12 @@
   margin: 0;
   background-color: var(--card-bg);
   border-radius: 4px;
-  padding: 0;
+  padding: 8px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   color: var(--text-color);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  gap: 16px;
 }
 
 :global(.dark) .card {
@@ -18,20 +19,32 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* Card header */
-.cardHeader {
-  padding: var(--base-spacing);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+/* Action section (left) */
+.actionSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  padding-right: 16px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-:global(.dark) .cardHeader {
+:global(.dark) .actionSection {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.headerContent {
+/* Title and status section */
+.titleSection {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 200px;
+  padding: 0 16px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .titleSection {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .title {
@@ -46,6 +59,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-top: 4px;
 }
 
 .statusText {
@@ -89,17 +103,16 @@
   box-shadow: none;
 }
 
-/* Card content */
-.cardContent {
-  padding: var(--base-spacing);
-  min-height: 2rem;
-  flex-grow: 1;
-  text-align: left;
-  background-color: #f5f5f5;
+/* Description section */
+.descriptionSection {
+  flex: 1;
+  padding: 0 16px;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  min-width: 200px;
 }
 
-:global(.dark) .cardContent {
-  background-color: #2a2a2a;
+:global(.dark) .descriptionSection {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .description {
@@ -108,22 +121,16 @@
   line-height: 1.4;
 }
 
-/* Card actions */
-.cardActions {
-  padding: var(--base-spacing);
+/* Icons section */
+.iconSection {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  gap: calc(var(--base-spacing) * 0.5);
+  justify-content: center;
+  gap: 12px;
+  width: 120px;
 }
 
-.downloadSection {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+/* Download info */
 .downloadInfo {
   font-size: 0.7rem;
   color: var(--text-color);
@@ -131,11 +138,9 @@
   white-space: nowrap;
 }
 
-:global(.dark) .cardActions {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
+/* Icon group */
 .iconGroup {
   display: flex;
-  gap: calc(var(--base-spacing) * 0.5);
+  gap: 8px;
+  justify-content: center;
 }

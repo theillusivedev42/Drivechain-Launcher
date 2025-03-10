@@ -6,7 +6,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Bitcoin Core 28.1",
-            "description": "The latest version of Bitcoin Core. (Run in signet mode — \"play money\".)",
+            "description": "Bitcoin Core running in signet mode (test network)",
             "repo_url": "https://github.com/bitcoin/bitcoin",
             "released": "yes",
             "directories": {
@@ -55,7 +55,7 @@
             "enabled": true,
             "version": "",
             "display_name": "BIP 300/301 Enforcer",
-            "description": "Activates Bip300, without changing Bitcoin's code.",
+            "description": "Activates Bip300, without changing Bitcoin's code",
             "repo_url": "https://github.com/LayerTwo-Labs/bip300301_enforcer",
             "released": "yes",
             "directories": {
@@ -104,7 +104,7 @@
             "enabled": true,
             "version": "",
             "display_name": "BitWindow",
-            "description": "A GUI for interacting with Bitcoin. Run this!",
+            "description": "GUI for managing Bitcoin and sidechains",
             "repo_url": "https://github.com/LayerTwo-Labs/bitwindow",
             "released": "yes",
             "directories": {
@@ -153,7 +153,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Thunder",
-            "description": "A high-performance sidechain designed to scale Bitcoin through optimized transaction formats and large blocks (up to 1GB). Part of a network of regional sidechains that together can process global transaction volumes.",
+            "description": "High-performance sidechain with large blocks",
             "repo_url": "https://github.com/LayerTwo-Labs/thunder-rust",
             "released": "yes",
             "directories": {
@@ -203,7 +203,7 @@
             "enabled": true,
             "version": "",
             "display_name": "Bitnames",
-            "description": "A decentralized naming and identity sidechain that enables universal logins and censorship-resistant domains. Provides a single username across all platforms while maintaining privacy through separate identities.",
+            "description": "Decentralized naming and identity sidechain",
             "repo_url": "https://github.com/LayerTwo-Labs/bitnames",
             "released": "yes",
             "directories": {
@@ -253,7 +253,7 @@
             "enabled": true,
             "version": "",
             "display_name": "ZSide",
-            "description": "A privacy-focused sidechain for confidential transactions and anonymous payments. Provides enhanced privacy features while maintaining Bitcoin's security model.",
+            "description": "Privacy-focused sidechain for anonymous payments",
             "repo_url": "https://github.com/LayerTwo-Labs/zcash-sidechain",
             "released": "no",
             "directories": {
@@ -303,7 +303,7 @@
             "enabled": true,
             "version": "",
             "display_name": "EthSide",
-            "description": "Ethereum-compatible sidechain",
+            "description": "Ethereum-compatible Bitcoin sidechain",
             "repo_url": "https://github.com/LayerTwo-Labs/ethereum-sidechain",
             "released": "no",
             "directories": {

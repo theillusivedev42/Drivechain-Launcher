@@ -5,6 +5,7 @@ import ChainSettingsModal from './ChainSettingsModal';
 import ForceStopModal from './ForceStopModal';
 import SettingsIcon from './SettingsIcon';
 import GitHubIcon from './GitHubIcon';
+import TrashIcon from './TrashIcon';
 import Tooltip from './Tooltip';
 import './StatusLight.css';
 import styles from './Card.module.css';
@@ -41,14 +42,12 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [processHealth, setProcessHealth] = useState('offline'); // 'healthy', 'warning', 'error', 'offline'
+  const [processHealth, setProcessHealth] = useState('offline');
   const [blockCount, setBlockCount] = useState(-1);
   const [startTime, setStartTime] = useState(null);
   const buttonRef = useRef(null);
 
-  // Periodic chain status / health check
   useEffect(() => {
-    // Track when chain starts running
     if (chain.status === 'running' && !startTime) {
       setStartTime(Date.now());
     } else if (chain.status !== 'running') {
@@ -56,18 +55,15 @@ const Card = ({
     }
 
     const fetchBlockCount = async () => {
-      console.log("chain name: ", chain)
       try {
         const count = await window.electronAPI.getChainBlockCount(chain.id);
-        console.log("new count: ", count)
         setBlockCount(count);
       } catch (error) {
-        setBlockCount(-1)
+        setBlockCount(-1);
         console.error('Failed to fetch block count:', error);
       }
     };
 
-    // Immediately set status based on chain state
     if (chain.status === 'stopping' && chain.id === 'bitcoin') {
       setProcessHealth('warning');
     } else if (chain.status === 'not_downloaded' || 
@@ -85,17 +81,14 @@ const Card = ({
       setProcessHealth('warning');
     }
 
-    // Then start interval for additional health checks
     const runningTime = startTime ? Date.now() - startTime : 0;
-    const intervalTime = runningTime > 5000 ? 500 : 5000; // Start at 5 seconds, then speed up to 500ms after 5 seconds
+    const intervalTime = runningTime > 5000 ? 500 : 5000;
 
     const interval = setInterval(() => {
-      // Only do additional health checks if chain is running
       if (chain.status === 'running' || 
           chain.status === 'starting' || 
           chain.status === 'ready') {
         
-        // For non-BitWindow chains, check block count
         if (chain.id !== 'bitwindow') {
           fetchBlockCount();
           if (blockCount === 0) {
@@ -115,7 +108,6 @@ const Card = ({
   };
 
   const checkReverseDependencies = () => {
-    // Get all chains that depend on this chain
     const dependentChains = runningNodes.filter(nodeId => {
       const chainData = window.cardData.find(c => c.id === nodeId);
       return chainData?.dependencies?.includes(chain.id);
@@ -136,7 +128,6 @@ const Card = ({
   };
 
   const getTooltipText = () => {
-    // Check for missing dependencies when starting
     if (chain.status === 'downloaded' || chain.status === 'stopped') {
       const missing = getMissingDependencies();
       if (missing.length > 0) {
@@ -150,7 +141,6 @@ const Card = ({
       }
     }
     
-    // Check for running dependents when stopping
     if (chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') {
       const dependents = getRunningDependents();
       if (dependents.length > 0) {
@@ -168,7 +158,6 @@ const Card = ({
   };
 
   const handleAction = async (event) => {
-    // Add cooldown period of 2 seconds between actions
     const now = Date.now();
     if (now - lastActionTime < 2000) {
       console.log('Action blocked: cooldown period');
@@ -176,7 +165,6 @@ const Card = ({
     }
     setLastActionTime(now);
 
-    // Check dependencies before starting
     if ((chain.status === 'downloaded' || chain.status === 'stopped') && !checkDependencies()) {
       const rect = buttonRef.current.getBoundingClientRect();
       setTooltipPosition({
@@ -190,7 +178,6 @@ const Card = ({
     switch (chain.status) {
       case 'not_downloaded':
         try {
-          console.log(`Initiating download for chain ${chain.id}`);
           await onDownload(chain.id);
         } catch (error) {
           console.error('Download failed:', error);
@@ -200,7 +187,6 @@ const Card = ({
       case 'downloaded':
       case 'stopped':
         try {
-          console.log(`Starting chain ${chain.id}`);
           await onStart(chain.id);
         } catch (error) {
           console.error('Start failed:', error);
@@ -210,21 +196,16 @@ const Card = ({
       case 'starting':
       case 'ready':
         try {
-          // Check for running dependent chains
           if (!checkReverseDependencies()) {
             setShowForceStop(true);
             return;
           }
           
           setProcessHealth('offline');
-
-          console.log(`Stopping chain ${chain.id}`);
-          // Update UI immediately to show stopping state
           onUpdateChain(chain.id, { status: 'stopping' });
           await onStop(chain.id);
         } catch (error) {
           console.error('Stop failed:', error);
-          // Revert to running state if stop fails
           onUpdateChain(chain.id, { status: 'running' });
         }
         break;
@@ -233,7 +214,6 @@ const Card = ({
 
   const handleForceStop = async () => {
     try {
-      console.log(`Force stopping chain ${chain.id}`);
       onUpdateChain(chain.id, { status: 'stopping' });
       await onStop(chain.id);
     } catch (error) {
@@ -313,7 +293,6 @@ const Card = ({
     }
   };
 
-  // Hide tooltip when mouse leaves button
   const handleMouseLeave = () => {
     setIsHovered(false);
     setTooltipVisible(false);
@@ -322,57 +301,69 @@ const Card = ({
   return (
     <>
       <div className={`card ${styles.card} ${isDarkMode ? 'dark' : 'light'}`}>
-        <div className={`card-header ${styles.cardHeader}`}>
-          <div className={styles.headerContent}>
-            <h2 className={styles.title}>{chain.display_name}</h2>
-            <div className={styles.statusGroup}>
-              <div className={styles.statusText}>
-                {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
-                  (chain.id === 'bitwindow' ? 'Running' :
-                   blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
-                  (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
-              </div>
-              <div className={`status-light ${processHealth} ${styles.statusLight}`} title={`Process Status: ${processHealth}`} />
+        <div className={styles.actionSection}>
+          <button
+            ref={buttonRef}
+            className={`${buttonStyles.btn} ${buttonStyles[getButtonClass()]}`}
+            onClick={handleAction}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={handleMouseLeave}
+            disabled={
+              chain.status === 'downloading' ||
+              chain.status === 'extracting' ||
+              chain.status === 'stopping'
+            }
+            id={`download-button-${chain.id}`}
+          >
+            {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
+              <div 
+                className={buttonStyles.progressBar}
+                style={{ transform: `scaleX(${downloadInfo.progress / 100})` }}
+              />
+            )}
+            <span>{getButtonText()}</span>
+          </button>
+          {/* File size info temporarily commented out
+          {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
+            <div className={styles.downloadInfo}>
+              {downloadInfo.totalLength ? (
+                <span>{formatFileSize(downloadInfo.downloadedLength)} / {formatFileSize(downloadInfo.totalLength)}</span>
+              ) : (
+                <span>{formatFileSize(downloadInfo.downloadedLength)}</span>
+              )}
             </div>
+          )} */}
+        </div>
+
+        <div className={styles.titleSection}>
+          <h2 className={styles.title}>{chain.display_name}</h2>
+          <div className={styles.statusGroup}>
+            <div className={styles.statusText}>
+              {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
+                (chain.id === 'bitwindow' ? 'Running' :
+                 blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
+                (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
+            </div>
+            <div className={`status-light ${processHealth} ${styles.statusLight}`} title={`Process Status: ${processHealth}`} />
           </div>
         </div>
-        <div className={`card-content ${styles.cardContent}`}>
+
+        <div className={styles.descriptionSection}>
           <p className={styles.description}>{chain.description}</p>
         </div>
-        <div className={`card-actions ${styles.cardActions}`}>
-          <div className={styles.downloadSection}>
-            <button
-              ref={buttonRef}
-              className={`${buttonStyles.btn} ${buttonStyles[getButtonClass()]}`}
-              onClick={handleAction}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={handleMouseLeave}
-              disabled={
-                chain.status === 'downloading' ||
-                chain.status === 'extracting' ||
-                chain.status === 'stopping'
-              }
-              id={`download-button-${chain.id}`}
-            >
-              {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
-                <div 
-                  className={buttonStyles.progressBar}
-                  style={{ transform: `scaleX(${downloadInfo.progress / 100})` }}
-                />
-              )}
-              <span>{getButtonText()}</span>
-            </button>
-            {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
-              <div className={styles.downloadInfo}>
-                {downloadInfo.totalLength ? (
-                  <span>{formatFileSize(downloadInfo.downloadedLength)} / {formatFileSize(downloadInfo.totalLength)}</span>
-                ) : (
-                  <span>{formatFileSize(downloadInfo.downloadedLength)}</span>
-                )}
-              </div>
-            )}
-          </div>
+
+        <div className={styles.iconSection}>
           <div className={styles.iconGroup}>
+            <button className={buttonStyles.iconButton} onClick={handleOpenSettings} aria-label="Chain Settings">
+              <SettingsIcon />
+            </button>
+            <button 
+              className={buttonStyles.iconButton} 
+              onClick={() => onReset(chain.id)} 
+              aria-label="Reset Chain"
+            >
+              <TrashIcon />
+            </button>
             <a 
               href={chain.repo_url}
               target="_blank"
@@ -382,17 +373,16 @@ const Card = ({
             >
               <GitHubIcon />
             </a>
-            <button className={buttonStyles.iconButton} onClick={handleOpenSettings} aria-label="Chain Settings">
-              <SettingsIcon />
-            </button>
           </div>
         </div>
       </div>
+
       <Tooltip 
         text={getTooltipText()}
         visible={tooltipVisible}
         position={tooltipPosition}
       />
+
       {showSettings && (
         <ChainSettingsModal
           chain={fullChainData}
@@ -402,6 +392,7 @@ const Card = ({
           onReset={onReset}
         />
       )}
+
       {showForceStop && (
         <ForceStopModal
           chainName={chain.display_name}

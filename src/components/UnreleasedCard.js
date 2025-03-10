@@ -7,13 +7,10 @@ const UnreleasedCard = ({ chain }) => {
 
   return (
     <div className={`${styles.card} ${isDarkMode ? 'dark' : 'light'}`}>
-      <div className={styles.cardHeader}>
-        <div className={styles.headerContent}>
-          <h2 className={styles.title}>{chain.display_name}</h2>
-        </div>
-      </div>
-      <div className={styles.cardContent}>
-        <p className={styles.description}>In development, contribute here:</p>
+      <div className={styles.content}>
+        <p className={styles.description}>
+          {chain.display_name} is in development, contribute here:
+        </p>
         <a
           href={chain.repo_url}
           target="_blank"

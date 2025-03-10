@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
 import styles from './Nodes.module.css';
-import buttonStyles from './Button.module.css';
 import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
@@ -219,122 +218,6 @@ function Nodes() {
     [chains, handleStopChain]
   );
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isStoppingSequence, setIsStoppingSequence] = useState(false);
-
-  const L1_CHAINS = ['bitcoin', 'enforcer', 'bitwindow'];
-  const L2_CHAINS = ['thunder', 'bitnames'];
-
-  const areAllChainsRunning = useCallback(() => {
-    return L1_CHAINS.every(chain =>
-      runningNodes.includes(chain)
-    );
-  }, [runningNodes]);
-
-  const isAnyL1ChainDownloading = useCallback(() => {
-    return L1_CHAINS.some(chainId => {
-      const chain = chains.find(c => c.id === chainId);
-      return chain && (chain.status === 'downloading' || chain.status === 'extracting');
-    });
-  }, [chains]);
-
-  const areAllL1ChainsDownloaded = useCallback(() => {
-    return L1_CHAINS.every(chainId => {
-      const chain = chains.find(c => c.id === chainId);
-      return chain && chain.status !== 'not_downloaded';
-    });
-  }, [chains]);
-
-  const downloadMissingL1Chains = useCallback(async () => {
-    try {
-      for (const chainId of L1_CHAINS) {
-        const chain = chains.find(c => c.id === chainId);
-        if (chain && chain.status === 'not_downloaded') {
-          await handleDownloadChain(chainId);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to download L1 chains:', error);
-    }
-  }, [chains, handleDownloadChain]);
-
-  const handleStartSequence = useCallback(async () => {
-    try {
-      setIsProcessing(true);
-      setIsStoppingSequence(false);
-      
-      if (!runningNodes.includes('bitcoin')) {
-        await window.electronAPI.startChain('bitcoin');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      
-      if (!runningNodes.includes('enforcer')) {
-        await window.electronAPI.startChain('enforcer');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      
-      if (!runningNodes.includes('bitwindow')) {
-        await window.electronAPI.startChain('bitwindow');
-      }
-    } catch (error) {
-      console.error('Start sequence failed:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [runningNodes]);
-
-  useEffect(() => {
-    const bitcoinChain = chains.find(c => c.id === 'bitcoin');
-    if (bitcoinChain?.status === 'stopped' && isStoppingSequence) {
-      setIsProcessing(false);
-      setIsStoppingSequence(false);
-    }
-  }, [chains]);
-
-  const handleStopSequence = useCallback(async () => {
-    try {
-      setIsProcessing(true);
-      setIsStoppingSequence(true);
-      
-      for (const chainId of L2_CHAINS) {
-        if (runningNodes.includes(chainId)) {
-          await window.electronAPI.stopChain(chainId);
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-      }
-      
-      if (runningNodes.includes('bitwindow')) {
-        await window.electronAPI.stopChain('bitwindow');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      if (runningNodes.includes('enforcer')) {
-        await window.electronAPI.stopChain('enforcer');
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-      if (runningNodes.includes('bitcoin')) {
-        await window.electronAPI.stopChain('bitcoin');
-      }
-    } catch (error) {
-      console.error('Stop sequence failed:', error);
-      setIsProcessing(false);
-      setIsStoppingSequence(false);
-    }
-  }, [runningNodes]);
-
-  const handleQuickStartStop = useCallback(async () => {
-    try {
-      if (!areAllL1ChainsDownloaded()) {
-        await downloadMissingL1Chains();
-      } else if (!areAllChainsRunning()) {
-        await handleStartSequence();
-      } else {
-        await handleStopSequence();
-      }
-    } catch (error) {
-      console.error('Quick start/stop failed:', error);
-    }
-  }, [areAllL1ChainsDownloaded, areAllChainsRunning, downloadMissingL1Chains, handleStartSequence, handleStopSequence]);
-
   if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
@@ -349,40 +232,6 @@ function Nodes() {
   return (
     <div className={styles.container}>
       <div className={styles.chainSection}>
-        <div className={styles.l1ChainHeading}>
-          <h2>Layer 1</h2>
-          {isInitialized && (
-            <button
-              onClick={handleQuickStartStop}
-              disabled={isProcessing || isAnyL1ChainDownloading()}
-              className={`${buttonStyles.quickStartBtn} ${
-                !isProcessing && !isAnyL1ChainDownloading() && 
-                (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded())) 
-                  ? buttonStyles.shimmer 
-                  : ''
-              } ${
-                isProcessing || isAnyL1ChainDownloading()
-                  ? buttonStyles.downloading
-                  : !areAllL1ChainsDownloaded()
-                    ? buttonStyles.download
-                    : areAllChainsRunning()
-                      ? buttonStyles.stop
-                      : buttonStyles.run
-              }`}
-              data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
-            >
-              {isProcessing
-                ? (isStoppingSequence ? 'Stopping...' : 'Starting...')
-                : isAnyL1ChainDownloading()
-                  ? 'Downloading...'
-                  : !areAllL1ChainsDownloaded() 
-                    ? 'Download L1' 
-                    : !areAllChainsRunning() 
-                      ? 'Quick Start' 
-                      : 'Safe Stop'}
-            </button>
-          )}
-        </div>
         <div className={styles.l1Chains}>
           {chains
             .filter(chain => chain.chain_type === 0)
@@ -409,9 +258,6 @@ function Nodes() {
         </div>
       </div>
       <div className={styles.chainSection}>
-        <div className={styles.l2ChainHeading}>
-          <h2>Layer 2</h2>
-        </div>
         <div className={styles.l2Chains}>
           {chains
             .filter(chain => chain.chain_type === 2)

@@ -35,8 +35,8 @@
   --base-spacing: 0.5rem;
   
   /* Fixed window dimensions */
-  --window-width: 450px;
-  --window-height: 550px;
+  --window-width: 900px;
+  --window-height: 400px;
 }
 
 /* Dark theme variables */
