@@ -170,8 +170,8 @@ const Card = ({
     if ((chain.status === 'downloaded' || chain.status === 'stopped') && !checkDependencies()) {
       const rect = buttonRef.current.getBoundingClientRect();
       setTooltipPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.top
+        x: rect.right,
+        y: rect.top + rect.height / 2
       });
       setTooltipVisible(true);
       return;

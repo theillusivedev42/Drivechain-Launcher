@@ -26,7 +26,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 16px;
   position: relative;
   width: 100%;
   max-width: 800px;
@@ -41,8 +40,9 @@
 }
 
 .closeButton {
-  position: absolute;
-  right: 0;
+  position: fixed;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
   cursor: pointer;
@@ -51,6 +51,7 @@
   border-radius: 4px;
   transition: opacity 0.2s;
   opacity: 0.7;
+  z-index: 1001;
 }
 
 .closeButton:hover {
@@ -59,7 +60,6 @@
 
 .description {
   color: var(--text-secondary);
-  margin-bottom: 16px;
   text-align: center;
   width: 100%;
   max-width: 800px;
@@ -99,7 +99,7 @@
 
 .sectionHeader {
   display: grid;
-  grid-template-columns: 2fr 5fr 70px;
+  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
   padding: 0;
   background-color: #f5f5f5;
   font-weight: 600;
@@ -124,7 +124,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: 2fr 5fr 70px;
+  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
   padding: 0;
   border-bottom: 1px solid var(--btn-bg);
   align-items: stretch;
@@ -160,13 +160,14 @@
 .mnemonicCol {
   text-align: left;
   font-family: monospace;
-  word-break: break-word;
-  padding: 10px 8px;
+  word-break: break-all;
+  padding: 10px 12px;
   font-size: 13px;
-  line-height: 1.2;
+  line-height: 1.4;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
+  overflow-wrap: break-word;
 }
 
 .actionsCol {

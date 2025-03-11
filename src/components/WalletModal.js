@@ -21,7 +21,18 @@ const WalletModal = () => {
   });
 
   const toggleMnemonic = async (key) => {
-    // Only fetch if we're revealing and haven't fetched before
+    // If we're hiding the current one, just hide it
+    if (revealedMnemonics[key]) {
+      setRevealedMnemonics(prev => ({
+        master: false,
+        layer1: false,
+        layer2_thunder: false,
+        layer2_bitnames: false
+      }));
+      return;
+    }
+
+    // If we're revealing a new one, hide all others first
     if (!revealedMnemonics[key] && mnemonics[key] === '••••••••••••') {
       try {
         let type;
@@ -50,10 +61,15 @@ const WalletModal = () => {
         console.error('Error fetching mnemonic:', error);
       }
     }
-    setRevealedMnemonics(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+    
+    // Set only the current one to visible
+    setRevealedMnemonics({
+      master: false,
+      layer1: false,
+      layer2_thunder: false,
+      layer2_bitnames: false,
+      [key]: true
+    });
   };
   const handleClose = () => {
     dispatch(hideWalletModal());
@@ -71,7 +87,7 @@ const WalletModal = () => {
     <div className={styles.modalOverlay} onClick={handleOverlayClick}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Starters</h2>
+          <h2 className={styles.modalTitle}>Wallet Starters</h2>
           <button className={styles.closeButton} onClick={handleClose}>
             <X size={20} />
           </button>
