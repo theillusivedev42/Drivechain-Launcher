@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 // import ThemeToggle from './ThemeToggle';
 import ToolsDropdown from './ToolsDropdown';
 import { showSettingsModal } from '../store/settingsModalSlice';
+import { updateChainStatus } from '../store/chainsSlice';
 import styles from './NavBar.module.css';
 import buttonStyles from './Button.module.css';
 
@@ -103,6 +104,20 @@ const NavBar = () => {
     }
   }, [runningNodes]);
 
+  useEffect(() => {
+    const unsubscribeStatus = window.electronAPI.onChainStatusUpdate(({ chainId, status }) => {
+      dispatch(updateChainStatus({ chainId, status }));
+      if (status === 'stopped' && chainId === 'bitcoin') {
+        setIsProcessing(false);
+        setIsStoppingSequence(false);
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribeStatus === 'function') unsubscribeStatus();
+    };
+  }, [dispatch]);
+
   const handleQuickStartStop = useCallback(async () => {
     try {
       if (!areAllL1ChainsDownloaded()) {
@@ -125,7 +140,7 @@ const NavBar = () => {
           disabled={isProcessing || isAnyL1ChainDownloading()}
           className={`${buttonStyles.quickStartBtn} ${
             !isProcessing && !isAnyL1ChainDownloading() && 
-            (!areAllL1ChainsDownloaded() || (!areAllChainsRunning() && areAllL1ChainsDownloaded())) 
+            (!areAllChainsRunning() || !areAllL1ChainsDownloaded())
               ? buttonStyles.shimmer 
               : ''
           } ${

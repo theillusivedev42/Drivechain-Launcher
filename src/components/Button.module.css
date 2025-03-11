@@ -1,131 +1,165 @@
 .btn {
-  min-width: 70px;
+  min-width: 65px;
   margin: 0;
-  padding: 0.4rem 0.75rem;
-  border: none;
-  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  font-weight: 600;
-  font-size: var(--base-font-size);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-weight: 500;
+  font-size: calc(var(--base-font-size) * 0.9);
+  font-family: inherit;
   text-align: center;
-  color: white;
-  transition: background-color 0.2s ease, opacity 0.2s ease, width 0.2s ease;
+  color: var(--text-color);
+  background: var(--card-bg);
+  transition: all 0.2s ease;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
-/* Fixed width states */
+:global(.dark) .btn {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .download,
 .run,
 .running,
 .stop,
 .stopping {
   composes: btn;
-  width: 100px;
+  width: 90px;
 }
 
-/* Variable width states */
 .downloading,
 .extracting {
   composes: btn;
   width: auto;
+  min-width: 90px;
 }
 
 .btn:disabled {
   cursor: wait;
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
-/* Button colors */
-.download { background-color: var(--download-btn); }
-.download:hover { background-color: var(--download-btn-hover); }
-.run { background-color: var(--run-btn); }
-.run:hover { background-color: var(--run-btn-hover); }
-.downloading, .extracting { 
-  background-color: var(--downloading-btn);
+.download:hover,
+.run:hover,
+.stop:hover { 
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+:global(.dark) .download:hover,
+:global(.dark) .run:hover,
+:global(.dark) .stop:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.downloading,
+.extracting { 
   position: relative;
 }
 
-.downloading:hover, .extracting:hover { 
-  background-color: var(--downloading-btn-hover);
-}
-
-/* Progress bar styling */
 .progressBar {
   position: absolute;
   left: 0;
-  top: 0;
-  height: 100%;
+  bottom: 0;
+  height: 2px;
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--text-color);
   transform-origin: left;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
+  opacity: 0.2;
 }
 
 .progressBar + span {
   position: relative;
   z-index: 1;
 }
-.running { background-color: var(--running-btn); }
-.running:hover { background-color: var(--running-btn-hover); }
-.stop { background-color: var(--stop-btn); }
-.stop:hover { background-color: var(--stop-btn-hover); }
-.stopping { background-color: var(--stopping-btn); }
-.stopping:hover { background-color: var(--stopping-btn-hover); }
 
-/* Quick Start/Stop Button */
+.running {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+:global(.dark) .running {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.running:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .running:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.stopping {
+  opacity: 0.7;
+}
+
 .quickStartBtn {
   composes: btn;
-  padding: calc(var(--base-spacing) * 0.75) var(--base-spacing);
+  padding: 0.4rem 0.7rem;
+  min-width: 100px;
+  color: white;
+  border: none;
+  background-color: var(--stop-btn);
   transition: background-color 0.2s ease !important;
-  font-size: var(--base-font-size);
-  min-width: 110px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .quickStartBtn:not(:disabled):hover {
   background-color: var(--stop-btn-hover) !important;
+  transform: translateY(-1px);
+}
+
+.quickStartBtn[data-state="start"] {
+  background-color: var(--run-btn);
 }
 
 .quickStartBtn[data-state="start"]:not(:disabled):hover {
   background-color: var(--run-btn-hover) !important;
 }
 
+.quickStartBtn[data-state="download"] {
+  background-color: var(--download-btn);
+}
+
 .quickStartBtn[data-state="download"]:not(:disabled):hover {
   background-color: var(--download-btn-hover) !important;
 }
 
-/* Settings icon button */
 .iconButton {
   background: none;
   border: none;
-  padding: calc(var(--base-spacing) * 0.5);
+  padding: 6px;
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-color);
-  opacity: 0.7;
+  opacity: 0.6;
   transition: all 0.2s ease;
 }
 
 .iconButton:hover {
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
 }
 
 :global(.dark) .iconButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Shimmer effect */
 .shimmer {
   --border-width: 1px;
-  --border-radius: 4px;
+  --border-radius: 6px;
   position: relative;
   border: var(--border-width) solid transparent;
   isolation: isolate;
@@ -134,42 +168,31 @@
 .shimmer::before {
   content: "";
   position: absolute;
-  inset: calc(var(--border-width) * -1);
-  z-index: -1;
-  border: inherit;
-  border-radius: inherit;
-  background: linear-gradient(90deg,
-    var(--current-color, var(--download-btn)) 0%,
-    rgba(255, 255, 255, 0.9) 25%,
-    var(--current-color, var(--download-btn)) 50%,
-    var(--current-color, var(--download-btn)) 100%
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
   );
-  background-size: 200% 100%;
-  -webkit-mask: 
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask: 
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: shine 1s linear infinite;
+  left: -100%;
+  animation: shine 2s ease-in-out infinite;
 }
 
 @keyframes shine {
-  to {
-    background-position: -200% 0;
+  0% {
+    left: -100%;
+    transition-property: left;
+  }
+  32.5%,
+  100% {
+    left: 100%;
+    transition-property: left;
   }
 }
 
 .shimmer:disabled::before {
   animation: none;
-}
-
-.shimmer[data-state="download"] {
-  --current-color: var(--download-btn);
-}
-
-.shimmer[data-state="start"] {
-  --current-color: var(--run-btn);
 }
