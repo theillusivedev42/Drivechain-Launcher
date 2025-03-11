@@ -4,6 +4,7 @@ import { hideFastWithdrawalModal } from '../store/fastWithdrawalModalSlice';
 import { X, Clipboard } from 'lucide-react';
 import styles from './FastWithdrawalModal.module.css';
 import WithdrawalSuccessPopup from './WithdrawalSuccessPopup';
+import ErrorPopup from './ErrorPopup';
 
 const FastWithdrawalModal = () => {
   const dispatch = useDispatch();
@@ -44,7 +45,7 @@ const FastWithdrawalModal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); // Clear any previous errors
+    setErrorMessage('');
     try {
       if (parseFloat(amount) <= 0) {
         throw new Error('Amount must be greater than 0');
@@ -93,7 +94,7 @@ const FastWithdrawalModal = () => {
 
   const handleComplete = async (e) => {
     e.preventDefault();
-    setErrorMessage(''); // Clear any previous errors
+    setErrorMessage('');
     try {
       if (!paymentTxid.trim()) {
         throw new Error('Please enter your L2 payment transaction ID');
@@ -144,11 +145,10 @@ const FastWithdrawalModal = () => {
               Quickly withdraw L2 coins to your L1 bitcoin address
             </div>
             <div className={styles.form}>
-              {errorMessage && (
-                <div className={styles.errorMessage}>
-                  {errorMessage}
-                </div>
-              )}
+              <ErrorPopup 
+                message={errorMessage} 
+                onClose={() => setErrorMessage('')}
+              />
               {!withdrawalHash ? (
                 <form onSubmit={handleSubmit} className={styles.form}>
                   <div className={styles.inputGroup}>
@@ -248,10 +248,7 @@ const FastWithdrawalModal = () => {
                         >
                           {paymentMessage.amount}
                           {copiedStates.amount && <div className={styles.copyTooltip}>Copied!</div>}
-                        </span> {layer2Chain} Coins
-                      </div>
-                      <div className={styles.messageRow}>
-                        to {layer2Chain} L2 address: <span 
+                        </span> {layer2Chain} Coins to {layer2Chain} L2 address: <span 
                           onClick={() => handleCopy(paymentMessage.address, 'address')} 
                           title="Click to copy"
                           className={`${styles.copyableText} ${copiedStates.address ? styles.copied : ''}`}
@@ -267,35 +264,32 @@ const FastWithdrawalModal = () => {
                   )}
                   <form onSubmit={handleComplete}>
                     <div className={styles.txInputSection}>
-                      <label className={styles.inputLabel}>
-                        Payment Transaction ID
-                      </label>
-                      <div className={styles.inputWithPaste}>
-                        <input
-                          type="text"
-                          value={paymentTxid}
-                          onChange={(e) => setPaymentTxid(e.target.value)}
-                          placeholder="Enter payment transaction ID"
-                          className={styles.input}
-                          required
-                        />
+                      <div className={styles.inputWithPasteAndSubmit}>
+                        <div className={styles.inputWithPaste}>
+                          <input
+                            type="text"
+                            value={paymentTxid}
+                            onChange={(e) => setPaymentTxid(e.target.value)}
+                            placeholder="Enter payment transaction ID"
+                            className={styles.input}
+                            required
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handlePaste(setPaymentTxid)}
+                            className={styles.pasteButton}
+                            title="Paste from clipboard"
+                          >
+                            <Clipboard size={18} />
+                          </button>
+                        </div>
                         <button
-                          type="button"
-                          onClick={() => handlePaste(setPaymentTxid)}
-                          className={styles.pasteButton}
-                          title="Paste from clipboard"
+                          type="submit"
+                          className={styles.submitButton}
                         >
-                          <Clipboard size={18} />
+                          Complete Withdrawal
                         </button>
                       </div>
-                    </div>
-                    <div className={styles.buttonGroup}>
-                      <button
-                        type="submit"
-                        className={styles.submitButton}
-                      >
-                        Complete Withdrawal
-                      </button>
                     </div>
                   </form>
                 </>

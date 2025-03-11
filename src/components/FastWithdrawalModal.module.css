@@ -16,7 +16,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   box-sizing: border-box;
   padding: 16px;
   overflow-y: auto;
@@ -36,7 +35,7 @@
 .modalHeader h2 {
   margin: 0;
   color: var(--modal-text);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   text-align: center;
   flex: 1;
@@ -49,11 +48,13 @@
   width: 100%;
   max-width: 800px;
   line-height: 1.5;
+  font-size: 0.9rem;
 }
 
 .closeButton {
-  position: absolute;
-  right: 0;
+  position: fixed;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
   cursor: pointer;
@@ -62,6 +63,7 @@
   border-radius: 4px;
   transition: opacity 0.2s;
   opacity: 0.7;
+  z-index: 1001;
 }
 
 .closeButton:hover {
@@ -80,13 +82,20 @@
   border-radius: 8px;
   background-color: rgba(128, 128, 128, 0.05);
   margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
 }
 
 .inputGroup {
   margin-bottom: 16px;
+  flex: 1;
 }
 
 .inputGroup:last-child {
+  margin-bottom: 0;
+}
+
+.formGroup .inputGroup {
   margin-bottom: 0;
 }
 
@@ -94,21 +103,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
 }
 
 .inputWithPaste .input {
   flex: 1;
 }
 
+.inputWithPasteAndSubmit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .input {
-  height: 42px;
-  padding: 10px 12px;
+  height: 36px;
+  padding: 8px 10px;
   box-sizing: border-box;
   border: 1px solid var(--btn-bg);
   border-radius: 4px;
   background-color: var(--bg-color);
   color: var(--text-color);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -132,8 +148,8 @@ select.input {
 
 .inputLabel {
   color: var(--text-color);
-  font-size: 0.9rem;
-  margin-bottom: 12px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
   display: block;
   font-weight: 600;
 }
@@ -145,15 +161,15 @@ select.input {
 }
 
 .submitButton {
-  min-width: 140px;
-  padding: 10px;
+  min-width: 120px;
+  padding: 8px;
   background-color: var(--download-btn);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -197,6 +213,8 @@ select.input {
   padding: 12px;
   border-radius: 8px;
   background-color: rgba(128, 128, 128, 0.05);
+  width: 100%;
+  max-width: 800px;
 }
 
 .hashDisplay label {
@@ -208,6 +226,8 @@ select.input {
 .paymentInstructions {
   margin: 16px 0;
   text-align: center;
+  width: 100%;
+  max-width: 800px;
 }
 
 .messageRow {
@@ -217,6 +237,8 @@ select.input {
   gap: 8px;
   margin-bottom: 16px;
   position: relative;
+  flex-wrap: wrap;
+  text-align: center;
 }
 
 .messageRow:last-child {
@@ -232,7 +254,10 @@ select.input {
   transition: background-color 0.2s;
   position: relative;
   background-color: var(--bg-color);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  display: inline-block;
 }
 
 .copyableText:hover {
@@ -286,6 +311,8 @@ select.input {
   padding: 12px;
   border-radius: 8px;
   background-color: rgba(128, 128, 128, 0.05);
+  width: 100%;
+  max-width: 800px;
 }
 
 .successMessage {
