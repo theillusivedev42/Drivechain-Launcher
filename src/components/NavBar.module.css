@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   width: calc(100% - 16px); /* Account for window frame */
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 8px 12px;
@@ -13,7 +13,7 @@
   z-index: 1000;
   height: 32px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .leftSection {
@@ -66,12 +66,8 @@
 }
 
 :global(.light) .nav {
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.95);
   border-bottom-color: rgba(0, 0, 0, 0.1);
-}
-
-:global(.dark) .nav {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 :global(.light) .navLink {
