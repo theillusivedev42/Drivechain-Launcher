@@ -337,6 +337,12 @@ const Card = ({
           )} */}
         </div>
 
+        <div className={styles.chainTypeSection}>
+          <div className={`${styles.chainTypeBadge} ${chain.chain_type === 0 ? styles.l1Badge : styles.l2Badge}`}>
+            {chain.chain_type === 0 ? 'L1' : 'L2'}
+          </div>
+        </div>
+
         <div className={styles.titleSection}>
           <h2 className={styles.title}>{chain.display_name}</h2>
           <div className={styles.statusGroup}>

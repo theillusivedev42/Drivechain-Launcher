@@ -6,7 +6,7 @@ import ToolsDropdown from './ToolsDropdown';
 import { showSettingsModal } from '../store/settingsModalSlice';
 import { updateChainStatus } from '../store/chainsSlice';
 import styles from './NavBar.module.css';
-import buttonStyles from './Button.module.css';
+import quickStartStyles from './QuickStartStop.module.css';
 
 const L1_CHAINS = ['bitcoin', 'enforcer', 'bitwindow'];
 const L2_CHAINS = ['thunder', 'bitnames'];
@@ -138,19 +138,11 @@ const NavBar = () => {
         <button
           onClick={handleQuickStartStop}
           disabled={isProcessing || isAnyL1ChainDownloading()}
-          className={`${buttonStyles.quickStartBtn} ${
+          className={`${quickStartStyles.quickStartButton} ${
             !isProcessing && !isAnyL1ChainDownloading() && 
             (!areAllChainsRunning() || !areAllL1ChainsDownloaded())
-              ? buttonStyles.shimmer 
+              ? quickStartStyles.shimmer 
               : ''
-          } ${
-            isProcessing || isAnyL1ChainDownloading()
-              ? buttonStyles.downloading
-              : !areAllL1ChainsDownloaded()
-                ? buttonStyles.download
-                : areAllChainsRunning()
-                  ? buttonStyles.stop
-                  : buttonStyles.run
           }`}
           data-state={!isProcessing && !isAnyL1ChainDownloading() && (!areAllL1ChainsDownloaded() ? 'download' : !areAllChainsRunning() ? 'start' : '')}
         >

@@ -12,7 +12,7 @@ const ForceStopModal = ({ chainName, onConfirm, onClose, dependentChains = [] })
           <h2 className={styles.modalTitle}>Force Stop {chainName}</h2>
         </div>
         <div className={styles.modalBody}>
-          <p>Warning: The following chains depend on {chainName}:</p>
+          <p>Warning - The following chains depend on {chainName}:</p>
           <ul className={styles.dependentList}>
             {dependentChains.map((name, index) => (
               <li key={index}>{name}</li>
