@@ -666,6 +666,22 @@ class ChainManager {
     return path.join(basePath, path.dirname(binaryPath));
   }
 
+  async getBitcoinInfo() {
+    try {
+      const status = await this.bitcoinMonitor.checkIBDStatus();
+      return {
+        blocks: status.blocks,
+        inIBD: status.inIBD
+      };
+    } catch (error) {
+      console.error("Failed to get Bitcoin info:", error);
+      return {
+        blocks: 0,
+        inIBD: false
+      };
+    }
+  }
+
   async getChainBlockCount(chainId) {
     const status = this.chainStatuses.get(chainId);
     if (status !== 'running') return -1;

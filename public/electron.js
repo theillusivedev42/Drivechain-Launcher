@@ -298,6 +298,22 @@ function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle("get-bitcoin-info", async () => {
+    try {
+      const info = await chainManager.getBitcoinInfo();
+      return {
+        blocks: info.blocks,
+        initialblockdownload: info.inIBD
+      };
+    } catch (error) {
+      console.error("Failed to get Bitcoin info:", error);
+      return {
+        blocks: 0,
+        initialblockdownload: false
+      };
+    }
+  });
+
   ipcMain.handle("reset-chain", async (event, chainId) => {
     try {
       return await chainManager.resetChain(chainId);

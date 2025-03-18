@@ -11,15 +11,34 @@ const QuickStartStop = ({ chains, onStart, onStop }) => {
     );
   }, [chains]);
 
+  const waitForIBD = async () => {
+    while (true) {
+      try {
+        const info = await window.electronAPI.getBitcoinInfo();
+        if (!info.initialblockdownload) {
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Check every second
+      } catch (error) {
+        console.error('Failed to check IBD status:', error);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Retry after error
+      }
+    }
+  };
+
   const handleStartSequence = useCallback(async () => {
     try {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      // Do one thing, wait 3s, do next thing
+      // Start bitcoin and wait for IBD
       await onStart('bitcoin');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForIBD();
+      
+      // Start enforcer once IBD is complete
       await onStart('enforcer');
+      
+      // Wait 3s before starting bitwindow
       await new Promise(resolve => setTimeout(resolve, 3000));
       await onStart('bitwindow');
     } finally {
@@ -32,7 +51,6 @@ const QuickStartStop = ({ chains, onStart, onStop }) => {
       setIsProcessing(true);
       setIsStoppingSequence(true);
       
-      // Do one thing, wait 3s, do next thing
       await onStop('bitwindow');
       await new Promise(resolve => setTimeout(resolve, 3000));
       await onStop('enforcer');

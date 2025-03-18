@@ -43,6 +43,7 @@ const Card = ({
   const [lastActionTime, setLastActionTime] = useState(0);
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipText, setTooltipText] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [processHealth, setProcessHealth] = useState('offline');
   const [blockCount, setBlockCount] = useState(-1);
@@ -104,22 +105,51 @@ const Card = ({
     return () => clearInterval(interval);
   }, [chain.id, chain.status, blockCount]);
 
-  const checkDependencies = () => {
+  const checkDependencies = async () => {
+    // For enforcer, check Bitcoin's IBD status
+    if (chain.id === 'enforcer' && runningNodes.includes('bitcoin')) {
+      try {
+        const info = await window.electronAPI.getBitcoinInfo();
+        if (info.initialblockdownload) {
+          setTooltipText('Wait for Bitcoin IBD to complete before starting Enforcer');
+          return false;
+        }
+      } catch (error) {
+        console.error('Failed to check Bitcoin IBD status:', error);
+      }
+    }
+    
+    // Check other dependencies
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
-    return chain.dependencies.every(dep => runningNodes.includes(dep));
+    
+    const missing = chain.dependencies.filter(dep => !runningNodes.includes(dep));
+    if (missing.length > 0) {
+      const missingNames = missing.map(id => {
+        const depName = id.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        return depName;
+      });
+      setTooltipText(`Required dependencies not running:\n${missingNames.join('\n')}`);
+      return false;
+    }
+    
+    return true;
   };
 
   const checkReverseDependencies = () => {
-    const dependentChains = runningNodes.filter(nodeId => {
-      const chainData = window.cardData.find(c => c.id === nodeId);
-      return chainData?.dependencies?.includes(chain.id);
-    });
-    return dependentChains.length === 0;
-  };
-
-  const getMissingDependencies = () => {
-    if (!chain.dependencies) return [];
-    return chain.dependencies.filter(dep => !runningNodes.includes(dep));
+    const dependentChains = getRunningDependents();
+    if (dependentChains.length > 0) {
+      const dependentNames = dependentChains.map(id => {
+        const depName = id.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        return depName;
+      });
+      setTooltipText(`Cannot stop: Following chains depend on this:\n${dependentNames.join('\n')}`);
+      return false;
+    }
+    return true;
   };
 
   const getRunningDependents = () => {
@@ -127,36 +157,6 @@ const Card = ({
       const chainData = window.cardData.find(c => c.id === nodeId);
       return chainData?.dependencies?.includes(chain.id);
     });
-  };
-
-  const getTooltipText = () => {
-    if (chain.status === 'downloaded' || chain.status === 'stopped') {
-      const missing = getMissingDependencies();
-      if (missing.length > 0) {
-        const missingNames = missing.map(id => {
-          const depName = id.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ');
-          return depName;
-        });
-        return `Required dependencies not running:\n${missingNames.join('\n')}`;
-      }
-    }
-    
-    if (chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready') {
-      const dependents = getRunningDependents();
-      if (dependents.length > 0) {
-        const dependentNames = dependents.map(id => {
-          const depName = id.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-          ).join(' ');
-          return depName;
-        });
-        return `Cannot stop: Following chains depend on this:\n${dependentNames.join('\n')}`;
-      }
-    }
-    
-    return '';
   };
 
   const handleAction = async (event) => {
@@ -167,14 +167,17 @@ const Card = ({
     }
     setLastActionTime(now);
 
-    if ((chain.status === 'downloaded' || chain.status === 'stopped') && !checkDependencies()) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setTooltipPosition({
-        x: rect.right,
-        y: rect.top + rect.height / 2
-      });
-      setTooltipVisible(true);
-      return;
+    if (chain.status === 'downloaded' || chain.status === 'stopped') {
+      const depsOk = await checkDependencies();
+      if (!depsOk) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setTooltipPosition({
+          x: rect.right,
+          y: rect.top + rect.height / 2
+        });
+        setTooltipVisible(true);
+        return;
+      }
     }
 
     switch (chain.status) {
@@ -199,7 +202,12 @@ const Card = ({
       case 'ready':
         try {
           if (!checkReverseDependencies()) {
-            setShowForceStop(true);
+            const rect = buttonRef.current.getBoundingClientRect();
+            setTooltipPosition({
+              x: rect.right,
+              y: rect.top + rect.height / 2
+            });
+            setTooltipVisible(true);
             return;
           }
           
@@ -325,16 +333,6 @@ const Card = ({
             )}
             <span>{getButtonText()}</span>
           </button>
-          {/* File size info temporarily commented out
-          {downloadInfo && (chain.status === 'downloading' || chain.status === 'extracting') && (
-            <div className={styles.downloadInfo}>
-              {downloadInfo.totalLength ? (
-                <span>{formatFileSize(downloadInfo.downloadedLength)} / {formatFileSize(downloadInfo.totalLength)}</span>
-              ) : (
-                <span>{formatFileSize(downloadInfo.downloadedLength)}</span>
-              )}
-            </div>
-          )} */}
         </div>
 
         <div className={styles.chainTypeSection}>
@@ -400,7 +398,7 @@ const Card = ({
       </div>
 
       <Tooltip 
-        text={getTooltipText()}
+        text={tooltipText}
         visible={tooltipVisible}
         position={tooltipPosition}
       />

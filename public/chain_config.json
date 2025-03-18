@@ -5,7 +5,7 @@
             "id": "bitcoin",
             "enabled": true,
             "version": "",
-            "display_name": "Bitcoin Core 28.1",
+            "display_name": "Bitcoin Core",
             "description": "Bitcoin Core running in signet mode (test network)",
             "repo_url": "https://github.com/bitcoin/bitcoin",
             "released": "yes",
