@@ -49,21 +49,53 @@ const NavBar = () => {
     }
   }, [chains]);
 
+  const waitForBitcoinReady = useCallback(async () => {
+    while (true) {
+      try {
+        const info = await window.electronAPI.getBitcoinInfo();
+        if (!info.initialblockdownload) {
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to check Bitcoin status:', error);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }, []);
+
+  const waitForChainRunning = useCallback(async (chainId) => {
+    while (true) {
+      try {
+        const status = await window.electronAPI.getChainStatus(chainId);
+        if (status === 'running' || status === 'ready') {
+          return;
+        }
+      } catch (error) {
+        console.error(`Failed to check ${chainId} status:`, error);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }, []);
+
   const handleStartSequence = useCallback(async () => {
     try {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
+      // Start Bitcoin and wait for IBD to complete
       if (!runningNodes.includes('bitcoin')) {
         await window.electronAPI.startChain('bitcoin');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await waitForChainRunning('bitcoin');
+        await waitForBitcoinReady();
       }
       
+      // Start enforcer and wait for it to be running
       if (!runningNodes.includes('enforcer')) {
         await window.electronAPI.startChain('enforcer');
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await waitForChainRunning('enforcer');
       }
       
+      // Start bitwindow
       if (!runningNodes.includes('bitwindow')) {
         await window.electronAPI.startChain('bitwindow');
       }
@@ -72,7 +104,7 @@ const NavBar = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [runningNodes]);
+  }, [runningNodes, waitForBitcoinReady, waitForChainRunning]);
 
   const handleStopSequence = useCallback(async () => {
     try {
@@ -156,19 +188,9 @@ const NavBar = () => {
                   ? 'Quick Start' 
                   : 'Safe Stop'}
         </button>
-        {/* <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `${styles.navLink} ${isActive ? styles.active : ''}`
-          }
-        >
-          Nodes
-        </NavLink> */}
       </div>
       <div className={styles.iconContainer}>
         <ToolsDropdown />
-        {/* <ThemeToggle /> */}
         <button 
           className={styles.settingsButton}
           onClick={() => dispatch(showSettingsModal())}
