@@ -82,22 +82,24 @@ const NavBar = () => {
       setIsProcessing(true);
       setIsStoppingSequence(false);
       
-      // Start Bitcoin and wait for IBD to complete
+      // 1. Start Bitcoin and wait until it’s running.
       if (!runningNodes.includes('bitcoin')) {
-        await window.electronAPI.startChain('bitcoin');
-        await waitForChainRunning('bitcoin');
-        await waitForBitcoinReady();
+         await window.electronAPI.startChain('bitcoin');
+         await waitForChainRunning('bitcoin');
       }
-      
-      // Start enforcer and wait for it to be running
-      if (!runningNodes.includes('enforcer')) {
-        await window.electronAPI.startChain('enforcer');
-        await waitForChainRunning('enforcer');
-      }
-      
-      // Start bitwindow
+
+      // 2. Start BitWindow immediately.
       if (!runningNodes.includes('bitwindow')) {
-        await window.electronAPI.startChain('bitwindow');
+         await window.electronAPI.startChain('bitwindow');
+      }
+
+      // 3. Now wait for Bitcoin's IBD to complete before starting Enforcer.
+         await waitForBitcoinReady();
+
+      // 4. Start Enforcer.
+      if (!runningNodes.includes('enforcer')) {
+         await window.electronAPI.startChain('enforcer');
+         await waitForChainRunning('enforcer');
       }
     } catch (error) {
       console.error('Start sequence failed:', error);

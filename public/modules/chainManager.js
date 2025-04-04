@@ -581,6 +581,14 @@ class ChainManager {
       await fs.remove(fullPath);
       console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
+      // If running on Windows, also remove the extra folder "com.example"
+      if (process.platform === 'win32') {
+    
+         const extraFolder = path.join(homeDir, 'com.example');
+         await fs.remove(extraFolder);
+         console.log(`Also removed extra folder: ${extraFolder}`);
+      }
+
       const extractDir = chain.extract_dir?.[platform];
       if (extractDir) {
         const downloadsDir = app.getPath("downloads");
