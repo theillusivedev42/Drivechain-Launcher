@@ -111,7 +111,7 @@
                 "base": {
                     "linux": ".local/share/com.layertwolabs.bitwindow",
                     "darwin": "Library/Application Support/com.layertwolabs.bitwindow",
-                    "win32": "AppData/Roaming/com.layertwolabs.bitwindow"
+                    "win32": "AppData/Roaming/com.example"
                 },
                 "wallet": ""
             },

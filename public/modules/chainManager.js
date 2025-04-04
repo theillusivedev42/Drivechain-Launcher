@@ -584,7 +584,7 @@ class ChainManager {
       // If running on Windows, also remove the extra folder "com.example"
       if (process.platform === 'win32') {
     
-         const extraFolder = path.join(homeDir, 'com.example');
+         const extraFolder = path.join(homeDir, 'com.layertwolabs.bitwindow');
          await fs.remove(extraFolder);
          console.log(`Also removed extra folder: ${extraFolder}`);
       }
