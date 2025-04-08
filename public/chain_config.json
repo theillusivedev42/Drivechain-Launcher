@@ -109,7 +109,7 @@
             "released": "yes",
             "directories": {
                 "base": {
-                    "linux": ".local/share/com.layertwolabs.bitwindow",
+                    "linux": ".local/share/bitwindow",
                     "darwin": "Library/Application Support/com.layertwolabs.bitwindow",
                     "win32": "AppData/Roaming/com.example"
                 },
