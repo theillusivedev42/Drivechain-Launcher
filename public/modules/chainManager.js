@@ -581,13 +581,18 @@ class ChainManager {
       await fs.remove(fullPath);
       console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
-      // If running on Windows, also remove the extra folder "com.example"
-      if (process.platform === 'win32') {
-    
-         const extraFolder = path.join(homeDir, 'com.layertwolabs.bitwindow');
-         await fs.remove(extraFolder);
-         console.log(`Also removed extra folder: ${extraFolder}`);
+    // Remove extra folders (no OS-specific logic needed)
+    if (chain.extra_delete && Array.isArray(chain.extra_delete)) {
+      for (const extraFolder of chain.extra_delete) {
+        const extraPath = path.join(homeDir, extraFolder);
+        if (await fs.pathExists(extraPath)) {
+          await fs.remove(extraPath);
+          console.log(`Reset chain ${chainId}: removed extra folder ${extraPath}`);
+        } else {
+          console.log(`Extra folder ${extraPath} does not exist, skipping deletion.`);
+        }
       }
+    }
 
       const extractDir = chain.extract_dir?.[platform];
       if (extractDir) {
@@ -740,7 +745,9 @@ class ChainManager {
           await fs.remove(fullPath);
           await fs.ensureDir(fullPath);
           console.log(`Reset chain ${chainId}: removed and recreated data directory ${fullPath}`);
+
         }
+
 
         // Remove binaries directory
         const extractDir = chain.extract_dir?.[platform];

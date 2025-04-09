@@ -115,6 +115,7 @@
                 },
                 "wallet": ""
             },
+            "extra_delete": ["Library/Application Support/bitwindow", "Library/AppData/Roaming/com.layertwolabs.bitwindow", ".local/share/com.layertwolabs.bitwindow"],
             "extract_dir": {
                 "linux": "Drivechain-Launcher-Downloads/bitwindow",
                 "darwin": "Drivechain-Launcher-Downloads/bitwindow",
