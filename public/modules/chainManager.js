@@ -581,6 +581,19 @@ class ChainManager {
       await fs.remove(fullPath);
       console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
+    // Remove extra folders (no OS-specific logic needed)
+    if (chain.extra_delete && Array.isArray(chain.extra_delete)) {
+      for (const extraFolder of chain.extra_delete) {
+        const extraPath = path.join(homeDir, extraFolder);
+        if (await fs.pathExists(extraPath)) {
+          await fs.remove(extraPath);
+          console.log(`Reset chain ${chainId}: removed extra folder ${extraPath}`);
+        } else {
+          console.log(`Extra folder ${extraPath} does not exist, skipping deletion.`);
+        }
+      }
+    }
+
       const extractDir = chain.extract_dir?.[platform];
       if (extractDir) {
         const downloadsDir = app.getPath("downloads");
@@ -732,7 +745,9 @@ class ChainManager {
           await fs.remove(fullPath);
           await fs.ensureDir(fullPath);
           console.log(`Reset chain ${chainId}: removed and recreated data directory ${fullPath}`);
+
         }
+
 
         // Remove binaries directory
         const extractDir = chain.extract_dir?.[platform];
