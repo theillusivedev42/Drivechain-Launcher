@@ -344,13 +344,13 @@ const Card = ({
         <div className={styles.titleSection}>
           <h2 className={styles.title}>{chain.display_name}</h2>
           <div className={styles.statusGroup}>
+            <div className={`status-light ${processHealth} ${styles.statusLight}`} title={`Process Status: ${processHealth}`} />
             <div className={styles.statusText}>
               {chain.status === 'running' || chain.status === 'starting' || chain.status === 'ready' ? 
                 (chain.id === 'bitwindow' ? 'Running' :
                  blockCount >= 0 ? `Block Height: ${blockCount}` : 'Running') :
                 (chain.status === 'stopping' && chain.id === 'bitcoin' ? 'Stopping...' : 'Offline')}
             </div>
-            <div className={`status-light ${processHealth} ${styles.statusLight}`} title={`Process Status: ${processHealth}`} />
           </div>
         </div>
 

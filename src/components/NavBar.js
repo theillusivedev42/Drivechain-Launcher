@@ -5,6 +5,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import ToolsDropdown from './ToolsDropdown';
 import { showSettingsModal } from '../store/settingsModalSlice';
 import { updateChainStatus } from '../store/chainsSlice';
+import { showWalletModal } from '../store/walletModalSlice';
+import { showFastWithdrawalModal } from '../store/fastWithdrawalModalSlice';
 import styles from './NavBar.module.css';
 import quickStartStyles from './QuickStartStop.module.css';
 
@@ -167,6 +169,7 @@ const NavBar = () => {
   return (
     <nav className={styles.nav}>
       <div className={styles.leftSection}>
+        {/* Quickstart button commented out
         <button
           onClick={handleQuickStartStop}
           disabled={isProcessing || isAnyL1ChainDownloading()}
@@ -188,9 +191,25 @@ const NavBar = () => {
                   ? 'Quick Start' 
                   : 'Safe Stop'}
         </button>
+        */}
+        
+        {/* ToolsDropdown commented out */}
+        {/* <ToolsDropdown /> */}
+        
+        <button 
+          className={styles.settingsButton}
+          onClick={() => dispatch(showWalletModal())}
+        >
+          Wallet
+        </button>
+        <button 
+          className={styles.settingsButton}
+          onClick={() => dispatch(showFastWithdrawalModal())}
+        >
+          Fast Withdrawal
+        </button>
       </div>
       <div className={styles.iconContainer}>
-        <ToolsDropdown />
         <button 
           className={styles.settingsButton}
           onClick={() => dispatch(showSettingsModal())}
