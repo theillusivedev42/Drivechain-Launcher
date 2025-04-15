@@ -224,33 +224,36 @@ const ChainSettingsModal = ({
               </span>
             </div>
           </div>
-          <div className={styles.buttonContainer}>
-            <button
-              onClick={handleResetChain}
-              className={`btn ${styles.resetBtn}`}
-              disabled={
-                currentChain.status === 'not_downloaded' ||
-                currentChain.status === 'downloading' ||
-                currentChain.status === 'extracting' ||
-                currentChain.status === 'stopping'
-              }
-              style={{
-                cursor: currentChain.status === 'not_downloaded' ||
-                        currentChain.status === 'downloading' ||
-                        currentChain.status === 'extracting' ||
-                        currentChain.status === 'stopping' 
-                  ? 'not-allowed' 
-                  : 'pointer'
-              }}
-            >
-              Reset Chain
-            </button>
-          </div>
+          {currentChain.id !== 'bitcoin' && currentChain.id !== 'enforcer' && (
+            <div className={styles.buttonContainer}>
+              <button
+                onClick={handleResetChain}
+                className={`btn ${styles.resetBtn}`}
+                disabled={
+                  currentChain.status === 'not_downloaded' ||
+                  currentChain.status === 'downloading' ||
+                  currentChain.status === 'extracting' ||
+                  currentChain.status === 'stopping'
+                }
+                style={{
+                  cursor: currentChain.status === 'not_downloaded' ||
+                          currentChain.status === 'downloading' ||
+                          currentChain.status === 'extracting' ||
+                          currentChain.status === 'stopping' 
+                    ? 'not-allowed' 
+                    : 'pointer'
+                }}
+              >
+                {currentChain.id === 'bitwindow' ? 'Reset Chains' : 'Reset Chain'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
       {showResetConfirm && (
         <ResetConfirmModal
           chainName={currentChain.display_name}
+          chainId={currentChain.id}
           onConfirm={handleResetConfirm}
           onClose={() => setShowResetConfirm(false)}
         />

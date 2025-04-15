@@ -447,6 +447,7 @@ const Card = ({
       {showResetConfirm && (
         <ResetConfirmModal
           chainName={chain.display_name}
+          chainId={chain.id}
           onConfirm={() => {
             onReset(chain.id);
             setShowResetConfirm(false);
