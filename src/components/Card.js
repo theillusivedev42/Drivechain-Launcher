@@ -57,6 +57,15 @@ const Card = ({
       setStartTime(null);
     }
 
+    // Listen for openChainSettings event
+    const handleOpenChainSettings = (event) => {
+      if (event.detail && event.detail.chainId === chain.id) {
+        handleOpenSettings();
+      }
+    };
+    
+    window.addEventListener('openChainSettings', handleOpenChainSettings);
+
     const fetchBlockCount = async () => {
       try {
         const count = await window.electronAPI.getChainBlockCount(chain.id);
@@ -102,11 +111,15 @@ const Card = ({
       }
     }, intervalTime);
 
-    return () => clearInterval(interval);
-  }, [chain.id, chain.status, blockCount]);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('openChainSettings', handleOpenChainSettings);
+    };
+  }, [chain.id, chain.status, blockCount, startTime]);
 
   const checkDependencies = async () => {
-    // For enforcer, check Bitcoin's IBD status
+    // For enforcer, check Bitcoin's IBD status - commented out as enforcer no longer depends on bitcoin
+    /*
     if (chain.id === 'enforcer' && runningNodes.includes('bitcoin')) {
       try {
         const info = await window.electronAPI.getBitcoinInfo();
@@ -118,6 +131,7 @@ const Card = ({
         console.error('Failed to check Bitcoin IBD status:', error);
       }
     }
+    */
     
     // Check other dependencies
     if (!chain.dependencies || chain.dependencies.length === 0) return true;
