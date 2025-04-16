@@ -208,6 +208,7 @@ const SettingsModal = ({ onResetComplete }) => {
                 try {
                   setIsCheckingUpdates(true);
                   setDownloadProgress({});  // Reset progress when checking starts
+                  setAvailableUpdates([]); // Clear available updates before checking
                   const checkingMessage = 'Checking for updates...';
                   window.electronAPI.sendMessage('toMain', { type: 'update-status', message: checkingMessage });
                   setUpdateStatus(checkingMessage);
@@ -286,6 +287,7 @@ const SettingsModal = ({ onResetComplete }) => {
             setShowUpdateStatus(false);
             setDownloadProgress({});  // Reset progress when modal is closed
             setIsUpdating(false);     // Reset updating state
+            setAvailableUpdates([]); // Clear available updates
           }}
           isUpdating={isUpdating}
           downloadProgress={downloadProgress}

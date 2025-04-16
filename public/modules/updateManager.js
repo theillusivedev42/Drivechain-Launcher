@@ -17,6 +17,9 @@ class UpdateManager {
         return false; // Chain isn't downloaded, so no update needed
       }
 
+      // Reload timestamps before checking
+      this.timestamps = getDownloadTimestamps();
+
       const response = await axios.head(url);
       const serverTimestamp = response.headers['last-modified'];
       if (!serverTimestamp) return true; // If no last-modified header, assume update needed

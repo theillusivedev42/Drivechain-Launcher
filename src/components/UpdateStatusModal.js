@@ -29,15 +29,26 @@ const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm
             </>
           ) : (
             <>
-              <p>{status}</p>
+              <p>
+                {isUpdating && Object.values(downloadProgress).every(progress => progress === 100)
+                  ? "All updates completed. You can close this window now."
+                  : status
+                }
+              </p>
               {isUpdating && updates.map(update => (
-                <div key={update} className={styles.downloadItem}>
-                  <div>{update}</div>
-                  <div className={styles.progressBar}>
-                    <div 
-                      className={styles.progressFill} 
-                      style={{ width: `${Math.round(downloadProgress[update] || 0)}%`, transition: 'width 0.3s ease-in-out' }}
-                    />
+                <div 
+                  key={update} 
+                  className={styles.downloadItem} 
+                  data-complete={downloadProgress[update] === 100}
+                >
+                  <div>
+                    <div>{update}</div>
+                    <div className={styles.progressBar}>
+                      <div 
+                        className={styles.progressFill} 
+                        style={{ width: `${Math.round(downloadProgress[update] || 0)}%` }}
+                      />
+                    </div>
                   </div>
                   <div className={styles.progressText}>
                     {Math.round(downloadProgress[update] || 0)}%
