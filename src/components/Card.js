@@ -227,7 +227,17 @@ const Card = ({
           
           setProcessHealth('offline');
           onUpdateChain(chain.id, { status: 'stopping' });
-          await onStop(chain.id);
+
+          // If this is bitwindow, stop all three chains
+          if (chain.id === 'bitwindow') {
+            const chainsToStop = ['bitwindow', 'bitcoin', 'enforcer'];
+            for (const chainId of chainsToStop) {
+              onUpdateChain(chainId, { status: 'stopping' });
+              await onStop(chainId);
+            }
+          } else {
+            await onStop(chain.id);
+          }
         } catch (error) {
           console.error('Stop failed:', error);
           onUpdateChain(chain.id, { status: 'running' });
