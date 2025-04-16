@@ -5,7 +5,7 @@ const axios = require("axios");
 const AdmZip = require("adm-zip");
 const tar = require("tar");
 const { pipeline } = require('stream/promises');
-const DownloadTimestamps = require('./downloadTimestamps');
+const getDownloadTimestamps = require('./downloadTimestamps');
 
 class DownloadManager {
   constructor(mainWindow, config) {
@@ -13,7 +13,7 @@ class DownloadManager {
     this.config = config;
     this.activeDownloads = new Map();
     this.pausedDownloads = new Map();
-    this.timestamps = new DownloadTimestamps();
+    this.timestamps = getDownloadTimestamps();
     this.extractionQueue = [];
     this.isExtracting = false;
   }

@@ -154,6 +154,21 @@ function createWindow() {
 }
 
 function setupIPCHandlers() {
+  // Add handler for update messages from frontend
+  ipcMain.on('toMain', (event, data) => {
+    switch (data.type) {
+      case 'update-status':
+        console.log('[Update Status]', data.message);
+        break;
+      case 'update-progress':
+        console.log('[Update Progress]', data.message);
+        break;
+      case 'update-error':
+        console.error('[Update Error]', data.message);
+        break;
+    }
+  });
+
   // API handlers
   ipcMain.handle("list-claims", async () => {
     try {
@@ -502,8 +517,12 @@ function setupIPCHandlers() {
     try {
       // First stop any running chains
       for (const chainId of chainIds) {
+        const chain = config.chains.find(c => c.id === chainId);
+        if (!chain) continue;
+
         const status = await chainManager.getChainStatus(chainId);
         if (status === 'running' || status === 'ready') {
+          console.log(`[Update Status] Stopping ${chain.display_name}...`);
           await chainManager.stopChain(chainId);
         }
       }
@@ -522,6 +541,7 @@ function setupIPCHandlers() {
         const extractPath = path.join(downloadsDir, extractDir);
 
         // Delete existing binary directory
+        console.log(`[Update Status] Removing old binaries for ${chain.display_name}...`);
         await fs.remove(extractPath);
 
         // Download and extract new binary

@@ -1,12 +1,12 @@
 const { fetchGithubReleases } = require('./githubReleaseParser');
 const axios = require('axios');
-const DownloadTimestamps = require('./downloadTimestamps');
+const getDownloadTimestamps = require('./downloadTimestamps');
 
 class UpdateManager {
   constructor(config, chainManager) {
     this.config = config;
     this.chainManager = chainManager;
-    this.timestamps = new DownloadTimestamps();
+    this.timestamps = getDownloadTimestamps();
   }
 
   async checkLastModified(url, chainId) {

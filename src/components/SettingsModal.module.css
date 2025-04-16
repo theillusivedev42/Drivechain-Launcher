@@ -238,6 +238,41 @@ input:checked + .slider:before {
   margin-top: 24px;
 }
 
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(128, 128, 128, 0.2);
+  border-radius: 4px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--secondary-color);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  text-align: center;
+  font-size: 0.9em;
+  margin: 8px 0 16px;
+  color: var(--text-color);
+}
+
+.downloadItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 4px 0;
+  background-color: rgba(128, 128, 128, 0.1);
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+
 .confirmButton {
   background-color: var(--danger-color);
   color: white;

@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 
-const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm }) => {
+const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm, isUpdating, downloadProgress = {} }) => {
   if (!isVisible) return null;
 
   return (
@@ -16,7 +16,7 @@ const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm
         </div>
         
         <div className={styles.updateConfirmContent}>
-          {updates.length > 0 ? (
+          {updates.length > 0 && !isUpdating ? (
             <>
               <p>Updates are available for: {updates.join(', ')}</p>
               <p>This will:</p>
@@ -28,18 +28,38 @@ const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm
               <p>Do you want to proceed?</p>
             </>
           ) : (
-            <p>{status}</p>
+            <>
+              <p>{status}</p>
+              {isUpdating && updates.map(update => (
+                <div key={update} className={styles.downloadItem}>
+                  <div>{update}</div>
+                  <div className={styles.progressBar}>
+                    <div 
+                      className={styles.progressFill} 
+                      style={{ width: `${Math.round(downloadProgress[update] || 0)}%` }}
+                    />
+                  </div>
+                  <div className={styles.progressText}>
+                    {Math.round(downloadProgress[update] || 0)}%
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
 
         <div className={styles.updateConfirmButtons}>
-          <button className={styles.cancelButton} onClick={onClose}>
-            {updates.length > 0 ? 'Cancel' : 'Close'}
-          </button>
-          {updates.length > 0 && (
-            <button className={styles.confirmButton} onClick={onConfirm}>
-              Update
-            </button>
+          {!isUpdating && (
+            <>
+              <button className={styles.cancelButton} onClick={onClose}>
+                {updates.length > 0 ? 'Cancel' : 'Close'}
+              </button>
+              {updates.length > 0 && (
+                <button className={styles.confirmButton} onClick={onConfirm}>
+                  Update
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
