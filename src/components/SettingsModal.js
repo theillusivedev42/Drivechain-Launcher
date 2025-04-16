@@ -37,22 +37,29 @@ const SettingsModal = ({ onResetComplete }) => {
     });
 
     const removeUpdateListener = window.electronAPI.receive("downloads-update", (downloads) => {
-      const download = downloads[0]; // We're only updating one chain at a time
-      if (download && isUpdating) {
-        const chain = config?.chains?.find(c => c.id === download.chainId);
-        const chainName = chain ? chain.display_name : download.chainId;
-        if (download.status === "downloading") {
-          setUpdateStatus('Downloading updates...');
-          setDownloadProgress(prev => ({
-            ...prev,
-            [chainName]: download.progress
-          }));
-        } else if (download.status === "extracting") {
-          const message = `Extracting update files for ${chainName}...`;
-          window.electronAPI.sendMessage('toMain', { type: 'update-status', message });
-          setUpdateStatus(message);
-          setDownloadProgress(100);
-        }
+      if (isUpdating) {
+        // Process all downloads
+        const newProgress = {};
+        downloads.forEach(download => {
+          const chain = config?.chains?.find(c => c.id === download.chainId);
+          const chainName = chain ? chain.display_name : download.chainId;
+          
+          if (download.status === "downloading") {
+            setUpdateStatus('Downloading updates...');
+            newProgress[chainName] = download.progress;
+          } else if (download.status === "extracting") {
+            const message = `Extracting update files for ${chainName}...`;
+            window.electronAPI.sendMessage('toMain', { type: 'update-status', message });
+            setUpdateStatus(message);
+            newProgress[chainName] = 100;
+          }
+        });
+        
+        // Update all progress bars at once
+        setDownloadProgress(prev => ({
+          ...prev,
+          ...newProgress
+        }));
       }
     });
 
@@ -99,6 +106,8 @@ const SettingsModal = ({ onResetComplete }) => {
     setIsCheckingUpdates(false);
     setAvailableUpdates([]);
     setShowUpdateStatus(false);
+    setDownloadProgress({});  // Reset download progress
+    setIsUpdating(false);     // Reset updating state
     dispatch(hideSettingsModal());
   };
 
@@ -198,6 +207,7 @@ const SettingsModal = ({ onResetComplete }) => {
               onClick={async () => {
                 try {
                   setIsCheckingUpdates(true);
+                  setDownloadProgress({});  // Reset progress when checking starts
                   const checkingMessage = 'Checking for updates...';
                   window.electronAPI.sendMessage('toMain', { type: 'update-status', message: checkingMessage });
                   setUpdateStatus(checkingMessage);
@@ -272,7 +282,11 @@ const SettingsModal = ({ onResetComplete }) => {
           status={updateStatus}
           isVisible={showUpdateStatus}
           updates={availableUpdates}
-          onClose={() => setShowUpdateStatus(false)}
+          onClose={() => {
+            setShowUpdateStatus(false);
+            setDownloadProgress({});  // Reset progress when modal is closed
+            setIsUpdating(false);     // Reset updating state
+          }}
           isUpdating={isUpdating}
           downloadProgress={downloadProgress}
           onConfirm={async () => {

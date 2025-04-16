@@ -36,7 +36,7 @@ const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm
                   <div className={styles.progressBar}>
                     <div 
                       className={styles.progressFill} 
-                      style={{ width: `${Math.round(downloadProgress[update] || 0)}%` }}
+                      style={{ width: `${Math.round(downloadProgress[update] || 0)}%`, transition: 'width 0.3s ease-in-out' }}
                     />
                   </div>
                   <div className={styles.progressText}>
