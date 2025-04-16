@@ -7,6 +7,7 @@ import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 import ResetAllModal from './ResetAllModal';
 import UpdateConfirmModal from './UpdateConfirmModal';
+import UpdateStatusModal from './UpdateStatusModal';
 import WalletWarningModal from './WalletWarningModal';
 
 const SettingsModal = ({ onResetComplete }) => {
@@ -14,6 +15,7 @@ const SettingsModal = ({ onResetComplete }) => {
   const [showWalletWarning, setShowWalletWarning] = useState(false);
   const [updateStatus, setUpdateStatus] = useState(null);
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [showUpdateStatus, setShowUpdateStatus] = useState(false);
   const [availableUpdates, setAvailableUpdates] = useState([]);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const dispatch = useDispatch();
@@ -27,6 +29,7 @@ const SettingsModal = ({ onResetComplete }) => {
     setIsCheckingUpdates(false);
     setAvailableUpdates([]);
     setShowUpdateConfirm(false);
+    setShowUpdateStatus(false);
     dispatch(hideSettingsModal());
   };
 
@@ -127,6 +130,7 @@ const SettingsModal = ({ onResetComplete }) => {
                 try {
                   setIsCheckingUpdates(true);
                   setUpdateStatus('Checking for updates...');
+                  setShowUpdateStatus(true);
                   const result = await window.electronAPI.invoke('check-for-updates');
                   
                   if (!result.success) {
@@ -157,11 +161,6 @@ const SettingsModal = ({ onResetComplete }) => {
               {isCheckingUpdates ? 'Checking...' : 'Check Now'}
             </button>
           </div>
-          {updateStatus && (
-            <div className={styles.updateStatus}>
-              {updateStatus}
-            </div>
-          )}
         </div>
 
         <div className={styles.buttonContainer}>
@@ -220,6 +219,13 @@ const SettingsModal = ({ onResetComplete }) => {
             }
           }}
           onClose={() => setShowWalletWarning(false)}
+        />
+      )}
+      {updateStatus && (
+        <UpdateStatusModal
+          status={updateStatus}
+          isVisible={showUpdateStatus}
+          onClose={() => setShowUpdateStatus(false)}
         />
       )}
     </div>
