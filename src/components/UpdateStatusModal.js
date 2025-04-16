@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 
-const UpdateStatusModal = ({ status, isVisible, onClose }) => {
+const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm }) => {
   if (!isVisible) return null;
 
   return (
@@ -16,13 +16,31 @@ const UpdateStatusModal = ({ status, isVisible, onClose }) => {
         </div>
         
         <div className={styles.updateConfirmContent}>
-          <p>{status}</p>
+          {updates.length > 0 ? (
+            <>
+              <p>Updates are available for: {updates.join(', ')}</p>
+              <p>This will:</p>
+              <ul>
+                <li>Stop the chains if they are running</li>
+                <li>Delete existing binaries</li>
+                <li>Download and install updates</li>
+              </ul>
+              <p>Do you want to proceed?</p>
+            </>
+          ) : (
+            <p>{status}</p>
+          )}
         </div>
 
         <div className={styles.updateConfirmButtons}>
           <button className={styles.cancelButton} onClick={onClose}>
-            Close
+            {updates.length > 0 ? 'Cancel' : 'Close'}
           </button>
+          {updates.length > 0 && (
+            <button className={styles.confirmButton} onClick={onConfirm}>
+              Update
+            </button>
+          )}
         </div>
       </div>
     </div>

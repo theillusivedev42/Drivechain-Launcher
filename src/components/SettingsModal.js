@@ -6,7 +6,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import styles from './SettingsModal.module.css';
 import { X } from 'lucide-react';
 import ResetAllModal from './ResetAllModal';
-import UpdateConfirmModal from './UpdateConfirmModal';
 import UpdateStatusModal from './UpdateStatusModal';
 import WalletWarningModal from './WalletWarningModal';
 
@@ -17,7 +16,6 @@ const SettingsModal = ({ onResetComplete }) => {
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [showUpdateStatus, setShowUpdateStatus] = useState(false);
   const [availableUpdates, setAvailableUpdates] = useState([]);
-  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const dispatch = useDispatch();
   const { isVisible } = useSelector((state) => state.settingsModal);
   const { showQuotes } = useSelector((state) => state.settings);
@@ -28,7 +26,6 @@ const SettingsModal = ({ onResetComplete }) => {
     setUpdateStatus(null);
     setIsCheckingUpdates(false);
     setAvailableUpdates([]);
-    setShowUpdateConfirm(false);
     setShowUpdateStatus(false);
     dispatch(hideSettingsModal());
   };
@@ -147,7 +144,6 @@ const SettingsModal = ({ onResetComplete }) => {
                   } else {
                     setUpdateStatus(`Updates available for: ${updates.join(', ')}`);
                     setAvailableUpdates(updates);
-                    setShowUpdateConfirm(true);
                   }
                 } catch (error) {
                   console.error('Error checking for updates:', error);
@@ -175,35 +171,6 @@ const SettingsModal = ({ onResetComplete }) => {
           onClose={() => setShowResetModal(false)}
         />
       )}
-      {showUpdateConfirm && (
-        <UpdateConfirmModal
-          updates={availableUpdates}
-          onConfirm={async () => {
-            try {
-              setUpdateStatus('Applying updates...');
-              // Get config to map display names to chain IDs
-              const config = await window.electronAPI.invoke('get-config');
-              const chainIds = availableUpdates.map(name => {
-                const chain = config.chains.find(c => c.display_name === name);
-                return chain ? chain.id : null;
-              }).filter(Boolean);
-
-              const result = await window.electronAPI.invoke('apply-updates', chainIds);
-
-              if (!result.success) {
-                throw new Error(result.error);
-              }
-
-              setUpdateStatus('Updates are being applied. Please wait for the process to complete.');
-              setShowUpdateConfirm(false);
-            } catch (error) {
-              console.error('Failed to apply updates:', error);
-              setUpdateStatus(`Error applying updates: ${error.message}`);
-            }
-          }}
-          onClose={() => setShowUpdateConfirm(false)}
-        />
-      )}
       {showWalletWarning && (
         <WalletWarningModal
           onConfirm={async () => {
@@ -225,7 +192,31 @@ const SettingsModal = ({ onResetComplete }) => {
         <UpdateStatusModal
           status={updateStatus}
           isVisible={showUpdateStatus}
+          updates={availableUpdates}
           onClose={() => setShowUpdateStatus(false)}
+          onConfirm={async () => {
+            try {
+              setUpdateStatus('Applying updates...');
+              // Get config to map display names to chain IDs
+              const config = await window.electronAPI.invoke('get-config');
+              const chainIds = availableUpdates.map(name => {
+                const chain = config.chains.find(c => c.display_name === name);
+                return chain ? chain.id : null;
+              }).filter(Boolean);
+
+              const result = await window.electronAPI.invoke('apply-updates', chainIds);
+
+              if (!result.success) {
+                throw new Error(result.error);
+              }
+
+              setUpdateStatus('Updates are being applied. Please wait for the process to complete.');
+              setShowUpdateStatus(false);
+            } catch (error) {
+              console.error('Failed to apply updates:', error);
+              setUpdateStatus(`Error applying updates: ${error.message}`);
+            }
+          }}
         />
       )}
     </div>
