@@ -251,12 +251,16 @@
         },
         {
             "id": "zside",
-            "enabled": true,
+            "enabled": {
+                "linux": true,
+                "darwin": true,
+                "win32": false
+            },
             "version": "",
             "display_name": "ZSide",
-            "description": "Privacy-focused sidechain for anonymous payments",
+            "description": "Privacy sidechain based on zCash",
             "repo_url": "https://github.com/LayerTwo-Labs/zcash-sidechain",
-            "released": "no",
+            "released": "yes",
             "directories": {
                 "base": {
                     "linux": ".local/share/zside",
