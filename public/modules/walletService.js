@@ -371,7 +371,7 @@ class WalletService extends EventEmitter {
       }
 
       // Check and generate sidechain starters if needed
-      const sidechainSlots = [9, 2]; // Thunder and Bitnames respectively
+      const sidechainSlots = [9, 2, 3]; // Thunder, Bitnames, and ZSide respectively
       for (const slot of sidechainSlots) {
         const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
         if (!(await fs.pathExists(sidechainPath))) {

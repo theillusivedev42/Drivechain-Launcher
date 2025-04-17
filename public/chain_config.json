@@ -250,7 +250,7 @@
             "slot": "2"
         },
         {
-            "id": "zside",
+            "id": "thunder-orchard",
             "enabled": {
                 "linux": true,
                 "darwin": true,
@@ -259,26 +259,27 @@
             "version": "",
             "display_name": "ZSide",
             "description": "Privacy sidechain based on zCash",
-            "repo_url": "https://github.com/LayerTwo-Labs/zcash-sidechain",
+            "repo_url": "https://github.com/iwakura-rein/thunder-orchard",
             "released": "yes",
             "directories": {
                 "base": {
-                    "linux": ".local/share/zside",
-                    "darwin": "Library/Application Support/zside",
-                    "win32": "AppData/Roaming/zside"
+                    "linux": ".local/share/thunder-orchard",
+                    "darwin": "Library/Application Support/thunder-orchard",
+                    "win32": "AppData/Roaming/thunder-orchard"
                 },
-                "wallet": "wallet.dat"
+                "wallet": "wallet.mdb"
             },
             "extract_dir": {
                 "linux": "Drivechain-Launcher-Downloads/zside",
                 "darwin": "Drivechain-Launcher-Downloads/zside",
                 "win32": "Drivechain-Launcher-Downloads/zside"
             },
+            "direct_binary": true,
             "download": {
                 "urls": {
-                    "linux": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-unknown-linux-gnu.zip",
-                    "darwin": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-apple-darwin.zip",
-                    "win32": "https://releases.drivechain.info/L2-S3-ZSide-latest-x86_64-pc-windows-gnu.zip"
+                    "linux": "https://github.com/iwakura-rein/thunder-orchard/releases/download/v0.11.7/thunder-orchard-0.11.7-x86_64-unknown-linux-gnu",
+                    "darwin": "https://github.com/iwakura-rein/thunder-orchard/releases/download/v0.11.7/thunder-orchard-0.11.7-x86_64-apple-darwin",
+                    "win32": ""
                 },
                 "sizes": {
                     "linux": "",
@@ -292,9 +293,9 @@
                 }
             },
             "binary": {
-                "linux": "zside-latest-x86_64-unknown-linux-gnu",
-                "darwin": "zside-latest-x86_64-apple-darwin",
-                "win32": "zside-latest-x86_64-pc-windows-gnu.exe"
+                "linux": "thunder-orchard-0.11.7-x86_64-unknown-linux-gnu",
+                "darwin": "thunder-orchard-0.11.7-x86_64-apple-darwin",
+                "win32": ""
             },
             "network": {
                 "port": 6003

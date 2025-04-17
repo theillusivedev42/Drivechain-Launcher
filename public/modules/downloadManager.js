@@ -105,29 +105,48 @@ class DownloadManager {
   }
 
   async downloadAndExtract(chainId, url, basePath) {
-    const fileExt = this.getFileExtension(url);
+    const chain = this.config.chains.find(c => c.id === chainId);
+    const isDirectBinary = chain?.direct_binary === true;
+    const fileExt = isDirectBinary ? '' : this.getFileExtension(url);
+    const fileName = url.split('/').pop();
     const tempPath = path.join(basePath, `temp_${chainId}${fileExt}`);
+    const finalPath = path.join(basePath, fileName);
+
+    console.log(`[${chainId}] Attempting download:`);
+    console.log(`[${chainId}] Base path: ${basePath}`);
+    console.log(`[${chainId}] Temp path: ${tempPath}`);
+    console.log(`[${chainId}] Final path: ${finalPath}`);
 
     try {
       await this.downloadFile(chainId, url, tempPath);
       
-      // Force progress to 100% and update status to extracting
+      // Force progress to 100%
       const download = this.activeDownloads.get(chainId);
       if (download) {
-        // Ensure progress is 100% before extraction starts
         download.progress = 100;
-        download.status = "extracting";
-        // Force immediate update without throttling
+        if (!isDirectBinary) {
+          download.status = "extracting";
+        }
         this.sendDownloadsUpdate();
       }
       
-      if (fileExt === '.tar.gz') {
-        await this.extractTarGz(chainId, tempPath, basePath);
+      if (isDirectBinary) {
+        // For direct binary, just move to final location and make executable
+        await fs.promises.rename(tempPath, finalPath);
+        console.log(`[${chainId}] Downloaded binary to: ${finalPath}`);
+        if (process.platform !== 'win32') {
+          await fs.promises.chmod(finalPath, 0o755);
+          console.log(`[${chainId}] Made binary executable`);
+        }
       } else {
-        await this.extractZip(chainId, tempPath, basePath);
+        // For archives, extract as usual
+        if (fileExt === '.tar.gz') {
+          await this.extractTarGz(chainId, tempPath, basePath);
+        } else {
+          await this.extractZip(chainId, tempPath, basePath);
+        }
+        await fs.promises.unlink(tempPath);
       }
-
-      await fs.promises.unlink(tempPath);
 
       // Save download timestamp
       this.timestamps.setTimestamp(chainId, new Date().toISOString());
