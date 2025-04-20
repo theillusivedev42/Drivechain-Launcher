@@ -96,6 +96,36 @@ class ChainManager {
     return [];
   }
 
+  async getBinaryPathForChain(chainId) {
+    const chain = this.getChainConfig(chainId);
+    if (!chain) throw new Error("Chain not found");
+
+    const platform = process.platform;
+    const extractDir = chain.extract_dir?.[platform];
+    if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
+
+    const downloadsDir = app.getPath("downloads");
+    const basePath = path.join(downloadsDir, extractDir);
+
+    // For GitHub-based releases, scan directory
+    if (chain.github?.use_github_releases) {
+      const pattern = chain.binary[platform];
+      if (!pattern) throw new Error(`No binary pattern for platform ${platform}`);
+
+      const files = await fs.readdir(basePath);
+      const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+      const match = files.find(f => regex.test(f));
+      if (!match) throw new Error(`No matching binary found in ${basePath}`);
+      
+      return path.join(basePath, match);
+    }
+
+    // For traditional releases, use static path
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
+    return path.join(basePath, binaryPath);
+  }
+
   async startChain(chainId, additionalArgs = []) {
     const chain = this.getChainConfig(chainId);
     if (!chain) throw new Error("Chain not found");
@@ -173,10 +203,7 @@ class ChainManager {
           });
         } else {
           // For other platforms, launch binary directly
-          const binaryPath = chain.binary[platform];
-          if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-          
-          const fullBinaryPath = path.join(basePath, binaryPath);
+          const fullBinaryPath = await this.getBinaryPathForChain(chainId);
           await fs.promises.access(fullBinaryPath, fs.constants.F_OK);
           
           if (process.platform !== "win32") {
@@ -203,12 +230,8 @@ class ChainManager {
     }
 
     // Standard handling for other chains
-    const binaryPath = chain.binary[platform];
-    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-
-    const fullBinaryPath = path.join(basePath, binaryPath);
-
     try {
+      const fullBinaryPath = await this.getBinaryPathForChain(chainId);
       await fs.promises.access(fullBinaryPath, fs.constants.F_OK);
 
       if (process.platform !== "win32") {
@@ -526,13 +549,8 @@ class ChainManager {
     }
 
     // Standard handling for other chains
-    const binaryPath = chain.binary[platform];
-    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-
-    const basePath = path.join(downloadsDir, extractDir);
-    const fullBinaryPath = path.join(basePath, binaryPath);
-
     try {
+      const fullBinaryPath = await this.getBinaryPathForChain(chainId);
       await fs.promises.access(fullBinaryPath);
       if (this.runningProcesses[chainId]) {
         return this.chainStatuses.get(chainId) || "running";
@@ -671,11 +689,17 @@ class ChainManager {
     const extractDir = chain.extract_dir?.[platform];
     if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
 
-    const binaryPath = chain.binary[platform];
-    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
-
     const downloadsDir = app.getPath("downloads");
     const basePath = path.join(downloadsDir, extractDir);
+
+    // For GitHub-based releases, just return the base path
+    if (chain.github?.use_github_releases) {
+      return basePath;
+    }
+
+    // For traditional releases, use dirname of static path
+    const binaryPath = chain.binary[platform];
+    if (!binaryPath) throw new Error(`No binary configured for platform ${platform}`);
     return path.join(basePath, path.dirname(binaryPath));
   }
 

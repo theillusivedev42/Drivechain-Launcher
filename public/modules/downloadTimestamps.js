@@ -24,6 +24,7 @@ class DownloadTimestamps {
       if (fs.existsSync(this.timestampsPath)) {
         return JSON.parse(fs.readFileSync(this.timestampsPath, 'utf8'));
       }
+      this.timestamps = {};  // Reset cached timestamps when file doesn't exist
       return {};
     } catch (error) {
       console.error('Failed to load timestamps:', error);

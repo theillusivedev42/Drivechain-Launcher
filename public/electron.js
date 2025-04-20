@@ -9,6 +9,7 @@ if (process.platform === 'linux') {
 const path = require("path");
 const fs = require("fs-extra");
 const isDev = require("electron-is-dev");
+const axios = require("axios");
 const ConfigManager = require("./modules/configManager");
 const ChainManager = require("./modules/chainManager");
 const WalletManager = require("./modules/walletManager");
@@ -48,11 +49,9 @@ function updatePowerSaveBlocker() {
   if (activeDownloadCount > 0 && !powerSaveBlockerId) {
     // Start power save blocker when downloads are active
     powerSaveBlockerId = powerSaveBlocker.start('prevent-app-suspension');
-    console.log('Power save blocker started:', powerSaveBlockerId);
   } else if (activeDownloadCount === 0 && powerSaveBlockerId !== null) {
     // Stop power save blocker when no downloads are active
     powerSaveBlocker.stop(powerSaveBlockerId);
-    console.log('Power save blocker stopped:', powerSaveBlockerId);
     powerSaveBlockerId = null;
   }
 }
@@ -344,14 +343,32 @@ function setupIPCHandlers() {
     if (!chain) throw new Error("Chain not found");
 
     const platform = process.platform;
-    const url = chain.download.urls[platform];
-    if (!url) throw new Error(`No download URL found for platform ${platform}`);
-
     const extractDir = chain.extract_dir?.[platform];
     if (!extractDir) throw new Error(`No extract directory configured for platform ${platform}`);
 
     const downloadsDir = app.getPath("downloads");
     const extractPath = path.join(downloadsDir, extractDir);
+
+    let url;
+    if (chain.github?.use_github_releases) {
+      // For GitHub-based releases, fetch the latest release to get download URL
+      const response = await axios.get(
+        `https://api.github.com/repos/${chain.github.owner}/${chain.github.repo}/releases/latest`
+      );
+      
+      const pattern = chain.github.asset_patterns[platform];
+      if (!pattern) throw new Error(`No asset pattern found for platform ${platform}`);
+      
+      const regex = new RegExp(pattern);
+      const asset = response.data.assets.find(a => regex.test(a.name));
+      if (!asset) throw new Error(`No matching asset found for platform ${platform}`);
+      
+      url = asset.browser_download_url;
+    } else {
+      // Traditional releases.drivechain.info approach
+      url = chain.download.urls[platform];
+      if (!url) throw new Error(`No download URL found for platform ${platform}`);
+    }
 
     await fs.ensureDir(extractPath);
     activeDownloadCount++;
@@ -544,9 +561,29 @@ function setupIPCHandlers() {
         console.log(`[Update Status] Removing old binaries for ${chain.display_name}...`);
         await fs.remove(extractPath);
 
-        // Download and extract new binary
-        const url = chain.download.urls[platform];
-        if (!url) continue;
+        // Get download URL based on chain type
+        let url;
+        if (chain.github?.use_github_releases) {
+          // For GitHub-based releases, fetch the latest release to get download URL
+          const response = await axios.get(
+            `https://api.github.com/repos/${chain.github.owner}/${chain.github.repo}/releases/latest`
+          );
+          
+          const pattern = chain.github.asset_patterns[platform];
+          if (!pattern) continue;
+          
+          const regex = new RegExp(pattern);
+          const asset = response.data.assets.find(a => regex.test(a.name));
+          if (!asset) continue;
+          
+          url = asset.browser_download_url;
+          // Set timestamp immediately after successful download
+          await downloadManager.timestamps.setTimestamp(chainId, new Date().toISOString());
+        } else {
+          // Traditional releases.drivechain.info approach
+          url = chain.download.urls[platform];
+          if (!url) continue;
+        }
 
         await fs.ensureDir(extractPath);
         downloadManager.startDownload(chainId, url, extractPath);

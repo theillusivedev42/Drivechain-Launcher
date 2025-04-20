@@ -28,5 +28,11 @@
     "display_name": "Bitnames",
     "description": "Bitnames sidechain",
     "dependencies": ["bitwindow"]
+  },
+  {
+    "id": "thunder-orchard",
+    "display_name": "ZSide",
+    "description": "Privacy sidechain based on zCash",
+    "dependencies": ["bitwindow"]
   }
 ]

@@ -49,8 +49,13 @@
   transition: opacity 0.2s;
 }
 
-.closeButton:hover {
+.closeButton:hover:not(.disabled) {
   opacity: 1;
+}
+
+.closeButton.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .settingGroup {

@@ -37,14 +37,21 @@ class UpdateManager {
 
   async checkForUpdates() {
     try {
-      const updates = {};
+      // First check GitHub-based releases
+      const githubUpdates = await fetchGithubReleases(this.config, this.chainManager);
+      const updates = { ...githubUpdates };
       
-      // Check each chain
+      // Then check traditional releases
       for (const chain of this.config.chains) {
-        const url = chain.download.urls[process.platform];
-        if (!url) continue;
+        // Skip GitHub-based releases as they're already handled
+        if (chain.github?.use_github_releases) continue;
+        
+        // Skip if no download URLs
+        if (!chain.download?.urls?.[process.platform]) continue;
 
+        const url = chain.download.urls[process.platform];
         const needsUpdate = await this.checkLastModified(url, chain.id);
+        
         if (needsUpdate) {
           updates[chain.id] = {
             displayName: chain.display_name,

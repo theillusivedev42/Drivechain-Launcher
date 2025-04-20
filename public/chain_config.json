@@ -275,26 +275,19 @@
                 "win32": "Drivechain-Launcher-Downloads/zside"
             },
             "direct_binary": true,
-            "download": {
-                "urls": {
-                    "linux": "https://github.com/iwakura-rein/thunder-orchard/releases/download/v0.11.7/thunder-orchard-0.11.7-x86_64-unknown-linux-gnu",
-                    "darwin": "https://github.com/iwakura-rein/thunder-orchard/releases/download/v0.11.7/thunder-orchard-0.11.7-x86_64-apple-darwin",
-                    "win32": ""
-                },
-                "sizes": {
-                    "linux": "",
-                    "darwin": "",
-                    "win32": ""
-                },
-                "hashes": {
-                    "linux": "",
-                    "darwin": "",
+            "github": {
+                "owner": "iwakura-rein",
+                "repo": "thunder-orchard",
+                "use_github_releases": true,
+                "asset_patterns": {
+                    "linux": "thunder-orchard-.*-x86_64-unknown-linux-gnu$",
+                    "darwin": "thunder-orchard-.*-x86_64-apple-darwin$",
                     "win32": ""
                 }
             },
             "binary": {
-                "linux": "thunder-orchard-0.11.7-x86_64-unknown-linux-gnu",
-                "darwin": "thunder-orchard-0.11.7-x86_64-apple-darwin",
+                "linux": "thunder-orchard-*-x86_64-unknown-linux-gnu",
+                "darwin": "thunder-orchard-*-x86_64-apple-darwin",
                 "win32": ""
             },
             "network": {

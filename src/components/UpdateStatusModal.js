@@ -5,12 +5,27 @@ import { X } from 'lucide-react';
 const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm, isUpdating, downloadProgress = {} }) => {
   if (!isVisible) return null;
 
+  // Allow closing if not updating or if all downloads are complete
+  const areAllUpdatesComplete = () => {
+    return Object.values(downloadProgress).every(progress => progress === 100);
+  };
+
+  const handleClose = () => {
+    if (!isUpdating || areAllUpdatesComplete()) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} onClick={handleClose}>
       <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Update Status</h2>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button 
+            className={`${styles.closeButton} ${isUpdating && !areAllUpdatesComplete() ? styles.disabled : ''}`} 
+            onClick={handleClose}
+            disabled={isUpdating && !areAllUpdatesComplete()}
+          >
             <X size={20} />
           </button>
         </div>
@@ -60,12 +75,12 @@ const UpdateStatusModal = ({ status, isVisible, onClose, updates = [], onConfirm
         </div>
 
         <div className={styles.updateConfirmButtons}>
-          {!isUpdating && (
+          {(!isUpdating || areAllUpdatesComplete()) && (
             <>
               <button className={styles.cancelButton} onClick={onClose}>
-                {updates.length > 0 ? 'Cancel' : 'Close'}
+                {updates.length > 0 && !isUpdating ? 'Cancel' : 'Close'}
               </button>
-              {updates.length > 0 && (
+              {updates.length > 0 && !isUpdating && (
                 <button className={styles.confirmButton} onClick={onConfirm}>
                   Update
                 </button>
