@@ -24,9 +24,7 @@ class EnforcerClient {
       let loadError;
       for (const tryPath of possiblePaths) {
         try {
-          console.log('Trying to load proto file from:', tryPath);
           const includeDir = path.dirname(path.dirname(path.dirname(path.dirname(tryPath))));
-          console.log('Include directory:', includeDir);
           
           packageDefinition = protoLoader.loadSync(tryPath, {
             keepCase: true,
@@ -39,7 +37,6 @@ class EnforcerClient {
           
           if (packageDefinition) {
             protoPath = tryPath;
-            console.log('Successfully loaded proto from:', tryPath);
             break;
           }
         } catch (e) {

@@ -157,13 +157,13 @@ function setupIPCHandlers() {
   ipcMain.on('toMain', (event, data) => {
     switch (data.type) {
       case 'update-status':
-        console.log('[Update Status]', data.message);
+        console.log(data.message);
         break;
       case 'update-progress':
-        console.log('[Update Progress]', data.message);
+        console.log(data.message);
         break;
       case 'update-error':
-        console.error('[Update Error]', data.message);
+        console.error(data.message);
         break;
     }
   });

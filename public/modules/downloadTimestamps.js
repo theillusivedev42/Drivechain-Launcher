@@ -35,7 +35,7 @@ class DownloadTimestamps {
   saveTimestamps() {
     try {
       fs.writeFileSync(this.timestampsPath, JSON.stringify(this.timestamps, null, 2));
-      // Reload timestamps after saving to ensure in-memory state matches disk
+      // Reload timestamps after saving to ensxdgure in-memory state matches disk
       this.timestamps = this.loadTimestamps();
     } catch (error) {
       console.error('Failed to save timestamps:', error);

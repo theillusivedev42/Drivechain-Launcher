@@ -66,7 +66,7 @@ const SettingsModal = ({ onResetComplete }) => {
     const removeCompleteListener = window.electronAPI.receive("download-complete", ({ chainId }) => {
       const chain = config?.chains?.find(c => c.id === chainId);
       const chainName = chain ? chain.display_name : chainId;
-      const message = `Update completed for ${chainName}. You can now restart the app to apply the updates.`;
+      const message = `Download completed for ${chainName}.`;
       window.electronAPI.sendMessage('toMain', { type: 'update-status', message });
       setUpdateStatus(message);
     });

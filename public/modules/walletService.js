@@ -136,6 +136,14 @@ class WalletService extends EventEmitter {
         derivation_path: sidechainPath
       };
 
+      const chainNames = {
+        9: 'Thunder',
+        2: 'Bitnames',
+        3: 'ZSide'
+      };
+      const chainName = chainNames[sidechainSlot] || 'Unknown';
+      console.log(`Generated new sidechain starter for slot ${sidechainSlot} (${chainName})`);
+      
       await this.saveSidechainStarter(sidechainSlot, sidechainStarter);
       return sidechainStarter;
     } catch (error) {
@@ -195,10 +203,22 @@ class WalletService extends EventEmitter {
     // Save mnemonic only for chain apps if it doesn't exist
     const mnemonicPath = path.join(this.mnemonicsDir, `sidechain_${slot}.txt`);
     if (!(await fs.pathExists(mnemonicPath))) {
-      console.log(`Creating new mnemonic file for slot ${slot}`);
+      const chainNames = {
+        9: 'Thunder',
+        2: 'Bitnames',
+        3: 'ZSide'
+      };
+      const chainName = chainNames[slot] || 'Unknown';
+      console.log(`Creating new mnemonic file for slot ${slot} (${chainName})`);
       await fs.writeFile(mnemonicPath, walletData.mnemonic);
     } else {
-      console.log(`Mnemonic file already exists for slot ${slot}, skipping creation`);
+      const chainNames = {
+        9: 'Thunder',
+        2: 'Bitnames',
+        3: 'ZSide'
+      };
+      const chainName = chainNames[slot] || 'Unknown';
+      console.log(`Mnemonic file already exists for slot ${slot} (${chainName}), skipping creation`);
     }
     
     this.emit('wallet-updated');
@@ -377,7 +397,6 @@ class WalletService extends EventEmitter {
         if (!(await fs.pathExists(sidechainPath))) {
           try {
             await this.deriveSidechainStarter(slot);
-            console.log(`Generated new sidechain starter for slot ${slot}`);
           } catch (error) {
             console.error(`Error generating sidechain starter for slot ${slot}:`, error);
           }
