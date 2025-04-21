@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(35, 35, 35, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 4px 24px;
@@ -80,13 +80,12 @@
 }
 
 .navButton {
-  background-color: rgba(0, 0, 0, 0.3);
   border: none;
   cursor: pointer;
   padding: 6px;
   color: var(--text-color);
   opacity: 0.7;
-  transition: all 0.2s;
+  transition: opacity 0.2s;
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -94,19 +93,11 @@
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+  background: none;
 }
 
 .navButton:hover {
   opacity: 1;
-  background-color: rgba(0, 0, 0, 0.4);
-}
-
-:global(.light) .navButton {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-:global(.light) .navButton:hover {
-  background-color: rgba(255, 255, 255, 0.4);
 }
 
 .quote {
