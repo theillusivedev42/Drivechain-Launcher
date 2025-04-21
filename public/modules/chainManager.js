@@ -563,6 +563,93 @@ class ChainManager {
 
   async resetChain(chainId) {
     try {
+      // Special handling for BitWindow - reset all related chains
+      if (chainId === 'bitwindow') {
+        const chainsToReset = ['bitwindow', 'bitcoin', 'enforcer'];
+        
+        // First clean up all downloads for involved chains
+        if (this.downloadManager) {
+          for (const id of chainsToReset) {
+            const chain = this.getChainConfig(id);
+            if (!chain) continue;
+            
+            const platform = process.platform;
+            const extractDir = chain.extract_dir?.[platform];
+            if (extractDir) {
+              const downloadsDir = app.getPath("downloads");
+              const extractPath = path.join(downloadsDir, extractDir);
+              await this.downloadManager.cleanupChainDownloads(id, extractPath);
+            }
+          }
+        }
+
+        // Stop all involved chains if running
+        for (const id of chainsToReset) {
+          if (this.runningProcesses[id]) {
+            await this.stopChain(id);
+          }
+          // Set status to stopped immediately
+          this.chainStatuses.set(id, 'stopped');
+          this.mainWindow.webContents.send("chain-status-update", {
+            chainId: id,
+            status: "stopped",
+          });
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Reset each chain's data
+        for (const id of chainsToReset) {
+          const chain = this.getChainConfig(id);
+          if (!chain) continue;
+
+          const platform = process.platform;
+          const baseDir = chain.directories.base[platform];
+          if (!baseDir) continue;
+
+          const homeDir = app.getPath("home");
+          const fullPath = path.join(homeDir, baseDir);
+          
+          // Remove data directory
+          await fs.remove(fullPath);
+          console.log(`Reset chain ${id}: removed data directory ${fullPath}`);
+
+          // Remove extra folders if any
+          if (chain.extra_delete && Array.isArray(chain.extra_delete)) {
+            for (const extraFolder of chain.extra_delete) {
+              const extraPath = path.join(homeDir, extraFolder);
+              if (await fs.pathExists(extraPath)) {
+                await fs.remove(extraPath);
+                console.log(`Reset chain ${id}: removed extra folder ${extraPath}`);
+              }
+            }
+          }
+
+          // Remove binaries
+          const extractDir = chain.extract_dir?.[platform];
+          if (extractDir) {
+            const downloadsDir = app.getPath("downloads");
+            const binariesPath = path.join(downloadsDir, extractDir);
+            await fs.remove(binariesPath);
+            console.log(`Reset chain ${id}: removed binaries directory ${binariesPath}`);
+          }
+
+          // Recreate empty data directory
+          await fs.ensureDir(fullPath);
+          console.log(`Recreated empty data directory for chain ${id}: ${fullPath}`);
+
+          // Set to not_downloaded
+          this.chainStatuses.set(id, 'not_downloaded');
+          this.mainWindow.webContents.send("chain-status-update", {
+            chainId: id,
+            status: "not_downloaded",
+          });
+        }
+
+        return { success: true };
+      }
+
+      // Standard handling for other chains
       const chain = this.getChainConfig(chainId);
       if (!chain) throw new Error("Chain not found");
 
@@ -579,7 +666,6 @@ class ChainManager {
 
       // Aggressively clean up any active downloads first
       if (this.downloadManager) {
-        const platform = process.platform;
         const extractDir = chain.extract_dir?.[platform];
         if (extractDir) {
           const downloadsDir = app.getPath("downloads");
@@ -599,18 +685,18 @@ class ChainManager {
       await fs.remove(fullPath);
       console.log(`Reset chain ${chainId}: removed data directory ${fullPath}`);
 
-    // Remove extra folders (no OS-specific logic needed)
-    if (chain.extra_delete && Array.isArray(chain.extra_delete)) {
-      for (const extraFolder of chain.extra_delete) {
-        const extraPath = path.join(homeDir, extraFolder);
-        if (await fs.pathExists(extraPath)) {
-          await fs.remove(extraPath);
-          console.log(`Reset chain ${chainId}: removed extra folder ${extraPath}`);
-        } else {
-          console.log(`Extra folder ${extraPath} does not exist, skipping deletion.`);
+      // Remove extra folders (no OS-specific logic needed)
+      if (chain.extra_delete && Array.isArray(chain.extra_delete)) {
+        for (const extraFolder of chain.extra_delete) {
+          const extraPath = path.join(homeDir, extraFolder);
+          if (await fs.pathExists(extraPath)) {
+            await fs.remove(extraPath);
+            console.log(`Reset chain ${chainId}: removed extra folder ${extraPath}`);
+          } else {
+            console.log(`Extra folder ${extraPath} does not exist, skipping deletion.`);
+          }
         }
       }
-    }
 
       const extractDir = chain.extract_dir?.[platform];
       if (extractDir) {
