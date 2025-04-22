@@ -1,4 +1,5 @@
 const { app } = require("electron");
+const { EventEmitter } = require('events');
 const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
@@ -7,8 +8,9 @@ const tar = require("tar");
 const { pipeline } = require('stream/promises');
 const getDownloadTimestamps = require('./downloadTimestamps');
 
-class DownloadManager {
+class DownloadManager extends EventEmitter {
   constructor(mainWindow, config) {
+    super();
     this.mainWindow = mainWindow;
     this.config = config;
     this.activeDownloads = new Map();
@@ -154,6 +156,7 @@ class DownloadManager {
       this.activeDownloads.delete(chainId);
       this.sendDownloadsUpdate();
       this.mainWindow.webContents.send("download-complete", { chainId });
+      this.emit('download-complete', chainId);
     } catch (error) {
       // Don't report cancellation errors during reset
       if (!axios.isCancel(error) || error.message !== 'Reset chain requested') {

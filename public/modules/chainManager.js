@@ -19,6 +19,17 @@ class ChainManager {
     this.logProcesses = new Map(); // Track log streaming processes
     this.processCheckers = new Map(); // Track process check intervals
     this.enforcerClient = new EnforcerClient(); // Connect to enfocer gRPC
+
+    // Handle download completion
+    this.downloadManager?.on('download-complete', async (chainId) => {
+      if (chainId === 'bitcoin') {
+        try {
+          await this.writeBitcoinConfig();
+        } catch (error) {
+          console.error('Failed to write bitcoin.conf after download:', error);
+        }
+      }
+    });
   }
 
   async isChainReady(chainId) {
@@ -72,6 +83,56 @@ class ChainManager {
       '-rpcpassword=password',
       '-rpcport=38332'
     ];
+  }
+
+  async writeBitcoinConfig() {
+    try {
+      const chain = this.getChainConfig('bitcoin');
+      if (!chain) throw new Error("Bitcoin chain config not found");
+
+      const platform = process.platform;
+      const baseDir = chain.directories.base[platform];
+      if (!baseDir) throw new Error(`No base directory configured for platform ${platform}`);
+
+      const homeDir = app.getPath("home");
+      const fullPath = path.join(homeDir, baseDir);
+      
+      // Ensure the directory exists
+      await fs.ensureDir(fullPath);
+      
+      const configPath = path.join(fullPath, 'bitcoin.conf');
+      
+      // Don't overwrite if config already exists
+      if (await fs.pathExists(configPath)) {
+        console.log('bitcoin.conf already exists, skipping creation');
+        return;
+      }
+
+      // Convert command line args to config format
+      const configContent = [
+        'signet=1',
+        'server=1',
+        'addnode=172.105.148.135:38333',
+        'signetblocktime=60',
+        'signetchallenge=00141551188e5153533b4fdd555449e640d9cc129456',
+        'acceptnonstdtxn=1',
+        'listen=1',
+        'rpcbind=0.0.0.0',
+        'rpcallowip=0.0.0.0/0',
+        'txindex=1',
+        'fallbackfee=0.00021',
+        'zmqpubsequence=tcp://0.0.0.0:29000',
+        'rpcuser=user',
+        'rpcpassword=password',
+        'rpcport=38332'
+      ].join('\n');
+
+      await fs.writeFile(configPath, configContent);
+      console.log(`Created bitcoin.conf at ${configPath}`);
+    } catch (error) {
+      console.error('Failed to write bitcoin.conf:', error);
+      throw error;
+    }
   }
 
   getChainArgs(chainId) {
