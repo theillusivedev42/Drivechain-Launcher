@@ -69,19 +69,19 @@ class ChainManager {
     return [
       '-signet',
       '-server',
-      '-addnode=172.105.148.135:38333',
       '-signetblocktime=60',
       '-signetchallenge=00141551188e5153533b4fdd555449e640d9cc129456',
       '-acceptnonstdtxn',
       '-listen',
-      '-rpcbind=0.0.0.0',
       '-rpcallowip=0.0.0.0/0',
       '-txindex',
       '-fallbackfee=0.00021',
       '-zmqpubsequence=tcp://0.0.0.0:29000',
       '-rpcuser=user',
       '-rpcpassword=password',
-      '-rpcport=38332'
+      '-rpcbind=0.0.0.0',
+      '-rpcport=38332',
+      '-addnode=172.105.148.135:38333'
     ];
   }
 
@@ -108,23 +108,25 @@ class ChainManager {
         return;
       }
 
-      // Convert command line args to config format
+      // Create config content with signet section
       const configContent = [
         'signet=1',
         'server=1',
-        'addnode=172.105.148.135:38333',
         'signetblocktime=60',
         'signetchallenge=00141551188e5153533b4fdd555449e640d9cc129456',
         'acceptnonstdtxn=1',
         'listen=1',
-        'rpcbind=0.0.0.0',
         'rpcallowip=0.0.0.0/0',
         'txindex=1',
         'fallbackfee=0.00021',
         'zmqpubsequence=tcp://0.0.0.0:29000',
         'rpcuser=user',
         'rpcpassword=password',
-        'rpcport=38332'
+        '',
+        '[signet]',
+        'rpcbind=0.0.0.0',
+        'rpcport=38332',
+        'addnode=172.105.148.135:38333'
       ].join('\n');
 
       await fs.writeFile(configPath, configContent);
@@ -271,7 +273,11 @@ class ChainManager {
             await fs.promises.chmod(fullBinaryPath, "755");
           }
           
-          const childProcess = spawn(fullBinaryPath, [], { cwd: basePath });
+          const childProcess = spawn(fullBinaryPath, [], { 
+            cwd: basePath,
+            // Ensure SIGINT is used for graceful shutdown on Windows
+            windowsHide: true 
+          });
           this.runningProcesses[chainId] = childProcess;
           this.setupProcessListeners(childProcess, chainId, basePath);
         }
@@ -504,12 +510,29 @@ class ChainManager {
               }, 100);
             });
           } else {
-            childProcess.kill();
+            // Send SIGINT for graceful shutdown
+            childProcess.kill('SIGINT');
+            
+            // Give BitWindow time to cleanup and shutdown
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Force kill if still running
+            if (this.runningProcesses[chainId]) {
+              childProcess.kill();
+            }
           }
           return { success: true };
         } catch (error) {
           console.error('Failed to stop BitWindow gracefully:', error);
-          // Just in case process is still in our tracking
+          // Force kill as last resort
+          try {
+            if (this.runningProcesses[chainId]) {
+              childProcess.kill();
+            }
+          } catch (e) {
+            console.error('Failed to force kill BitWindow:', e);
+          }
+          // Clean up tracking
           delete this.runningProcesses[chainId];
           this.chainStatuses.set(chainId, 'stopped');
           return { success: true };
@@ -543,6 +566,7 @@ class ChainManager {
             '-rpcuser=user',
             '-rpcpassword=password',
             '-rpcport=38332',
+            '-rpcbind=0.0.0.0',
             'stop'
           ], {
             shell: true
