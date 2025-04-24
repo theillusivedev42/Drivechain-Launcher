@@ -510,8 +510,43 @@ class ChainManager {
               }, 100);
             });
           } else {
-            // Send SIGINT for graceful shutdown
-            childProcess.kill('SIGINT');
+            if (process.platform === 'win32') {
+              // Windows doesn't handle signals like SIGINT the same way as UNIX-based systems,
+              // especially when dealing with child processes that aren't attached to a real terminal
+              // (such as bitwindow!)
+              // So we try to use windows's built-in taskkill command to gracefully stop the process
+              try {
+                if (childProcess.pid) {
+                  // Try graceful termination first with PID
+                  const taskkill = spawn('taskkill', ['/PID', childProcess.pid.toString()]);
+                  await new Promise((resolve) => taskkill.on('exit', resolve));
+                  
+                  // If process is still running after 2 seconds, force kill by PID
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  if (this.runningProcesses[chainId]) {
+                    const forceKill = spawn('taskkill', ['/F', '/PID', childProcess.pid.toString()]);
+                    await new Promise((resolve) => forceKill.on('exit', resolve));
+                  }
+                } else {
+                  // Fallback to application name if PID is undefined
+                  const processName = 'bitwindow.exe';
+                  const taskkill = spawn('taskkill', ['/IM', processName]);
+                  await new Promise((resolve) => taskkill.on('exit', resolve));
+                  
+                  // If still running after 2 seconds, force kill by image name
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                  if (this.runningProcesses[chainId]) {
+                    const forceKill = spawn('taskkill', ['/F', '/IM', processName]);
+                    await new Promise((resolve) => forceKill.on('exit', resolve));
+                  }
+                }
+              } catch (error) {
+                console.error(`Failed to TASKKILL process:`, error);
+              }
+            } else {
+              // Send SIGINT for graceful shutdown
+              childProcess.kill('SIGINT');
+            }
             
             // Give BitWindow time to cleanup and shutdown
             await new Promise(resolve => setTimeout(resolve, 2000));
