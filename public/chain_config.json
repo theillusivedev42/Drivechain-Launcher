@@ -126,7 +126,7 @@
                 "Library/Application Support/com.layertwolabs.zsail",
                 "Library/Application Support/drivechain_launcher",
                 "Library/Application Support/drivechain_launcher_sidechains",
-                "Library/Application Support/ZcashDrivechain",  
+                "Library/Application Support/ZcashDrivechain"
             ],
             "extract_dir": {
                 "linux": "Drivechain-Launcher-Downloads/bitwindow",
