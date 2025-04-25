@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { hideWalletModal, setWalletStatus } from '../store/walletModalSlice';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import styles from './WalletModal.module.css';
-import { X, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 const WalletModal = () => {
-  const dispatch = useDispatch();
-  const { isVisible, isLoading, error } = useSelector(state => state.walletModal);
+  const { isLoading, error } = useSelector(state => state.walletModal);
   const [revealedMnemonics, setRevealedMnemonics] = useState({
     master: false,
     layer1: false,
@@ -71,34 +69,17 @@ const WalletModal = () => {
       [key]: true
     });
   };
-  const handleClose = () => {
-    dispatch(hideWalletModal());
-  };
-
-  const handleOverlayClick = e => {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  };
-
-  if (!isVisible) return null;
-
   return (
-    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Wallet Starters</h2>
-          <button className={styles.closeButton} onClick={handleClose}>
-            <X size={20} />
-          </button>
-        </div>
+    <div className={styles.pageContainer}>
+      <div className={styles.content}>
+        <h2 className={styles.title}>Wallet Starters</h2>
 
         <p className={styles.description}>View your wallet starters</p>
 
         {error && <div className={styles.error}>{error}</div>}
         {isLoading && <div className={styles.loading}>Loading...</div>}
 
-        <div className={styles.starterTable}>
+        <div className={styles.starterTable} style={{ marginTop: '20px' }}>
           {/* Starter section */}
           <div className={styles.sectionHeader}>
             <div className={styles.starterCol}>Starter</div>
