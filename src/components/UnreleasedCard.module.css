@@ -1,7 +1,6 @@
 /* Extend from Card styles */
 .card {
   composes: card from './Card.module.css';
-  opacity: 0.7;
   cursor: default;
   padding: 16px;
 }
@@ -48,7 +47,6 @@
   font-size: 0.9rem;
   word-break: break-all;
   text-decoration: none;
-  opacity: 0.7;
   transition: opacity 0.2s ease;
   text-align: center;
 }
