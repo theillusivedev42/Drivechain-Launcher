@@ -5,6 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 const WalletModal = () => {
   const { isLoading, error } = useSelector(state => state.walletModal);
+  const [copiedStates, setCopiedStates] = useState({});
   const [revealedMnemonics, setRevealedMnemonics] = useState({
     master: false,
     layer1: false,
@@ -12,6 +13,39 @@ const WalletModal = () => {
     layer2_bitnames: false,
     layer2_zside: false
   });
+
+  const handleCopy = async (text, type, event) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      const rect = event.target.getBoundingClientRect();
+      const tooltipX = rect.left + (rect.width / 2);
+      const tooltipY = rect.top;
+      setCopiedStates(prev => ({ 
+        ...prev, 
+        [type]: { 
+          copied: true,
+          x: tooltipX,
+          y: tooltipY
+        }
+      }));
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [type]: false }));
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  const handleWheel = (event) => {
+    // Get the parent mnemonicCol div
+    const mnemonicCol = event.target.closest(`.${styles.mnemonicCol}`);
+    if (mnemonicCol) {
+      // Prevent the default vertical scroll
+      event.preventDefault();
+      // Scroll horizontally instead
+      mnemonicCol.scrollLeft += event.deltaY;
+    }
+  };
   const [mnemonics, setMnemonics] = useState({
     master: '••••••••••••',
     layer1: '••••••••••••',
@@ -96,7 +130,24 @@ const WalletModal = () => {
             </div>
             <div className={styles.starterCol}>Master</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.master ? mnemonics.master : '••••••••••••'}
+              <span 
+                className={`${revealedMnemonics.master ? styles.copyableText : ''} ${copiedStates.master?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedMnemonics.master && handleCopy(mnemonics.master, 'master', e)}
+                onWheel={handleWheel}
+              >
+                {revealedMnemonics.master ? mnemonics.master : '••••••••••••'}
+                {copiedStates.master?.copied && (
+                  <div 
+                    className={styles.copyTooltip} 
+                    style={{
+                      left: copiedStates.master.x + 'px',
+                      top: copiedStates.master.y + 'px'
+                    }}
+                  >
+                    Copied!
+                  </div>
+                )}
+              </span>
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -120,7 +171,24 @@ const WalletModal = () => {
             </div>
             <div className={styles.starterCol}>Bitcoin Core</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer1 ? mnemonics.layer1 : '••••••••••••'}
+              <span 
+                className={`${revealedMnemonics.layer1 ? styles.copyableText : ''} ${copiedStates.layer1?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedMnemonics.layer1 && handleCopy(mnemonics.layer1, 'layer1', e)}
+                onWheel={handleWheel}
+              >
+                {revealedMnemonics.layer1 ? mnemonics.layer1 : '••••••••••••'}
+                {copiedStates.layer1?.copied && (
+                  <div 
+                    className={styles.copyTooltip} 
+                    style={{
+                      left: copiedStates.layer1.x + 'px',
+                      top: copiedStates.layer1.y + 'px'
+                    }}
+                  >
+                    Copied!
+                  </div>
+                )}
+              </span>
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -144,7 +212,24 @@ const WalletModal = () => {
             </div>
             <div className={styles.starterCol}>Thunder</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer2_thunder ? mnemonics.layer2_thunder : '••••••••••••'}
+              <span 
+                className={`${revealedMnemonics.layer2_thunder ? styles.copyableText : ''} ${copiedStates.layer2_thunder?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedMnemonics.layer2_thunder && handleCopy(mnemonics.layer2_thunder, 'layer2_thunder', e)}
+                onWheel={handleWheel}
+              >
+                {revealedMnemonics.layer2_thunder ? mnemonics.layer2_thunder : '••••••••••••'}
+                {copiedStates.layer2_thunder?.copied && (
+                  <div 
+                    className={styles.copyTooltip} 
+                    style={{
+                      left: copiedStates.layer2_thunder.x + 'px',
+                      top: copiedStates.layer2_thunder.y + 'px'
+                    }}
+                  >
+                    Copied!
+                  </div>
+                )}
+              </span>
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -168,7 +253,24 @@ const WalletModal = () => {
             </div>
             <div className={styles.starterCol}>Bitnames</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer2_bitnames ? mnemonics.layer2_bitnames : '••••••••••••'}
+              <span 
+                className={`${revealedMnemonics.layer2_bitnames ? styles.copyableText : ''} ${copiedStates.layer2_bitnames?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedMnemonics.layer2_bitnames && handleCopy(mnemonics.layer2_bitnames, 'layer2_bitnames', e)}
+                onWheel={handleWheel}
+              >
+                {revealedMnemonics.layer2_bitnames ? mnemonics.layer2_bitnames : '••••••••••••'}
+                {copiedStates.layer2_bitnames?.copied && (
+                  <div 
+                    className={styles.copyTooltip} 
+                    style={{
+                      left: copiedStates.layer2_bitnames.x + 'px',
+                      top: copiedStates.layer2_bitnames.y + 'px'
+                    }}
+                  >
+                    Copied!
+                  </div>
+                )}
+              </span>
             </div>
             <div className={styles.actionsCol}>
               <button 
@@ -192,7 +294,24 @@ const WalletModal = () => {
             </div>
             <div className={styles.starterCol}>zSide</div>
             <div className={styles.mnemonicCol}>
-              {revealedMnemonics.layer2_zside ? mnemonics.layer2_zside : '••••••••••••'}
+              <span 
+                className={`${revealedMnemonics.layer2_zside ? styles.copyableText : ''} ${copiedStates.layer2_zside?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedMnemonics.layer2_zside && handleCopy(mnemonics.layer2_zside, 'layer2_zside', e)}
+                onWheel={handleWheel}
+              >
+                {revealedMnemonics.layer2_zside ? mnemonics.layer2_zside : '••••••••••••'}
+                {copiedStates.layer2_zside?.copied && (
+                  <div 
+                    className={styles.copyTooltip} 
+                    style={{
+                      left: copiedStates.layer2_zside.x + 'px',
+                      top: copiedStates.layer2_zside.y + 'px'
+                    }}
+                  >
+                    Copied!
+                  </div>
+                )}
+              </span>
             </div>
             <div className={styles.actionsCol}>
               <button 

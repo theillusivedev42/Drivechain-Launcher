@@ -10,7 +10,6 @@
   align-items: stretch;
   z-index: 1000;
   height: 40px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .leftSection {
@@ -55,7 +54,6 @@
 
 .navLink:hover:not(:global(.active)) {
   background-color: rgba(128, 128, 128, 0.1);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .settingsButton {
@@ -72,5 +70,4 @@
 
 .settingsButton:hover {
   background-color: rgba(128, 128, 128, 0.1);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }

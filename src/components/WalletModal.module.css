@@ -196,7 +196,35 @@
   display: flex;
   align-items: center;
   overflow-x: auto;
+  position: relative;
+  min-height: 32px;
+}
+
+.copyableText {
+  cursor: pointer;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.copyableText:hover {
+  opacity: 0.8;
+}
+
+.copyableText.copied {
+  color: #4CAF50;
+}
+
+.copyTooltip {
+  position: fixed;
+  transform: translate(-50%, -130%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
   white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .mnemonicCol::-webkit-scrollbar {
