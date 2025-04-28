@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './QuoteWidget.module.css';
@@ -23,17 +23,6 @@ const QuoteWidget = () => {
   const goToPreviousQuote = () => {
     setCurrentQuoteIndex((prevIndex) => (prevIndex - 1 + quotes.length) % quotes.length);
   };
-
-  useEffect(() => {
-    if (showQuotes) {
-      // Set up interval for cycling quotes
-      const interval = setInterval(() => {
-        goToNextQuote();
-      }, 30000); // Change quote every 30 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [showQuotes]);
 
   if (!showQuotes) return null;
 
