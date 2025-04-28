@@ -9,13 +9,15 @@ const WalletModal = () => {
     master: false,
     layer1: false,
     layer2_thunder: false,
-    layer2_bitnames: false
+    layer2_bitnames: false,
+    layer2_zside: false
   });
   const [mnemonics, setMnemonics] = useState({
     master: '••••••••••••',
     layer1: '••••••••••••',
     layer2_thunder: '••••••••••••',
-    layer2_bitnames: '••••••••••••'
+    layer2_bitnames: '••••••••••••',
+    layer2_zside: '••••••••••••'
   });
 
   const toggleMnemonic = async (key) => {
@@ -25,7 +27,8 @@ const WalletModal = () => {
         master: false,
         layer1: false,
         layer2_thunder: false,
-        layer2_bitnames: false
+        layer2_bitnames: false,
+        layer2_zside: false
       }));
       return;
     }
@@ -47,6 +50,9 @@ const WalletModal = () => {
           case 'layer2_bitnames':
             type = 'bitnames';
             break;
+          case 'layer2_zside':
+            type = 'zside';
+            break;
         }
         const result = await window.electronAPI.getWalletStarter(type);
         if (result.success) {
@@ -66,27 +72,28 @@ const WalletModal = () => {
       layer1: false,
       layer2_thunder: false,
       layer2_bitnames: false,
+      layer2_zside: false,
       [key]: true
     });
   };
   return (
     <div className={styles.pageContainer}>
       <div className={styles.content}>
-        <h2 className={styles.title}>Wallet Starters</h2>
-
-        <p className={styles.description}>View your wallet starters</p>
-
         {error && <div className={styles.error}>{error}</div>}
         {isLoading && <div className={styles.loading}>Loading...</div>}
 
         <div className={styles.starterTable} style={{ marginTop: '20px' }}>
           {/* Starter section */}
           <div className={styles.sectionHeader}>
+            <div className={styles.typeCol}></div>
             <div className={styles.starterCol}>Starter</div>
             <div className={styles.mnemonicCol}>Mnemonic</div>
             <div className={styles.actionsCol}></div>
           </div>
           <div className={styles.tableRow}>
+            <div className={styles.typeCol}>
+              <div className={`${styles.chainTypeBadge} ${styles.l1Badge}`}>L1</div>
+            </div>
             <div className={styles.starterCol}>Master</div>
             <div className={styles.mnemonicCol}>
               {revealedMnemonics.master ? mnemonics.master : '••••••••••••'}
@@ -107,13 +114,10 @@ const WalletModal = () => {
             </div>
           </div>
 
-          {/* Layer 1 section */}
-          <div className={styles.sectionHeader}>
-            <div className={styles.starterCol}>Layer 1</div>
-            <div className={styles.mnemonicCol}>Mnemonic</div>
-            <div className={styles.actionsCol}></div>
-          </div>
           <div className={styles.tableRow}>
+            <div className={styles.typeCol}>
+              <div className={`${styles.chainTypeBadge} ${styles.l1Badge}`}>L1</div>
+            </div>
             <div className={styles.starterCol}>Bitcoin Core (Patched)</div>
             <div className={styles.mnemonicCol}>
               {revealedMnemonics.layer1 ? mnemonics.layer1 : '••••••••••••'}
@@ -134,13 +138,10 @@ const WalletModal = () => {
             </div>
           </div>
 
-          {/* Layer 2 section */}
-          <div className={styles.sectionHeader}>
-            <div className={styles.starterCol}>Layer 2</div>
-            <div className={styles.mnemonicCol}>Mnemonic</div>
-            <div className={styles.actionsCol}></div>
-          </div>
           <div className={styles.tableRow}>
+            <div className={styles.typeCol}>
+              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
+            </div>
             <div className={styles.starterCol}>Thunder</div>
             <div className={styles.mnemonicCol}>
               {revealedMnemonics.layer2_thunder ? mnemonics.layer2_thunder : '••••••••••••'}
@@ -162,6 +163,9 @@ const WalletModal = () => {
           </div>
 
           <div className={styles.tableRow}>
+            <div className={styles.typeCol}>
+              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
+            </div>
             <div className={styles.starterCol}>Bitnames</div>
             <div className={styles.mnemonicCol}>
               {revealedMnemonics.layer2_bitnames ? mnemonics.layer2_bitnames : '••••••••••••'}
@@ -173,6 +177,30 @@ const WalletModal = () => {
                 onClick={() => toggleMnemonic('layer2_bitnames')}
               >
                 {revealedMnemonics.layer2_bitnames ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              {/* Delete functionality not yet implemented
+              <button className={styles.deleteIconButton} title="Delete Starter">
+                <Trash2 size={18} />
+              </button>
+              */}
+            </div>
+          </div>
+
+          <div className={styles.tableRow}>
+            <div className={styles.typeCol}>
+              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
+            </div>
+            <div className={styles.starterCol}>zSide</div>
+            <div className={styles.mnemonicCol}>
+              {revealedMnemonics.layer2_zside ? mnemonics.layer2_zside : '••••••••••••'}
+            </div>
+            <div className={styles.actionsCol}>
+              <button 
+                className={styles.iconButton} 
+                title={revealedMnemonics.layer2_zside ? "Hide" : "Reveal"}
+                onClick={() => toggleMnemonic('layer2_zside')}
+              >
+                {revealedMnemonics.layer2_zside ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
               {/* Delete functionality not yet implemented
               <button className={styles.deleteIconButton} title="Delete Starter">

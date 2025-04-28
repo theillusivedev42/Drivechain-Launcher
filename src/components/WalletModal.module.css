@@ -28,7 +28,7 @@
   align-items: center;
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .modalTitle {
@@ -62,7 +62,7 @@
   color: var(--text-secondary);
   text-align: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .error {
@@ -72,7 +72,7 @@
   border-radius: 4px;
   margin-bottom: 16px;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   text-align: center;
 }
 
@@ -81,7 +81,7 @@
   padding: 16px;
   color: var(--modal-text);
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .starterTable {
@@ -90,7 +90,7 @@
   border-radius: 8px;
   border: 1px solid var(--btn-bg);
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 :global(.dark) .starterTable {
@@ -99,7 +99,7 @@
 
 .sectionHeader {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
+  grid-template-columns: 60px minmax(200px, 1.5fr) minmax(400px, 4fr) 70px;
   padding: 0;
   background-color: #f5f5f5;
   font-weight: 600;
@@ -124,7 +124,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
+  grid-template-columns: 60px minmax(200px, 1.5fr) minmax(400px, 4fr) 70px;
   padding: 0;
   border-bottom: 1px solid var(--btn-bg);
   align-items: stretch;
@@ -149,12 +149,39 @@
   border-bottom-right-radius: 8px;
 }
 
+.typeCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--btn-bg);
+  padding: 10px 4px;
+}
+
 .starterCol {
   text-align: left;
   padding: 10px 8px;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
+}
+
+.chainTypeBadge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.l1Badge {
+  background-color: rgba(247, 147, 26, 0.15);
+  color: #f7931a;
+}
+
+.l2Badge {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: #3498db;
 }
 
 .mnemonicCol {
@@ -184,8 +211,10 @@
 }
 
 .sectionHeader .starterCol,
-.sectionHeader .mnemonicCol {
+.sectionHeader .mnemonicCol,
+.sectionHeader .typeCol {
   font-family: inherit;
+  font-size: inherit;
   padding: 10px 8px;
   display: flex;
   align-items: center;
@@ -244,7 +273,7 @@
   gap: 12px;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .submitButton {
