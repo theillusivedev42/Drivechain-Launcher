@@ -46,7 +46,6 @@ const FastWithdrawalModal = () => {
       if (!result.server_l2_address?.info) {
         throw new Error('Invalid server response: Missing L2 address');
       }
-
       const totalAmount = (parseFloat(amount) + result.server_fee_sats/100000000).toString();
       setPaymentMessage({
         amount: totalAmount,
@@ -105,10 +104,10 @@ const FastWithdrawalModal = () => {
     <div className={styles.pageContainer}>
       {!isCompleted && (
         <div className={styles.content}>
-          <h2>Fast Withdrawal</h2>
-          <div className={styles.description}>
+          {/* <h2>Fast Withdrawal</h2> */}
+          {/* <div className={styles.description}>
             Quickly withdraw L2 coins to your L1 bitcoin address
-          </div>
+          </div> */}
           <div className={styles.form}>
             <ErrorPopup 
               message={errorMessage} 

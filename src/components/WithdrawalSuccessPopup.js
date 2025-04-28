@@ -79,15 +79,6 @@ const WithdrawalSuccessPopup = ({ transactionId, onClose, onStartNew }) => {
             {copiedState && <div className={styles.copyTooltip}>Copied!</div>}
           </span>
         </div>
-        <div className={styles.buttonContainer}>
-          <button
-            type="button"
-            onClick={onStartNew}
-            className={styles.newWithdrawalButton}
-          >
-            Start new withdrawal
-          </button>
-        </div>
       </div>
     </div>
   );
