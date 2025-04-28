@@ -118,7 +118,7 @@ const WalletModal = () => {
             <div className={styles.typeCol}>
               <div className={`${styles.chainTypeBadge} ${styles.l1Badge}`}>L1</div>
             </div>
-            <div className={styles.starterCol}>Bitcoin Core (Patched)</div>
+            <div className={styles.starterCol}>Bitcoin Core</div>
             <div className={styles.mnemonicCol}>
               {revealedMnemonics.layer1 ? mnemonics.layer1 : '••••••••••••'}
             </div>
