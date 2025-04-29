@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChainSettingsModal.module.css';
-import { X, ExternalLink } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolderOpen as faFolderOpenRegular } from '@fortawesome/free-regular-svg-icons';
+import { X, ExternalLink, FolderOpen } from 'lucide-react';
 import ResetConfirmModal from './ResetConfirmModal';
 
 const ChainSettingsModal = ({
@@ -193,7 +191,7 @@ const ChainSettingsModal = ({
                   onClick={() => onOpenWalletDir(currentChain.id)}
                   title="Open wallet directory"
                 >
-                  <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
+                  <FolderOpen size={14} />
                 </button>
               </span>
             </div>
@@ -206,7 +204,7 @@ const ChainSettingsModal = ({
                   onClick={() => onOpenDataDir(currentChain.id)}
                   title="Open data directory"
                 >
-                  <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
+                  <FolderOpen size={14} />
                 </button>
               </span>
             </div>
@@ -219,7 +217,7 @@ const ChainSettingsModal = ({
                   onClick={() => window.electronAPI.openBinaryDir(currentChain.id)}
                   title="Open binary directory"
                 >
-                  <FontAwesomeIcon icon={faFolderOpenRegular} size="sm" />
+                  <FolderOpen size={14} />
                 </button>
               </span>
             </div>
