@@ -10,40 +10,26 @@
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
+    "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-node": "^2.0.2",
     "@electron/remote": "^2.1.1",
-    "@fortawesome/fontawesome-svg-core": "^6.6.0",
-    "@fortawesome/free-regular-svg-icons": "^6.6.0",
-    "@fortawesome/free-solid-svg-icons": "^6.6.0",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "@grpc/grpc-js": "^1.12.5",
-    "@grpc/proto-loader": "^0.7.13",
     "@primer/octicons-react": "^19.14.0",
     "@reduxjs/toolkit": "^2.2.6",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "adm-zip": "^0.5.14",
     "axios": "^1.7.2",
     "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.7",
     "canvas-confetti": "^1.9.3",
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron-dl": "^4.0.0",
     "electron-is-dev": "^2.0.0",
     "electron-store": "^10.0.0",
     "hdkey": "^2.1.0",
     "lucide-react": "^0.417.0",
-    "phosphor-react": "^1.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-icons": "^5.2.1",
     "react-redux": "^9.1.2",
     "react-router-dom": "^6.25.1",
-    "react-scripts": "5.0.1",
     "redux": "^5.0.1",
     "tar": "^7.4.3",
-    "wait-on": "^7.2.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -53,6 +39,7 @@
     "react-eject": "react-scripts eject",
     "electron-build": "electron-builder",
     "build": "npm run react-build && npm run electron-build",
+    "gen-proto": "buf generate --clean",
     "start": "concurrently \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron --no-sandbox .\"",
     "start:prod": "concurrently \"cross-env NODE_ENV=production BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=production electron --no-sandbox .\"",
     "generate-icons": "node scripts/generate-icons.js"
@@ -88,20 +75,15 @@
     "productName": "Drivechain Launcher",
     "files": [
       "build/**/*",
-      "public/**/*",
-      {
-        "from": "src/data/proto",
-        "to": "src/data/proto"
-      },
-      {
-        "from": "node_modules/@grpc/proto-loader/node_modules/google-proto-files/google",
-        "to": "src/data/proto/google"
-      }
+      "public/**/*"
     ],
     "directories": {
       "buildResources": "public",
       "output": "dist"
     },
+    "electronLanguages": [
+      "en"
+    ],
     "linux": {
       "target": [
         {
@@ -119,9 +101,6 @@
       ],
       "category": "Development",
       "artifactName": "Drivechain-Launcher-${version}.${ext}",
-      "asarUnpack": [
-        "node_modules/@grpc"
-      ],
       "maintainer": "Drivechain <support@drivechain.info>",
       "executableName": "drivechain-launcher",
       "executableArgs": [
@@ -170,12 +149,19 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@babel/plugin-transform-modules-commonjs": "^7.26.3",
     "@babel/preset-env": "^7.26.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
     "babel-jest": "^29.7.0",
-    "electron": "^28.1.0",
+    "cross-env": "^7.0.3",
+    "concurrently": "^8.2.2",
     "electron-builder": "^24.9.1",
+    "electron": "^28.1.0",
     "png2icons": "^2.0.1",
     "prettier": "^3.3.3",
-    "typescript": "4.9.5"
+    "react-scripts": "5.0.1",
+    "typescript": "4.9.5",
+    "wait-on": "^7.2.0"
   },
   "overrides": {
     "nth-check": "^2.1.1",

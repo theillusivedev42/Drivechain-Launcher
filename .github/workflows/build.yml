@@ -27,7 +27,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci 
 
       - name: Build React app
         env:
@@ -88,12 +88,12 @@ jobs:
           npm run electron-build
 
       - name: Setup notarization credentials
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && !github.event.pull_request.head.repo.fork
         run: |
           echo ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }} | base64 --decode > notarization_api_key.p8
 
       - name: Submit app for notarization
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && !github.event.pull_request.head.repo.fork
         env:
           GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
           GODOT_MACOS_NOTARIZATION_API_KEY: ./notarization_api_key.p8

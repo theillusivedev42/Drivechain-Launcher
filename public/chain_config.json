@@ -105,7 +105,7 @@
             "version": "",
             "display_name": "BitWindow",
             "description": "GUI for managing Bitcoin and sidechains",
-            "repo_url": "https://github.com/LayerTwo-Labs/bitwindow",
+            "repo_url": "https://github.com/LayerTwo-Labs/drivechain-frontends/blob/master/bitwindow/README.md",
             "released": "yes",
             "directories": {
                 "base": {
