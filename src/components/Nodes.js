@@ -466,7 +466,7 @@ function Nodes() {
     [chains, handleStopChain]
   );
 
-  if (isLoading) {
+  if (isLoading && chains.length === 0) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>

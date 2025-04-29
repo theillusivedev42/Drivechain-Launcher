@@ -28,7 +28,7 @@
   align-items: center;
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .modalTitle {
@@ -62,7 +62,7 @@
   color: var(--text-secondary);
   text-align: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .error {
@@ -72,7 +72,7 @@
   border-radius: 4px;
   margin-bottom: 16px;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
   text-align: center;
 }
 
@@ -81,7 +81,7 @@
   padding: 16px;
   color: var(--modal-text);
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .starterTable {
@@ -90,7 +90,8 @@
   border-radius: 8px;
   border: 1px solid var(--btn-bg);
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
+  table-layout: fixed;
 }
 
 :global(.dark) .starterTable {
@@ -99,7 +100,7 @@
 
 .sectionHeader {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
+  grid-template-columns: 60px 150px 600px 40px;
   padding: 0;
   background-color: #f5f5f5;
   font-weight: 600;
@@ -124,7 +125,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: minmax(120px, 1.5fr) minmax(200px, 4fr) 70px;
+  grid-template-columns: 60px 150px 600px 40px;
   padding: 0;
   border-bottom: 1px solid var(--btn-bg);
   align-items: stretch;
@@ -149,25 +150,116 @@
   border-bottom-right-radius: 8px;
 }
 
+.typeCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--btn-bg);
+  padding: 6px 4px;
+}
+
 .starterCol {
   text-align: left;
-  padding: 10px 8px;
+  padding: 6px 12px;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
 }
 
+.chainTypeBadge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.l1Badge {
+  background-color: rgba(247, 147, 26, 0.15);
+  color: #f7931a;
+}
+
+.l2Badge {
+  background-color: rgba(52, 152, 219, 0.15);
+  color: #3498db;
+}
+
 .mnemonicCol {
   text-align: left;
   font-family: monospace;
-  word-break: break-all;
-  padding: 10px 12px;
+  word-break: normal;
+  padding: 6px 12px;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.2;
   border-right: 1px solid var(--btn-bg);
   display: flex;
   align-items: center;
-  overflow-wrap: break-word;
+  overflow-x: auto;
+  position: relative;
+  min-height: 32px;
+}
+
+.copyableText {
+  cursor: pointer;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.copyableText:hover {
+  opacity: 0.8;
+}
+
+.copyableText.copied {
+  color: #4CAF50;
+}
+
+.copyTooltip {
+  position: fixed;
+  transform: translate(-50%, -130%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.mnemonicCol::-webkit-scrollbar {
+  height: 10px;
+}
+
+.mnemonicCol::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mnemonicCol::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.mnemonicCol::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(155, 155, 155, 0.7);
+}
+
+:global(.light) .mnemonicCol::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+:global(.light) .mnemonicCol::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .mnemonicCol::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+:global(.dark) .mnemonicCol::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .actionsCol {
@@ -184,9 +276,11 @@
 }
 
 .sectionHeader .starterCol,
-.sectionHeader .mnemonicCol {
+.sectionHeader .mnemonicCol,
+.sectionHeader .typeCol {
   font-family: inherit;
-  padding: 10px 8px;
+  font-size: inherit;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
 }
@@ -244,7 +338,7 @@
   gap: 12px;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 1200px;
 }
 
 .submitButton {

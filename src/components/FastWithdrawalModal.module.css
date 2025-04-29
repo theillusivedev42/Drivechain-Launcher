@@ -1,3 +1,7 @@
+.pageContainer {
+  padding-top: 30px;
+}
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -156,8 +160,7 @@ select.input {
 
 .buttonGroup {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
+  justify-content: center;
 }
 
 .submitButton {
@@ -307,7 +310,6 @@ select.input {
 }
 
 .txInputSection {
-  margin-top: 16px;
   padding: 12px;
   border-radius: 8px;
   background-color: rgba(128, 128, 128, 0.05);

@@ -2,93 +2,72 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: calc(100% - 16px); /* Account for window frame */
-  background-color: rgba(35, 35, 35, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: 8px 12px;
+  width: 100%;
+  background-color: var(--nav-bg);
+  padding: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   z-index: 1000;
-  height: 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  height: 40px;
 }
 
 .leftSection {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
+  height: 100%;
 }
 
 .iconContainer {
   display: flex;
   align-items: center;
-  gap: 12px;
+  padding: 0 12px;
 }
 
 .navLink {
-  color: #ffffff;
+  color: var(--nav-text);
   text-decoration: none;
-  padding: 3px 6px;
-  border-radius: 2px;
-  transition: background-color 0.2s;
-  font-weight: 400;
-  font-size: 0.95rem;
-}
-
-.navLink:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.iconWrapper {
+  padding: 0 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-
+  font-weight: 400;
+  font-size: 0.95rem;
+  position: relative;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
-:global(.light) .nav {
-  background-color: rgba(255, 255, 255, 0.95);
-  border-bottom-color: rgba(0, 0, 0, 0.1);
+.navLink:global(.active) {
+  background-color: var(--bg-color);
+  position: relative;
+  z-index: 1001;
 }
 
-:global(.light) .navLink {
-  color: #333333;
+.navLink:global(.active)::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: var(--bg-color);
 }
 
-:global(.light) .navLink:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-:global(.dark) .navLink:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.navLink:hover:not(:global(.active)) {
+  background-color: rgba(128, 128, 128, 0.1);
 }
 
 .settingsButton {
-  color: #ffffff;
+  color: var(--nav-text);
   background: none;
   border: none;
-  padding: 3px 6px;
-  border-radius: 2px;
-  transition: background-color 0.2s;
+  padding: 0 12px;
+  cursor: pointer;
   font-weight: 400;
   font-size: 0.95rem;
-  cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: inherit;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
 .settingsButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-:global(.light) .settingsButton {
-  color: #333333;
-}
-
-:global(.light) .settingsButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(128, 128, 128, 0.1);
 }

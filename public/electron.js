@@ -472,6 +472,9 @@ function setupIPCHandlers() {
         case 'bitnames':
           filePath = path.join(walletDir, 'sidechain_2_starter.json');
           break;
+        case 'zside':
+          filePath = path.join(walletDir, 'sidechain_3_starter.json');
+          break;
         default:
           throw new Error('Invalid wallet type');
       }

@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import './App.css';
 import './scrollbar.css';
 import NavBar from './components/NavBar';
 import cardData from './CardData.json';
 import Nodes from './components/Nodes';
-// import Tools from './components/Tools';
 import Settings from './components/Settings';
 import Other from './components/Other';
 import FaucetModal from './components/FaucetModal';
@@ -79,14 +78,12 @@ function AppContent() {
       <div className="App">
         <NavBar />
         <Routes>
-          <Route path="/" element={<Nodes />} />
-          {/* <Route path="/tools" element={<Tools />} /> */}
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/other" element={<Other />} />
+          <Route path="/" element={<Navigate to="/chains" replace />} />
+          <Route path="/chains" element={<Nodes />} />
+          <Route path="/wallet" element={<WalletModal />} />
+          <Route path="/fast-withdrawal" element={<FastWithdrawalModal />} />
         </Routes>
         <FaucetModal />
-        <WalletModal />
-        <FastWithdrawalModal />
         <SettingsModal onResetComplete={() => setShowWelcomeModal(true)} />
         <WelcomeModal 
           isOpen={showWelcomeModal}

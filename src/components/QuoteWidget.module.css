@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   width: 100%;
-  background-color: rgba(35, 35, 35, 0.75);
+  background-color: var(--nav-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   padding: 4px 24px;
@@ -17,7 +17,6 @@
 }
 
 :global(.light) .widget {
-  background-color: rgba(255, 255, 255, 0.95);
   border-top-color: rgba(0, 0, 0, 0.1);
 }
 
