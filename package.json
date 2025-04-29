@@ -10,6 +10,7 @@
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
+    "@bufbuild/protobuf": "^2.2.5",
     "@connectrpc/connect": "^2.0.2",
     "@connectrpc/connect-node": "^2.0.2",
     "@electron/remote": "^2.1.1",
@@ -35,7 +36,8 @@
   },
   "scripts": {
     "react-start": "react-scripts start",
-    "react-build": "react-scripts build",
+    "copy-gen": "cp -r gen/ build/gen/",
+    "react-build": "react-scripts build && npm run copy-gen",
     "react-test": "react-scripts test",
     "react-eject": "react-scripts eject",
     "electron-build": "electron-builder",
@@ -76,7 +78,11 @@
     "productName": "Drivechain Launcher",
     "files": [
       "build/**/*",
-      "public/**/*"
+      "public/**/*",
+      "gen/**/*",
+      "node_modules/@bufbuild/**/*",
+      "node_modules/@connectrpc/**/*",
+      "node_modules/fs-extra/**/*"
     ],
     "directories": {
       "buildResources": "public",
