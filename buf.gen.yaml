@@ -1,0 +1,15 @@
+version: v2
+
+managed: 
+  enabled: true
+
+inputs:
+  - git_repo: https://github.com/LayerTwo-Labs/cusf_sidechain_proto.git
+    ref: a379bf8
+
+plugins:
+  - remote: buf.build/bufbuild/es:v2.2.5
+    out: gen
+    # https://github.com/bufbuild/protobuf-es/blob/main/MANUAL.md#plugin-options
+    opt:
+      - js_import_style=legacy_commonjs

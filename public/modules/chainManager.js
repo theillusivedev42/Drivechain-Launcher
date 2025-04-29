@@ -18,7 +18,7 @@ class ChainManager {
     this.bitWindowClient = new BitWindowClient();
     this.logProcesses = new Map(); // Track log streaming processes
     this.processCheckers = new Map(); // Track process check intervals
-    this.enforcerClient = new EnforcerClient(); // Connect to enfocer gRPC
+    this.enforcerClient = new EnforcerClient(); // Connect to enforcer gRPC
 
     // Handle download completion
     this.downloadManager?.on('download-complete', async (chainId) => {

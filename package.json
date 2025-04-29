@@ -10,13 +10,13 @@
   "main": "public/electron.js",
   "homepage": "./",
   "dependencies": {
+    "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-node": "^2.0.2",
     "@electron/remote": "^2.1.1",
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
-    "@grpc/grpc-js": "^1.12.5",
-    "@grpc/proto-loader": "^0.7.13",
     "@primer/octicons-react": "^19.14.0",
     "@reduxjs/toolkit": "^2.2.6",
     "@testing-library/jest-dom": "^5.17.0",
@@ -52,6 +52,7 @@
     "react-eject": "react-scripts eject",
     "electron-build": "electron-builder",
     "build": "npm run react-build && npm run electron-build",
+    "gen-proto": "buf generate --clean",
     "start": "concurrently \"cross-env BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && electron --no-sandbox .\"",
     "start:prod": "concurrently \"cross-env NODE_ENV=production BROWSER=none npm run react-start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=production electron --no-sandbox .\"",
     "generate-icons": "node scripts/generate-icons.js"
@@ -87,15 +88,7 @@
     "productName": "Drivechain Launcher",
     "files": [
       "build/**/*",
-      "public/**/*",
-      {
-        "from": "src/data/proto",
-        "to": "src/data/proto"
-      },
-      {
-        "from": "node_modules/@grpc/proto-loader/node_modules/google-proto-files/google",
-        "to": "src/data/proto/google"
-      }
+      "public/**/*"
     ],
     "directories": {
       "buildResources": "public",
@@ -118,9 +111,6 @@
       ],
       "category": "Development",
       "artifactName": "Drivechain-Launcher-${version}.${ext}",
-      "asarUnpack": [
-        "node_modules/@grpc"
-      ],
       "maintainer": "Drivechain <support@drivechain.info>",
       "executableName": "drivechain-launcher",
       "executableArgs": [
