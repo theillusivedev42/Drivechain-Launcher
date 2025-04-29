@@ -94,6 +94,9 @@
       "buildResources": "public",
       "output": "dist"
     },
+    "electronLanguages": [
+      "en" 
+    ],
     "linux": {
       "target": [
         {
