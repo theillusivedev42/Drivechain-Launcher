@@ -164,7 +164,7 @@ class ChainManager {
           const platform = process.platform;
           const downloadsDir = app.getPath("downloads");
           const extractDir = chain.extract_dir[platform];
-          const mnemonicPath = path.join(downloadsDir, extractDir, 'mnemonic', 'l1.txt');
+          const mnemonicPath = path.join(downloadsDir, extractDir, 'mnemonic', 'mnemonic.txt');
           
           // Use async file existence check
           if (await fs.pathExists(mnemonicPath)) {
