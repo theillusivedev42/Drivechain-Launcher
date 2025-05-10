@@ -22,12 +22,23 @@ class ChainManager {
 
     // Handle download completion
     this.downloadManager?.on('download-complete', async (chainId) => {
+      // Handle bitcoin config creation
       if (chainId === 'bitcoin') {
         try {
           await this.writeBitcoinConfig();
         } catch (error) {
           console.error('Failed to write bitcoin.conf after download:', error);
         }
+      }
+      
+      // Create mnemonic files after download for any chain that needs them
+      try {
+        // Import WalletService here to avoid circular dependencies
+        const WalletService = require('./walletService');
+        const walletService = new WalletService();
+        await walletService.createMnemonicAfterDownload(chainId);
+      } catch (error) {
+        console.error(`Failed to create mnemonic file for ${chainId} after download:`, error);
       }
     });
   }
@@ -139,15 +150,30 @@ class ChainManager {
     }
   }
 
-  getChainArgs(chainId) {
+  async getChainArgs(chainId) {
     if (chainId === 'bitcoin') {
       return this.getBitcoinArgs();
     }
     if (chainId === 'enforcer') {
-      const mnemonicsPath = path.join(app.getPath('userData'), 'wallet_starters', 'mnemonics', 'l1.txt');
-      const walletArg = fs.existsSync(mnemonicsPath) 
-        ? `--wallet-seed-file=${mnemonicsPath}`
-        : '--wallet-auto-create';
+      // Try to get mnemonic path from the enforcer extract directory
+      let walletArg = '--wallet-auto-create';
+      
+      try {
+        const chain = this.getChainConfig('enforcer');
+        if (chain && chain.extract_dir) {
+          const platform = process.platform;
+          const downloadsDir = app.getPath("downloads");
+          const extractDir = chain.extract_dir[platform];
+          const mnemonicPath = path.join(downloadsDir, extractDir, 'mnemonic', 'l1.txt');
+          
+          // Use async file existence check
+          if (await fs.pathExists(mnemonicPath)) {
+            walletArg = `--wallet-seed-file=${mnemonicPath}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error getting mnemonic path for enforcer:', error);
+      }
 
       return [
         '--node-rpc-pass=password',
@@ -307,7 +333,7 @@ class ChainManager {
         await fs.promises.chmod(fullBinaryPath, "755");
       }
 
-      const baseArgs = this.getChainArgs(chainId);
+      const baseArgs = await this.getChainArgs(chainId);
       const args = [...baseArgs, ...additionalArgs];
       console.log(`Starting ${chainId} with args:`, args);
       

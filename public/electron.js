@@ -653,9 +653,8 @@ function setupIPCHandlers() {
   ipcMain.handle("init-wallet-dirs", async () => {
     try {
       const walletDir = path.join(app.getPath('userData'), 'wallet_starters');
-      const mnemonicsDir = path.join(walletDir, 'mnemonics');
+      // Mnemonics are now stored in chain extract directories, not in a subdirectory here
       await fs.ensureDir(walletDir);
-      await fs.ensureDir(mnemonicsDir);
       return { success: true };
     } catch (error) {
       console.error('Failed to initialize wallet directories:', error);
@@ -687,6 +686,118 @@ function setupIPCHandlers() {
   });
 }
 
+async function migrateExistingMnemonics() {
+  try {
+    console.log("Checking for mnemonic files to migrate...");
+    
+    const walletStartersDir = path.join(app.getPath('userData'), 'wallet_starters');
+    const oldMnemonicsDir = path.join(walletStartersDir, 'mnemonics');
+    
+    if (!fs.existsSync(oldMnemonicsDir)) {
+      console.log("No old mnemonics directory found, skipping migration");
+      return;
+    }
+    
+    const files = await fs.readdir(oldMnemonicsDir);
+    if (files.length === 0) {
+      console.log("No mnemonic files to migrate");
+      // Delete empty mnemonics directory
+      await fs.remove(oldMnemonicsDir);
+      console.log("Removed empty mnemonics directory");
+      return;
+    }
+    
+    if (!config || !config.chains || !Array.isArray(config.chains)) {
+      console.log("Chain configuration not available, cannot migrate mnemonics yet");
+      return;
+    }
+    
+    const platform = process.platform;
+    const downloadsDir = app.getPath('downloads');
+    
+    // Map filenames to their target chain extract directories
+    const fileToChainMap = {};
+    
+    // Map L1 to enforcer
+    const enforcerChain = config.chains.find(chain => chain.id === 'enforcer');
+    if (enforcerChain && enforcerChain.extract_dir && enforcerChain.extract_dir[platform]) {
+      fileToChainMap['l1.txt'] = enforcerChain;
+    }
+    
+    // Map sidechain files to their chains
+    for (const chain of config.chains) {
+      if (chain.slot) {
+        fileToChainMap[`sidechain_${chain.slot}.txt`] = chain;
+      }
+    }
+    
+    // Track files that were migrated so we can remove them later
+    const migratedFiles = [];
+    
+    // Migrate files
+    for (const file of files) {
+      const chain = fileToChainMap[file];
+      if (!chain) {
+        console.log(`Unknown mnemonic file ${file}, skipping migration`);
+        continue;
+      }
+      
+      const extractDir = chain.extract_dir?.[platform];
+      if (!extractDir) {
+        console.log(`No extract directory configured for ${chain.id} on platform ${platform}, skipping migration of ${file}`);
+        continue;
+      }
+      
+      const sourceFile = path.join(oldMnemonicsDir, file);
+      const targetExtractDir = path.join(downloadsDir, extractDir);
+      
+      // Check if the extract directory exists (chain has been downloaded)
+      if (!fs.existsSync(targetExtractDir)) {
+        console.log(`Extract directory ${targetExtractDir} doesn't exist yet, chain ${chain.id} may not be downloaded, skipping migration of ${file}`);
+        continue;
+      }
+      
+      // Create mnemonic directory
+      const targetMnemonicDir = path.join(targetExtractDir, 'mnemonic');
+      await fs.ensureDir(targetMnemonicDir);
+      
+      // Use standardized filename
+      const targetFile = path.join(targetMnemonicDir, 'mnemonic.txt');
+      
+      // Skip if target file already exists
+      if (fs.existsSync(targetFile)) {
+        console.log(`Mnemonic file ${targetFile} already exists, skipping migration`);
+        migratedFiles.push(file); // Consider this file migrated
+        continue;
+      }
+      
+      // Copy the file
+      await fs.copy(sourceFile, targetFile);
+      console.log(`Migrated mnemonic file from ${sourceFile} to ${targetFile}`);
+      migratedFiles.push(file);
+    }
+    
+    // Clean up old files that were successfully migrated
+    for (const file of migratedFiles) {
+      await fs.remove(path.join(oldMnemonicsDir, file));
+      console.log(`Removed old mnemonic file: ${file}`);
+    }
+    
+    // If all files were migrated, remove the old directory
+    const remainingFiles = await fs.readdir(oldMnemonicsDir);
+    if (remainingFiles.length === 0) {
+      await fs.remove(oldMnemonicsDir);
+      console.log(`Deleted empty mnemonics folder: ${oldMnemonicsDir}`);
+    } else {
+      console.log(`${remainingFiles.length} mnemonic files couldn't be migrated yet, kept in original location`);
+    }
+    
+    console.log("Mnemonic migration completed");
+  } catch (error) {
+    console.error("Error migrating mnemonics:", error);
+  }
+}
+
 async function initialize() {
   try {
     await loadConfig();
@@ -710,6 +821,9 @@ async function initialize() {
     downloadManager = new DownloadManager(mainWindow, config);
     chainManager = new ChainManager(mainWindow, config, downloadManager);
     updateManager = new UpdateManager(config, chainManager);
+    
+    // Run migration function to handle any existing mnemonics
+    await migrateExistingMnemonics();
     
     // Finally setup IPC handlers after everything is initialized
     setupIPCHandlers();

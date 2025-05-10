@@ -13,13 +13,123 @@ class WalletService extends EventEmitter {
   constructor() {
     super();
     this.walletDir = path.join(app.getPath('userData'), 'wallet_starters');
-    this.mnemonicsDir = path.join(this.walletDir, 'mnemonics');
+    // We no longer need a mnemonics subdirectory as mnemonics are now stored
+    // directly in the chain extract directories
     fs.ensureDirSync(this.walletDir);
-    fs.ensureDirSync(this.mnemonicsDir);
+    
+    // Load chain configuration
+    this.config = this.loadChainConfig();
+  }
+  
+  loadChainConfig() {
+    try {
+      const configPath = path.join(__dirname, '..', 'chain_config.json');
+      return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (error) {
+      console.error('Error loading chain config:', error);
+      return { chains: [] };
+    }
+  }
+  
+  getChainBySlot(slot) {
+    return this.config.chains.find(chain => chain.slot === slot);
+  }
+  
+  getChainById(id) {
+    return this.config.chains.find(chain => chain.id === id);
+  }
+
+  async createMnemonicAfterDownload(chainId) {
+    try {
+      // Skip chains that don't need mnemonics
+      if (chainId === 'bitcoin' || chainId === 'bitwindow') {
+        return;
+      }
+
+      console.log(`Creating mnemonic file for ${chainId} after download...`);
+      
+      // Determine chain and wallet starter file
+      let chain, walletStarterPath;
+      
+      if (chainId === 'enforcer' || chainId === 'l1') {
+        chain = this.getChainById('enforcer');
+        walletStarterPath = path.join(this.walletDir, 'l1_starter.json');
+      } else {
+        chain = this.getChainById(chainId);
+        if (!chain?.slot) {
+          console.log(`Chain ${chainId} doesn't have a slot number, skipping mnemonic creation`);
+          return;
+        }
+        walletStarterPath = path.join(this.walletDir, `sidechain_${chain.slot}_starter.json`);
+      }
+      
+      // Check required conditions
+      const platform = process.platform;
+      if (!chain?.extract_dir?.[platform]) {
+        console.log(`No extract directory configured for ${chainId} on platform ${platform}`);
+        return;
+      }
+      
+      // Check if wallet starter file exists
+      if (!await fs.pathExists(walletStarterPath)) {
+        console.log(`Wallet starter file not found at ${walletStarterPath}, skipping mnemonic creation`);
+        return;
+      }
+      
+      // Read wallet starter data
+      const walletData = await fs.readJson(walletStarterPath);
+      if (!walletData.mnemonic) {
+        console.log(`No mnemonic found in wallet starter for ${chainId}, skipping`);
+        return;
+      }
+      
+      // Create the mnemonic file
+      const downloadsDir = app.getPath('downloads');
+      const extractDir = path.join(downloadsDir, chain.extract_dir[platform]);
+      const mnemonicDir = path.join(extractDir, 'mnemonic');
+      
+      // Ensure mnemonic directory exists
+      await fs.ensureDir(mnemonicDir);
+      
+      const mnemonicPath = path.join(mnemonicDir, 'mnemonic.txt');
+      
+      await fs.writeFile(mnemonicPath, walletData.mnemonic);
+      console.log(`Created mnemonic file at ${mnemonicPath}`);
+      
+      return true;
+    } catch (error) {
+      console.error(`Error creating mnemonic file for ${chainId}:`, error);
+      return false;
+    }
   }
 
   getMnemonicPath(chainId) {
-    return path.join(this.mnemonicsDir, `sidechain_${chainId}.txt`);
+    const platform = process.platform;
+    const downloadsDir = app.getPath('downloads');
+    
+    // Determine which chain to use
+    let chain;
+    
+    if (chainId === 'l1') {
+      chain = this.getChainById('enforcer');
+    } else {
+      chain = this.getChainBySlot(chainId);
+    }
+    
+    // Check if we have a valid chain with extract directory
+    if (!chain?.extract_dir?.[platform]) {
+      return null;
+    }
+    
+    // Return the path to the mnemonic file
+    const mnemonicPath = path.join(downloadsDir, chain.extract_dir[platform], 'mnemonic', 'mnemonic.txt');
+    
+    // Check if the file exists
+    if (!fs.existsSync(mnemonicPath)) {
+      return null;
+    }
+    
+    return mnemonicPath;
   }
 
   async generateWallet(options = {}) {
@@ -182,15 +292,9 @@ class WalletService extends EventEmitter {
     // Save full wallet data
     const l1Path = path.join(this.walletDir, 'l1_starter.json');
     await fs.writeJson(l1Path, walletData, { spaces: 2 });
-
-    // Save mnemonic only for L1 if it doesn't exist
-    const mnemonicPath = path.join(this.mnemonicsDir, 'l1.txt');
-    if (!(await fs.pathExists(mnemonicPath))) {
-      console.log('Creating new mnemonic file for L1');
-      await fs.writeFile(mnemonicPath, walletData.mnemonic);
-    } else {
-      console.log('Mnemonic file already exists for L1, skipping creation');
-    }
+    
+    // The mnemonic txt file will be created when needed in getMnemonicPath()
+    // when the chain is started, not at wallet creation time
     
     this.emit('wallet-updated');
   }
@@ -200,26 +304,8 @@ class WalletService extends EventEmitter {
     const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
     await fs.writeJson(sidechainPath, walletData, { spaces: 2 });
     
-    // Save mnemonic only for chain apps if it doesn't exist
-    const mnemonicPath = path.join(this.mnemonicsDir, `sidechain_${slot}.txt`);
-    if (!(await fs.pathExists(mnemonicPath))) {
-      const chainNames = {
-        9: 'Thunder',
-        2: 'Bitnames',
-        3: 'ZSide'
-      };
-      const chainName = chainNames[slot] || 'Unknown';
-      console.log(`Creating new mnemonic file for slot ${slot} (${chainName})`);
-      await fs.writeFile(mnemonicPath, walletData.mnemonic);
-    } else {
-      const chainNames = {
-        9: 'Thunder',
-        2: 'Bitnames',
-        3: 'ZSide'
-      };
-      const chainName = chainNames[slot] || 'Unknown';
-      console.log(`Mnemonic file already exists for slot ${slot} (${chainName}), skipping creation`);
-    }
+    // The mnemonic txt file will be created when needed in getMnemonicPath()
+    // when the chain is started, not at wallet creation time
     
     this.emit('wallet-updated');
   }
