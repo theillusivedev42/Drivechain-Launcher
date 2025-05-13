@@ -34,5 +34,11 @@
     "display_name": "ZSide",
     "description": "Privacy sidechain based on zCash",
     "dependencies": ["bitwindow"]
+  },
+  {
+    "id": "bitassets",
+    "display_name": "Bitassets",
+    "description": "A sidechain for digital assets (ERC-20 / NFT / ICO / etc)",
+    "dependencies": ["bitwindow"]
   }
 ]
