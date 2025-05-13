@@ -258,23 +258,37 @@ function setupIPCHandlers() {
       const chain = config.chains.find(c => c.id === chainId);
       let args = [];
       
-      // Only for Thunder and Bitnames (layer 2 chains)
+      // For all layer 2 chains with a slot number
       if (chain && chain.chain_layer === 2 && chain.slot) {
-        const walletPath = path.join(
+        // Determine the correct wallet path based on chain configuration
+        const baseDir = path.join(
           app.getPath("home"),
-          chain.directories.base[process.platform],
-          "wallet.mdb"
+          chain.directories.base[process.platform]
         );
         
+        // Get the wallet path, which might be a subdirectory or direct file based on chain config
+        let walletPath;
+        if (chain.directories.wallet) {
+          walletPath = path.join(baseDir, chain.directories.wallet);
+        } else {
+          walletPath = path.join(baseDir, "wallet.mdb");
+        }
+        
         const walletExists = await fs.pathExists(walletPath);
-        console.log(`[${chainId}] Checking wallet.mdb at: ${walletPath}`);
+        console.log(`[${chainId}] Checking wallet at: ${walletPath}`);
         
         if (!walletExists) {
+          // Get mnemonic path using slot (not chain ID)
           const mnemonicPath = walletManager.walletService.getMnemonicPath(chain.slot);
-          args = ['--mnemonic-seed-phrase-path', mnemonicPath];
-          console.log(`[${chainId}] First run detected - passing mnemonic arg: ${mnemonicPath}`);
+          
+          if (!mnemonicPath) {
+            console.error(`[${chainId}] No mnemonic file found for slot ${chain.slot}`);
+          } else {
+            args = ['--mnemonic-seed-phrase-path', mnemonicPath];
+            console.log(`[${chainId}] First run detected - passing mnemonic arg: ${mnemonicPath}`);
+          }
         } else {
-          console.log(`[${chainId}] wallet.mdb exists - skipping mnemonic arg`);
+          console.log(`[${chainId}] Wallet exists at ${walletPath} - skipping mnemonic arg`);
         }
       }
       

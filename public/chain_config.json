@@ -255,11 +255,61 @@
                 "win32": "bitnames-latest-x86_64-pc-windows-gnu.exe"
             },
             "network": {
-                "port": 0
+                "port": 6002
             },
             "chain_type": 2,
             "chain_layer": 2,
             "slot": "2"
+        },
+        {
+            "id": "bitassets",
+            "enabled": true,
+            "version": "",
+            "display_name": "Bitassets",
+            "description": "A sidechain for digital assets (ERC-20 / NFT / ICO / etc)",
+            "repo_url": "https://github.com/LayerTwo-Labs/plain-bitassets.git",
+            "released": "yes",
+            "directories": {
+                "base": {
+                    "linux": ".local/share/plain_bitassets",
+                    "darwin": "Library/Application Support/plain_bitassets",
+                    "win32": "AppData/Roaming/plain_bitassets"
+                },
+                "wallet": "wallet.mdb"
+            },
+            "extract_dir": {
+                "linux": "Drivechain-Launcher-Downloads/bitassets",
+                "darwin": "Drivechain-Launcher-Downloads/bitassets",
+                "win32": "Drivechain-Launcher-Downloads/bitassets"
+            },
+            "download": {
+                "urls": {
+                    "linux": "https://releases.drivechain.info/L2-S4-BitAssets-latest-x86_64-unknown-linux-gnu.zip",
+                    "darwin": "https://releases.drivechain.info/L2-S4-BitAssets-latest-x86_64-apple-darwin.zip",
+                    "win32": "https://releases.drivechain.info/L2-S4-BitAssets-latest-x86_64-pc-windows-gnu.zip"
+                },
+                "sizes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                },
+                "hashes": {
+                    "linux": "",
+                    "darwin": "",
+                    "win32": ""
+                }
+            },
+            "binary": {
+                "linux": "bitassets-latest-x86_64-unknown-linux-gnu",
+                "darwin": "bitassets-latest-x86_64-apple-darwin",
+                "win32": "bitassets-latest-x86_64-pc-windows-gnu.exe"
+            },
+            "network": {
+                "port": 6004
+            },
+            "chain_type": 2,
+            "chain_layer": 2,
+            "slot": "4"
         },
         {
             "id": "thunder-orchard",
@@ -353,11 +403,11 @@
                 "win32": "ethside-latest-x86_64-pc-windows-gnu.exe"
             },
             "network": {
-                "port": 6004
+                "port": 8545
             },
             "chain_type": 2,
             "chain_layer": 2,
-            "slot": "4"
+            "slot": "6"
         }
     ]
 }

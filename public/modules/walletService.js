@@ -246,13 +246,15 @@ class WalletService extends EventEmitter {
         derivation_path: sidechainPath
       };
 
-      const chainNames = {
-        9: 'Thunder',
-        2: 'Bitnames',
-        3: 'ZSide'
-      };
-      const chainName = chainNames[sidechainSlot] || 'Unknown';
-      console.log(`Generated new sidechain starter for slot ${sidechainSlot} (${chainName})`);
+      // Get chain name from config
+      const slotString = sidechainSlot.toString();
+      const chain = this.config.chains.find(c => c.slot === slotString);
+      
+      if (!chain || !chain.display_name) {
+        throw new Error(`No chain configuration found for slot ${sidechainSlot}`);
+      }
+      
+      console.log(`Generated new sidechain starter for slot ${sidechainSlot} (${chain.display_name})`);
       
       await this.saveSidechainStarter(sidechainSlot, sidechainStarter);
       return sidechainStarter;
@@ -476,8 +478,20 @@ class WalletService extends EventEmitter {
         }
       }
 
+      // Find all sidechain slots from the configuration
+      const sidechainSlots = [];
+      for (const chain of this.config.chains) {
+        if (chain.slot && !isNaN(parseInt(chain.slot))) {
+          const slot = parseInt(chain.slot);
+          if (!sidechainSlots.includes(slot)) {
+            sidechainSlots.push(slot);
+          }
+        }
+      }
+      
+      console.log(`Found sidechain slots in configuration: ${sidechainSlots.join(', ')}`);
+
       // Check and generate sidechain starters if needed
-      const sidechainSlots = [9, 2, 3]; // Thunder, Bitnames, and ZSide respectively
       for (const slot of sidechainSlots) {
         const sidechainPath = path.join(this.walletDir, `sidechain_${slot}_starter.json`);
         if (!(await fs.pathExists(sidechainPath))) {
