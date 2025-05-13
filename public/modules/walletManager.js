@@ -82,8 +82,11 @@ class WalletManager extends EventEmitter {
         return await this.walletService.deriveL1Starter();
       }
       // For sidechains
-      else {
-        return await this.walletService.deriveSidechainStarter(chain.id);
+      else if (chain.slot) {
+        console.log(`Deriving sidechain wallet for chain ${chainId} with slot ${chain.slot}`);
+        return await this.walletService.deriveSidechainStarter(parseInt(chain.slot));
+      } else {
+        throw new Error(`Chain ${chainId} has no slot number`);
       }
     } catch (error) {
       console.error(`Error deriving wallet for chain ${chainId}:`, error);
@@ -97,9 +100,16 @@ class WalletManager extends EventEmitter {
 
     try {
       const walletDir = this.walletService.walletDir;
-      const walletPath = chain.chain_layer === 1 
-        ? path.join(walletDir, 'l1_starter.json')
-        : path.join(walletDir, `sidechain_${chainId}_starter.json`);
+      let walletPath;
+      
+      if (chain.chain_layer === 1) {
+        walletPath = path.join(walletDir, 'l1_starter.json');
+      } else if (chain.slot) {
+        walletPath = path.join(walletDir, `sidechain_${chain.slot}_starter.json`);
+      } else {
+        console.error(`Chain ${chainId} has no slot number`);
+        return null;
+      }
 
       if (await fs.pathExists(walletPath)) {
         return await fs.readJson(walletPath);
