@@ -9,13 +9,19 @@ const QuoteWidget = () => {
   const chains = useSelector(state => state.chains);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
-  const downloadedCount = chains.filter(chain => 
+  // Count only visible chain rows (exclude bitcoin and enforcer as they don't render as cards)
+  const visibleChains = chains.filter(chain => chain.id !== 'bitcoin' && chain.id !== 'enforcer' && chain.released !== "no");
+  
+  // Count downloaded chains (only those that appear as visible cards)
+  const downloadedCount = visibleChains.filter(chain => 
     chain.status !== 'not_downloaded' && 
     chain.status !== 'downloading' && 
-    chain.status !== 'extracting' && 
-    chain.released !== "no"
+    chain.status !== 'extracting'
   ).length;
-  const totalAvailable = chains.filter(chain => chain.released !== "no").length;
+  
+  // Total visible chains (rows) count
+  const totalAvailable = visibleChains.length;
+
   const goToNextQuote = () => {
     setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes.length);
   };
