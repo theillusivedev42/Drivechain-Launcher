@@ -4,9 +4,11 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--modal-bg);
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
-  overflow: hidden;
 }
 
 .modalContent {
@@ -185,6 +187,42 @@
   color: #3498db;
 }
 
+.masterBadge {
+  background-color: rgba(156, 39, 176, 0.15);
+  color: #9c27b0;
+  font-weight: 700;
+}
+
+.infoBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 1200px;
+}
+
+:global(.dark) .infoBox {
+  background-color: rgba(52, 152, 219, 0.05);
+  border-color: rgba(52, 152, 219, 0.15);
+}
+
+.infoBox p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.derivationPath {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
 .mnemonicCol {
   text-align: left;
   font-family: monospace;
@@ -353,4 +391,139 @@
 
 .submitButton:hover {
   background-color: var(--download-btn-hover);
+}
+
+.infoButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #555);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.infoButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--accent-color, #3498db);
+}
+
+:global(.dark) .infoButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.infoModalContent {
+  background-color: var(--bg-color, white);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 600px;
+  padding: 20px;
+  position: relative;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+:global(.dark) .infoModalContent {
+  background-color: #1a1a1a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.closeModalButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #555);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.closeModalButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--accent-color, #3498db);
+}
+
+:global(.dark) .closeModalButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.infoModalContent h2 {
+  margin-top: 0;
+  color: var(--text-primary, #333);
+  border-bottom: 1px solid var(--border-color, #eee);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+:global(.dark) .infoModalContent h2 {
+  color: #e1e1e1;
+  border-color: #333;
+}
+
+.infoContent h3 {
+  color: var(--text-primary, #333);
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+:global(.dark) .infoContent h3 {
+  color: #e1e1e1;
+}
+
+.infoContent p {
+  color: var(--text-secondary, #555);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+:global(.dark) .infoContent p {
+  color: #aaa;
+}
+
+.infoContent ul {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.infoContent li {
+  color: var(--text-secondary, #555);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+:global(.dark) .infoContent li {
+  color: #aaa;
+}
+
+.alertBox {
+  background-color: rgba(255, 152, 0, 0.1);
+  border-left: 4px solid #ff9800;
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  color: var(--text-primary, #333);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:global(.dark) .alertBox {
+  background-color: rgba(255, 152, 0, 0.05);
+  color: #e1e1e1;
+}
+
+.securityNote {
+  font-style: italic;
+  opacity: 0.8;
+  font-size: 14px;
 }
