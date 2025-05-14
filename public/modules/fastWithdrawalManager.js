@@ -1,19 +1,21 @@
-const { app, shell } = require("electron");
 const { EventEmitter } = require('events');
 const axios = require("axios");
-
+const { FAST_WITHDRAWAL_SERVERS, defaultFastWithdrawalServer } = require('../../src/utils/fastWithdrawals');
 
 class FastWithdrawalManager extends EventEmitter {
-  // Fast withdrawal server config
-  FAST_WITHDRAW_SERVER = 'http://172.105.148.135:3333';
-  constructor() {
+  constructor(serverUrl) {
     super();
+    this.serverUrl = FAST_WITHDRAWAL_SERVERS[0].url;
     this.rpcConfigBTC = {
       host: '127.0.0.1',
       port: 38332,
       user: 'user',
       password: 'password'
     };
+  }
+
+  getServerUrl() {
+    return this.serverUrl;
   }
 
   async makeRpcCallBTC(method, params = []) {
@@ -49,13 +51,27 @@ class FastWithdrawalManager extends EventEmitter {
     }
   }
 
+  setServerUrl(serverUrl) {
+    const server = FAST_WITHDRAWAL_SERVERS.find(s => s.url === serverUrl);
+    if (!server) {
+      throw new Error(`unknown fast withdrawal server: ${serverUrl}`);
+    }
+
+    console.debug(`setting fast withdrawal server to: "${server.url}"`);
+    this.serverUrl = server.url;
+  }
+
   async requestWithdrawal(destination, amount, layer2Chain) {
     try {
-      const response = await axios.post(`${this.FAST_WITHDRAW_SERVER}/withdraw`, {
+      const url = `${this.serverUrl}/withdraw`;
+      const body = {
         withdrawal_destination: destination,
-        withdrawal_amount: amount.toString(), // Server expects string
-        layer_2_chain_name: layer2Chain // "Thunder" or "BitNames"
-      });
+        withdrawal_amount: amount.toString(), 
+        layer_2_chain_name: layer2Chain 
+      }
+      console.debug(`requesting withdrawal from ${url} with params: ${JSON.stringify(body)}`);
+
+      const response = await axios.post(url, body);
 
       if (response.data.status !== 'success') {
         throw new Error(response.data.error || 'Withdrawal request failed');
@@ -70,7 +86,7 @@ class FastWithdrawalManager extends EventEmitter {
 
   async notifyPaymentComplete(hash, txid) {
     try {
-      const response = await axios.post(`${this.FAST_WITHDRAW_SERVER}/paid`, {
+      const response = await axios.post(`${this.serverUrl}/paid`, {
         hash: hash,
         txid: txid
       });
@@ -87,4 +103,8 @@ class FastWithdrawalManager extends EventEmitter {
   }
 }
 
-module.exports = FastWithdrawalManager;
+module.exports = {
+  FastWithdrawalManager,
+  defaultFastWithdrawalServer,
+  FAST_WITHDRAWAL_SERVERS
+};

@@ -119,6 +119,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   notifyPaymentComplete: (hash, txid) =>
     ipcRenderer.invoke("notify-payment-complete", hash, txid),
 
+  setFastWithdrawalServer: (serverUrl) => ipcRenderer.invoke("set-fast-withdrawal-server", serverUrl),
+
   // Shutdown handlers
   onShutdownStarted: (callback) => {
     const subscription = (event, data) => callback(data);
