@@ -1,18 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import styles from './WalletModal.module.css';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Info, X } from 'lucide-react';
 
 const WalletModal = () => {
   const { isLoading, error } = useSelector(state => state.walletModal);
   const [copiedStates, setCopiedStates] = useState({});
-  const [revealedMnemonics, setRevealedMnemonics] = useState({
-    master: false,
-    layer1: false,
-    layer2_thunder: false,
-    layer2_bitnames: false,
-    layer2_zside: false
-  });
+  const [revealedPaths, setRevealedPaths] = useState({ master: false });
+  const [, setConfig] = useState(null);
+  const [derivationPaths, setDerivationPaths] = useState({});
+  const [mnemonics, setMnemonics] = useState({ master: '••••••••••••' });
+  const [chainsList, setChainsList] = useState([]);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
+  // Load config on component mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const result = await window.electronAPI.getConfig();
+        setConfig(result);
+        
+        if (result && result.chains) {
+          // Find the L1 chain (enforcer)
+          const enforcerChain = result.chains.find(chain => chain.id === 'enforcer');
+          
+          // Setup initial paths object with L1 (hardcoded path as specified)
+          const paths = {};
+          if (enforcerChain) {
+            paths['enforcer'] = "m/44'/0'/256'";
+          }
+          
+          // Find all L2 chains and compute their paths based on slot
+          const l2Chains = result.chains.filter(chain => chain.chain_layer === 2 && chain.slot);
+          
+          // Process L2 chains
+          l2Chains.forEach(chain => {
+            paths[chain.id] = `m/44'/0'/${chain.slot}'`;
+          });
+          
+          setDerivationPaths(paths);
+          
+          // Initialize revealed state for all chains
+          const initialRevealState = { master: false };
+          if (enforcerChain) {
+            initialRevealState['enforcer'] = false;
+          }
+          
+          l2Chains.forEach(chain => {
+            initialRevealState[chain.id] = false;
+          });
+          
+          setRevealedPaths(initialRevealState);
+          
+          // Setup the chains list for rendering
+          const chains = [];
+          
+          // Add L1 chain
+          if (enforcerChain) {
+            chains.push({
+              ...enforcerChain,
+              type: 'L1',
+              display_name: 'Bitcoin Core (Patched)'
+            });
+          }
+          
+          // Add L2 chains
+          l2Chains.forEach(chain => {
+            chains.push({
+              ...chain,
+              type: 'L2'
+            });
+          });
+          
+          setChainsList(chains);
+        }
+      } catch (error) {
+        console.error("Error fetching chain config:", error);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const handleCopy = async (text, type, event) => {
     try {
@@ -46,53 +113,22 @@ const WalletModal = () => {
       mnemonicCol.scrollLeft += event.deltaY;
     }
   };
-  const [mnemonics, setMnemonics] = useState({
-    master: '••••••••••••',
-    layer1: '••••••••••••',
-    layer2_thunder: '••••••••••••',
-    layer2_bitnames: '••••••••••••',
-    layer2_zside: '••••••••••••'
-  });
+  
+  const toggleReveal = async (key) => {
+    // Toggle the current path's reveal state
+    setRevealedPaths(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
 
-  const toggleMnemonic = async (key) => {
-    // If we're hiding the current one, just hide it
-    if (revealedMnemonics[key]) {
-      setRevealedMnemonics(prev => ({
-        master: false,
-        layer1: false,
-        layer2_thunder: false,
-        layer2_bitnames: false,
-        layer2_zside: false
-      }));
-      return;
-    }
-
-    // If we're revealing a new one, hide all others first
-    if (!revealedMnemonics[key] && mnemonics[key] === '••••••••••••') {
+    // For master key, we need to fetch the actual mnemonic
+    if (key === 'master' && !revealedPaths[key] && mnemonics[key] === '••••••••••••') {
       try {
-        let type;
-        switch (key) {
-          case 'master':
-            type = 'master';
-            break;
-          case 'layer1':
-            type = 'layer1';
-            break;
-          case 'layer2_thunder':
-            type = 'thunder';
-            break;
-          case 'layer2_bitnames':
-            type = 'bitnames';
-            break;
-          case 'layer2_zside':
-            type = 'zside';
-            break;
-        }
-        const result = await window.electronAPI.getWalletStarter(type);
+        const result = await window.electronAPI.getWalletStarter('master');
         if (result.success) {
           setMnemonics(prev => ({
             ...prev,
-            [key]: result.data
+            master: result.data
           }));
         }
       } catch (error) {
@@ -100,16 +136,23 @@ const WalletModal = () => {
       }
     }
     
-    // Set only the current one to visible
-    setRevealedMnemonics({
-      master: false,
-      layer1: false,
-      layer2_thunder: false,
-      layer2_bitnames: false,
-      layer2_zside: false,
-      [key]: true
-    });
+    // For chain wallets, we don't need to fetch actual mnemonics, just reveal their paths
   };
+
+  const getChainType = (chain) => {
+    if (chain.type === 'L1') {
+      return styles.l1Badge;
+    } else if (chain.type === 'L2') {
+      return styles.l2Badge;
+    } else {
+      return '';
+    }
+  };
+
+  const getChainTypeText = (chain) => {
+    return chain.type;
+  };
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.content}>
@@ -119,23 +162,33 @@ const WalletModal = () => {
         <div className={styles.starterTable} style={{ marginTop: '20px' }}>
           {/* Starter section */}
           <div className={styles.sectionHeader}>
-            <div className={styles.typeCol}></div>
+            <div className={styles.typeCol}>
+              <button 
+                className={styles.infoButton} 
+                onClick={() => setShowInfoModal(true)}
+                title="About Wallet Starters"
+              >
+                <Info size={16} />
+              </button>
+            </div>
             <div className={styles.starterCol}>Starter</div>
-            <div className={styles.mnemonicCol}>Mnemonic</div>
+            <div className={styles.mnemonicCol}>Mnemonic / Derivation Path</div>
             <div className={styles.actionsCol}></div>
           </div>
+          
+          {/* Master seed row */}
           <div className={styles.tableRow}>
             <div className={styles.typeCol}>
-              <div className={`${styles.chainTypeBadge} ${styles.l1Badge}`}>L1</div>
+              <div className={`${styles.chainTypeBadge} ${styles.masterBadge}`}>M</div>
             </div>
             <div className={styles.starterCol}>Master</div>
             <div className={styles.mnemonicCol}>
               <span 
-                className={`${revealedMnemonics.master ? styles.copyableText : ''} ${copiedStates.master?.copied ? styles.copied : ''}`}
-                onClick={(e) => revealedMnemonics.master && handleCopy(mnemonics.master, 'master', e)}
+                className={`${revealedPaths.master ? styles.copyableText : ''} ${copiedStates.master?.copied ? styles.copied : ''}`}
+                onClick={(e) => revealedPaths.master && handleCopy(mnemonics.master, 'master', e)}
                 onWheel={handleWheel}
               >
-                {revealedMnemonics.master ? mnemonics.master : '••••••••••••'}
+                {revealedPaths.master ? mnemonics.master : '••••••••••••'}
                 {copiedStates.master?.copied && (
                   <div 
                     className={styles.copyTooltip} 
@@ -152,185 +205,82 @@ const WalletModal = () => {
             <div className={styles.actionsCol}>
               <button 
                 className={styles.iconButton} 
-                title={revealedMnemonics.master ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('master')}
+                title={revealedPaths.master ? "Hide" : "Reveal"}
+                onClick={() => toggleReveal('master')}
               >
-                {revealedMnemonics.master ? <EyeOff size={18} /> : <Eye size={18} />}
+                {revealedPaths.master ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-              {/* Delete functionality not yet implemented
-              <button className={styles.deleteIconButton} title="Delete Starter">
-                <Trash2 size={18} />
-              </button>
-              */}
             </div>
           </div>
 
-          <div className={styles.tableRow}>
-            <div className={styles.typeCol}>
-              <div className={`${styles.chainTypeBadge} ${styles.l1Badge}`}>L1</div>
+          {/* Chain rows - dynamically generated based on config */}
+          {chainsList.map(chain => (
+            <div key={chain.id} className={styles.tableRow}>
+              <div className={styles.typeCol}>
+                <div className={`${styles.chainTypeBadge} ${getChainType(chain)}`}>
+                  {getChainTypeText(chain)}
+                </div>
+              </div>
+              <div className={styles.starterCol}>{chain.display_name}</div>
+              <div className={styles.mnemonicCol}>
+                <span 
+                  className={`${revealedPaths[chain.id] ? styles.copyableText : ''} ${copiedStates[chain.id]?.copied ? styles.copied : ''}`}
+                  onClick={(e) => revealedPaths[chain.id] && handleCopy(`derived from Master at ${derivationPaths[chain.id]}`, chain.id, e)}
+                  onWheel={handleWheel}
+                >
+                  {revealedPaths[chain.id]
+                    ? `derived from Master at ${derivationPaths[chain.id]}`
+                    : '••••••••••••'}
+                  {copiedStates[chain.id]?.copied && (
+                    <div 
+                      className={styles.copyTooltip} 
+                      style={{
+                        left: copiedStates[chain.id].x + 'px',
+                        top: copiedStates[chain.id].y + 'px'
+                      }}
+                    >
+                      Copied!
+                    </div>
+                  )}
+                </span>
+              </div>
+              <div className={styles.actionsCol}>
+                <button 
+                  className={styles.iconButton} 
+                  title={revealedPaths[chain.id] ? "Hide" : "Reveal"}
+                  onClick={() => toggleReveal(chain.id)}
+                >
+                  {revealedPaths[chain.id] ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            <div className={styles.starterCol}>Bitcoin Core</div>
-            <div className={styles.mnemonicCol}>
-              <span 
-                className={`${revealedMnemonics.layer1 ? styles.copyableText : ''} ${copiedStates.layer1?.copied ? styles.copied : ''}`}
-                onClick={(e) => revealedMnemonics.layer1 && handleCopy(mnemonics.layer1, 'layer1', e)}
-                onWheel={handleWheel}
-              >
-                {revealedMnemonics.layer1 ? mnemonics.layer1 : '••••••••••••'}
-                {copiedStates.layer1?.copied && (
-                  <div 
-                    className={styles.copyTooltip} 
-                    style={{
-                      left: copiedStates.layer1.x + 'px',
-                      top: copiedStates.layer1.y + 'px'
-                    }}
-                  >
-                    Copied!
-                  </div>
-                )}
-              </span>
-            </div>
-            <div className={styles.actionsCol}>
-              <button 
-                className={styles.iconButton} 
-                title={revealedMnemonics.layer1 ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('layer1')}
-              >
-                {revealedMnemonics.layer1 ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {/* Delete functionality not yet implemented
-              <button className={styles.deleteIconButton} title="Delete Starter">
-                <Trash2 size={18} />
-              </button>
-              */}
-            </div>
-          </div>
-
-          <div className={styles.tableRow}>
-            <div className={styles.typeCol}>
-              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
-            </div>
-            <div className={styles.starterCol}>Thunder</div>
-            <div className={styles.mnemonicCol}>
-              <span 
-                className={`${revealedMnemonics.layer2_thunder ? styles.copyableText : ''} ${copiedStates.layer2_thunder?.copied ? styles.copied : ''}`}
-                onClick={(e) => revealedMnemonics.layer2_thunder && handleCopy(mnemonics.layer2_thunder, 'layer2_thunder', e)}
-                onWheel={handleWheel}
-              >
-                {revealedMnemonics.layer2_thunder ? mnemonics.layer2_thunder : '••••••••••••'}
-                {copiedStates.layer2_thunder?.copied && (
-                  <div 
-                    className={styles.copyTooltip} 
-                    style={{
-                      left: copiedStates.layer2_thunder.x + 'px',
-                      top: copiedStates.layer2_thunder.y + 'px'
-                    }}
-                  >
-                    Copied!
-                  </div>
-                )}
-              </span>
-            </div>
-            <div className={styles.actionsCol}>
-              <button 
-                className={styles.iconButton} 
-                title={revealedMnemonics.layer2_thunder ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('layer2_thunder')}
-              >
-                {revealedMnemonics.layer2_thunder ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {/* Delete functionality not yet implemented
-              <button className={styles.deleteIconButton} title="Delete Starter">
-                <Trash2 size={18} />
-              </button>
-              */}
-            </div>
-          </div>
-
-          <div className={styles.tableRow}>
-            <div className={styles.typeCol}>
-              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
-            </div>
-            <div className={styles.starterCol}>Bitnames</div>
-            <div className={styles.mnemonicCol}>
-              <span 
-                className={`${revealedMnemonics.layer2_bitnames ? styles.copyableText : ''} ${copiedStates.layer2_bitnames?.copied ? styles.copied : ''}`}
-                onClick={(e) => revealedMnemonics.layer2_bitnames && handleCopy(mnemonics.layer2_bitnames, 'layer2_bitnames', e)}
-                onWheel={handleWheel}
-              >
-                {revealedMnemonics.layer2_bitnames ? mnemonics.layer2_bitnames : '••••••••••••'}
-                {copiedStates.layer2_bitnames?.copied && (
-                  <div 
-                    className={styles.copyTooltip} 
-                    style={{
-                      left: copiedStates.layer2_bitnames.x + 'px',
-                      top: copiedStates.layer2_bitnames.y + 'px'
-                    }}
-                  >
-                    Copied!
-                  </div>
-                )}
-              </span>
-            </div>
-            <div className={styles.actionsCol}>
-              <button 
-                className={styles.iconButton} 
-                title={revealedMnemonics.layer2_bitnames ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('layer2_bitnames')}
-              >
-                {revealedMnemonics.layer2_bitnames ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {/* Delete functionality not yet implemented
-              <button className={styles.deleteIconButton} title="Delete Starter">
-                <Trash2 size={18} />
-              </button>
-              */}
-            </div>
-          </div>
-
-          <div className={styles.tableRow}>
-            <div className={styles.typeCol}>
-              <div className={`${styles.chainTypeBadge} ${styles.l2Badge}`}>L2</div>
-            </div>
-            <div className={styles.starterCol}>zSide</div>
-            <div className={styles.mnemonicCol}>
-              <span 
-                className={`${revealedMnemonics.layer2_zside ? styles.copyableText : ''} ${copiedStates.layer2_zside?.copied ? styles.copied : ''}`}
-                onClick={(e) => revealedMnemonics.layer2_zside && handleCopy(mnemonics.layer2_zside, 'layer2_zside', e)}
-                onWheel={handleWheel}
-              >
-                {revealedMnemonics.layer2_zside ? mnemonics.layer2_zside : '••••••••••••'}
-                {copiedStates.layer2_zside?.copied && (
-                  <div 
-                    className={styles.copyTooltip} 
-                    style={{
-                      left: copiedStates.layer2_zside.x + 'px',
-                      top: copiedStates.layer2_zside.y + 'px'
-                    }}
-                  >
-                    Copied!
-                  </div>
-                )}
-              </span>
-            </div>
-            <div className={styles.actionsCol}>
-              <button 
-                className={styles.iconButton} 
-                title={revealedMnemonics.layer2_zside ? "Hide" : "Reveal"}
-                onClick={() => toggleMnemonic('layer2_zside')}
-              >
-                {revealedMnemonics.layer2_zside ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-              {/* Delete functionality not yet implemented
-              <button className={styles.deleteIconButton} title="Delete Starter">
-                <Trash2 size={18} />
-              </button>
-              */}
-            </div>
-          </div>
-
+          ))}
         </div>
       </div>
+
+      {/* Information Modal */}
+      {showInfoModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowInfoModal(false)}>
+          <div className={styles.infoModalContent} onClick={(e) => e.stopPropagation()}>
+            <button 
+              className={styles.closeModalButton} 
+              onClick={() => setShowInfoModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <h2>Wallet Information</h2>
+            <div className={styles.infoContent}>
+              <div className={styles.alertBox}>
+                <strong>Important:</strong> You must back up your Master Seed if you want to restore your drivechain wallets.
+              </div>
+              
+              <p className={styles.securityNote}>
+                Your wallet seeds are stored locally and are never transmitted over the internet.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
