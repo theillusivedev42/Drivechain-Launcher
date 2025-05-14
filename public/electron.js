@@ -13,7 +13,7 @@ const axios = require("axios");
 const ConfigManager = require("./modules/configManager");
 const ChainManager = require("./modules/chainManager");
 const WalletManager = require("./modules/walletManager");
-const FastWithdrawalManager = require("./modules/fastWithdrawalManager");
+const { FastWithdrawalManager } = require("./modules/fastWithdrawalManager");
 const DownloadManager = require("./modules/downloadManager");
 const ApiManager = require("./modules/apiManager");
 const DirectoryManager = require("./modules/directoryManager");
@@ -625,8 +625,12 @@ function setupIPCHandlers() {
     try {
       return await fastWithdrawalManager.requestWithdrawal(destination, amount, layer2Chain);
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.response?.data?.error || error.message };
     }
+  });
+
+  ipcMain.handle("set-fast-withdrawal-server", async (event, serverUrl) => {
+    fastWithdrawalManager.setServerUrl(serverUrl);
   });
 
   ipcMain.handle("notify-payment-complete", async (event, hash, txid) => {

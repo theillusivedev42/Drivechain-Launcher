@@ -3,11 +3,12 @@ import { Clipboard } from 'lucide-react';
 import styles from './FastWithdrawalModal.module.css';
 import WithdrawalSuccessPopup from './WithdrawalSuccessPopup';
 import ErrorPopup from './ErrorPopup';
+import { defaultFastWithdrawalServer, FAST_WITHDRAWAL_SERVERS } from '../utils/fastWithdrawals';
 
 const FastWithdrawalModal = () => {
   const [amount, setAmount] = useState('');
   const [address, setAddress] = useState('');
-  const [selectedServer, setSelectedServer] = useState('localhost');
+  const [selectedServer, setSelectedServer] = useState(defaultFastWithdrawalServer());
   const [layer2Chain, setLayer2Chain] = useState('Thunder');
   const [withdrawalHash, setWithdrawalHash] = useState(null);
   const [paymentTxid, setPaymentTxid] = useState('');
@@ -20,7 +21,7 @@ const FastWithdrawalModal = () => {
   const resetState = () => {
     setAmount('');
     setAddress('');
-    setSelectedServer('localhost');
+    setSelectedServer(defaultFastWithdrawalServer());
     setLayer2Chain('Thunder');
     setWithdrawalHash(null);
     setPaymentTxid('');
@@ -44,7 +45,9 @@ const FastWithdrawalModal = () => {
 
       const result = await window.electronAPI.requestWithdrawal(address, parseFloat(amount), layer2Chain);
       if (!result.server_l2_address?.info) {
-        throw new Error('Invalid server response: Missing L2 address');
+        console.error("HMMM", result)
+        const errorMessage = result.error || JSON.stringify(result) ;
+        throw new Error(`Withdrawal request failed: ${errorMessage}`);
       }
       const totalAmount = (parseFloat(amount) + result.server_fee_sats/100000000).toString();
       setPaymentMessage({
@@ -162,10 +165,17 @@ const FastWithdrawalModal = () => {
                     </label>
                     <select
                       value={selectedServer}
-                      onChange={(e) => setSelectedServer(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedServer(e.target.value);
+                        window.electronAPI.setFastWithdrawalServer(e.target.value);
+                      }}
                       className={styles.input}
                     >
-                      <option value="172.105.148.135">172.105.148.135 (L2L #1)</option>
+                      {FAST_WITHDRAWAL_SERVERS.map((server) => (
+                        <option key={server.url} value={server.url}>
+                          {server.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className={styles.inputGroup}>
