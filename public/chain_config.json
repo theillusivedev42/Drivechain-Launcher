@@ -212,6 +212,54 @@
             "slot": "9"
         },
         {
+            "id": "thunder-orchard",
+            "enabled": {
+                "linux": true,
+                "darwin": true,
+                "win32": false
+            },
+            "version": "",
+            "display_name": "ZSide",
+            "description": "Privacy sidechain based on zCash",
+            "repo_url": "https://github.com/iwakura-rein/thunder-orchard",
+            "released": "yes",
+            "directories": {
+                "base": {
+                    "linux": ".local/share/thunder-orchard",
+                    "darwin": "Library/Application Support/thunder-orchard",
+                    "win32": "AppData/Roaming/thunder-orchard"
+                },
+                "wallet": "wallet.mdb"
+            },
+            "extract_dir": {
+                "linux": "Drivechain-Launcher-Downloads/zside",
+                "darwin": "Drivechain-Launcher-Downloads/zside",
+                "win32": "Drivechain-Launcher-Downloads/zside"
+            },
+            "direct_binary": true,
+            "github": {
+                "owner": "iwakura-rein",
+                "repo": "thunder-orchard",
+                "use_github_releases": true,
+                "asset_patterns": {
+                    "linux": "thunder-orchard-.*-x86_64-unknown-linux-gnu$",
+                    "darwin": "thunder-orchard-.*-x86_64-apple-darwin$",
+                    "win32": ""
+                }
+            },
+            "binary": {
+                "linux": "thunder-orchard-*-x86_64-unknown-linux-gnu",
+                "darwin": "thunder-orchard-*-x86_64-apple-darwin",
+                "win32": ""
+            },
+            "network": {
+                "port": 6003
+            },
+            "chain_type": 2,
+            "chain_layer": 2,
+            "slot": "3"
+        },
+        {
             "id": "bitnames",
             "enabled": true,
             "version": "",
@@ -310,54 +358,6 @@
             "chain_type": 2,
             "chain_layer": 2,
             "slot": "4"
-        },
-        {
-            "id": "thunder-orchard",
-            "enabled": {
-                "linux": true,
-                "darwin": true,
-                "win32": false
-            },
-            "version": "",
-            "display_name": "ZSide",
-            "description": "Privacy sidechain based on zCash",
-            "repo_url": "https://github.com/iwakura-rein/thunder-orchard",
-            "released": "yes",
-            "directories": {
-                "base": {
-                    "linux": ".local/share/thunder-orchard",
-                    "darwin": "Library/Application Support/thunder-orchard",
-                    "win32": "AppData/Roaming/thunder-orchard"
-                },
-                "wallet": "wallet.mdb"
-            },
-            "extract_dir": {
-                "linux": "Drivechain-Launcher-Downloads/zside",
-                "darwin": "Drivechain-Launcher-Downloads/zside",
-                "win32": "Drivechain-Launcher-Downloads/zside"
-            },
-            "direct_binary": true,
-            "github": {
-                "owner": "iwakura-rein",
-                "repo": "thunder-orchard",
-                "use_github_releases": true,
-                "asset_patterns": {
-                    "linux": "thunder-orchard-.*-x86_64-unknown-linux-gnu$",
-                    "darwin": "thunder-orchard-.*-x86_64-apple-darwin$",
-                    "win32": ""
-                }
-            },
-            "binary": {
-                "linux": "thunder-orchard-*-x86_64-unknown-linux-gnu",
-                "darwin": "thunder-orchard-*-x86_64-apple-darwin",
-                "win32": ""
-            },
-            "network": {
-                "port": 6003
-            },
-            "chain_type": 2,
-            "chain_layer": 2,
-            "slot": "3"
         },
         {
             "id": "ethside",
