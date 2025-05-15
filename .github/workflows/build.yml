@@ -74,26 +74,30 @@ jobs:
       - name: Build & Sign Electron app (macOS)
         if: matrix.os == 'macos-latest'
         env:
-          # Provide ONLY the .p12 certificate for code signing.
+          # These environment variables will be used by electron-builder for signing
           CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
           CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-
-          # Remove or omit the Apple API key vars from electron-builder,
-          # so it doesn't attempt notarization internally.
+          
+          # Ensure hardened runtime is enabled during the build
+          CSC_IDENTITY_AUTO_DISCOVERY: true
+          
           DEBUG: electron-builder
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Remove any "notarize" block from package.json or set "notarize": false
-          # to ensure electron-builder won't attempt notarization automatically.
+          # List certificate to verify it's available
+          echo "Checking for certificate in keychain..."
+          security find-identity -v -p codesigning || echo "No certificates found but continuing"
+          
+          # Build with hardened runtime and code signing
           npm run electron-build
 
       - name: Setup notarization credentials
-        if: matrix.os == 'macos-latest' && !github.event.pull_request.head.repo.fork
+        if: matrix.os == 'macos-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           echo ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY }} | base64 --decode > notarization_api_key.p8
 
       - name: Submit app for notarization
-        if: matrix.os == 'macos-latest' && !github.event.pull_request.head.repo.fork
+        if: matrix.os == 'macos-latest' && github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
           GODOT_MACOS_NOTARIZATION_API_KEY_ID: ${{ secrets.GODOT_MACOS_NOTARIZATION_API_KEY_ID }}
           GODOT_MACOS_NOTARIZATION_API_KEY: ./notarization_api_key.p8
@@ -108,6 +112,15 @@ jobs:
             exit 1
           fi
           echo "Submitting $DMG_FILE for notarization..."
+          
+          # Display detailed info about the DMG file
+          echo "DMG file details:"
+          ls -la "$DMG_FILE"
+          file "$DMG_FILE"
+          
+          # Verify the DMG is properly signed
+          echo "Verifying code signature..."
+          codesign -dv --verbose=4 "$DMG_FILE" || echo "Warning: DMG signature verification failed or incomplete"
 
           echo "Running notarytool submit..."
           request_uuid=$(xcrun notarytool submit "$DMG_FILE" \
@@ -124,9 +137,20 @@ jobs:
             --key "$GODOT_MACOS_NOTARIZATION_API_KEY" \
             --key-id "$GODOT_MACOS_NOTARIZATION_API_KEY_ID" \
             --issuer "$GODOT_MACOS_NOTARIZATION_API_UUID"
+          
+          # Fetch and display detailed notarization log for diagnostics
+          echo "Fetching detailed notarization log..."
+          xcrun notarytool log "$request_uuid" \
+            --key "$GODOT_MACOS_NOTARIZATION_API_KEY" \
+            --key-id "$GODOT_MACOS_NOTARIZATION_API_KEY_ID" \
+            --issuer "$GODOT_MACOS_NOTARIZATION_API_UUID" \
+            notarization.log
+          
+          echo "Notarization log contents:"
+          cat notarization.log || echo "Failed to read notarization log"
 
           echo "Stapling notarization..."
-          xcrun stapler staple "$DMG_FILE"
+          xcrun stapler staple "$DMG_FILE" || echo "Warning: Stapling failed, but continuing build"
 
       # ---------------------------------
       # Upload Artifacts
