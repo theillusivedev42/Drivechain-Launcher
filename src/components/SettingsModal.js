@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideSettingsModal } from '../store/settingsModalSlice';
 import { toggleShowQuotes } from '../store/settingsSlice';
@@ -80,15 +80,6 @@ const SettingsModal = ({ onResetComplete }) => {
       setIsUpdating(false);
     });
 
-    // Helper function to format bytes
-    const formatBytes = (bytes) => {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-    };
-
     return () => {
       removeStartedListener();
       removeUpdateListener();
@@ -121,13 +112,15 @@ const SettingsModal = ({ onResetComplete }) => {
     setShowResetModal(true);
   };
 
-  const handleConfirmReset = async () => {
+  const handleConfirmReset = async (deleteWallet) => {
     try {
-      // Delete wallet starters directory first
-      await window.electronAPI.invoke('delete-wallet-starters-dir');
-      
-      // Recreate wallet starters directories
-      await window.electronAPI.invoke('init-wallet-dirs');
+      if (deleteWallet) {
+        // Delete wallet starters directory first
+        await window.electronAPI.invoke('delete-wallet-starters-dir');
+        
+        // Recreate wallet starters directories
+        await window.electronAPI.invoke('init-wallet-dirs');
+      }
 
       // Then handle chain resets
       const chains = await window.electronAPI.getConfig();
@@ -144,7 +137,11 @@ const SettingsModal = ({ onResetComplete }) => {
       }
       setShowResetModal(false);
       handleClose(); // Close the settings modal after reset
-      onResetComplete(); // Show the welcome modal
+      
+      // Only show welcome modal if wallet was deleted
+      if (deleteWallet) {
+        onResetComplete(); // Show the welcome modal
+      }
     } catch (error) {
       console.error('Failed to reset all chains:', error);
     }
@@ -257,7 +254,7 @@ const SettingsModal = ({ onResetComplete }) => {
       </div>
       {showResetModal && (
         <ResetAllModal
-          onConfirm={handleConfirmReset}
+          onConfirm={(deleteWallet) => handleConfirmReset(deleteWallet)}
           onClose={() => setShowResetModal(false)}
         />
       )}
