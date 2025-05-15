@@ -215,9 +215,32 @@
   line-height: 1.4;
 }
 
+.dataList {
+  line-height: 1.5;
+  margin: 15px 0;
+  color: var(--text-color);
+}
+
 .warningText {
   color: var(--danger-color);
   font-weight: bold;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  margin: 15px 0;
+  gap: 8px;
+}
+
+.checkboxContainer input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.checkboxContainer label {
+  cursor: pointer;
+  user-select: none;
 }
 
 .dark {
@@ -236,4 +259,10 @@
   --danger-hover-color: #c82333;
   --secondary-color: #6c757d;
   --secondary-hover-color: #5a6268;
+}
+
+.compactModal {
+  max-height: none;
+  overflow-y: visible;
+  width: 450px;
 }
