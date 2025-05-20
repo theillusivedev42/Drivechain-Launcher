@@ -1,22 +1,25 @@
+// Make this a module and add types
+export {};
+import type { AxiosResponse } from 'axios';
+
 // Mock axios
-const mockAxiosGet = jest.fn();
+const mockAxiosGet = jest.fn<Promise<any>, any[]>();
 jest.mock('axios', () => ({
-    get: (...args) => mockAxiosGet(...args)
+    get: (...args: any[]) => mockAxiosGet(...args)
 }));
 
 // Reset and re-require before each test to get fresh module state
-let fetchGithubReleases, compareVersions;
+let fetchGithubReleases: (config: any, force?: boolean) => Promise<any>;
+let compareVersions: (v1: string, v2: string) => number;
 
 beforeEach(() => {
-    // Reset everything
     jest.resetModules();
     jest.clearAllMocks();
     mockAxiosGet.mockReset();
-    
     // Re-require to get fresh module with reset cache state
-    const githubReleaseParser = require('./githubReleaseParser');
-    fetchGithubReleases = githubReleaseParser.fetchGithubReleases;
-    compareVersions = githubReleaseParser.compareVersions;
+    const parser = require('./githubReleaseParser');
+    fetchGithubReleases = parser.fetchGithubReleases;
+    compareVersions = parser.compareVersions;
 });
 
 describe('githubReleaseParser', () => {
@@ -109,7 +112,7 @@ describe('githubReleaseParser', () => {
 
     describe('fetchGithubReleases', () => {
         it('should detect available updates', async () => {
-            mockAxiosGet.mockResolvedValue(mockGithubResponse);
+            mockAxiosGet.mockResolvedValue(mockGithubResponse as any);
 
             const result = await fetchGithubReleases(mockChainConfig, true);
 
@@ -146,10 +149,7 @@ describe('githubReleaseParser', () => {
         });
 
         it('should handle no updates available', async () => {
-            mockAxiosGet.mockResolvedValue({
-                status: 200,
-                data: [mockGithubResponse.data[1]] // Only include current version
-            });
+            mockAxiosGet.mockResolvedValue({ status: 200, data: [mockGithubResponse.data[1]] } as any);
 
             const result = await fetchGithubReleases(mockChainConfig, true);
 
@@ -159,7 +159,7 @@ describe('githubReleaseParser', () => {
         });
 
         it('should use cache when available', async () => {
-            mockAxiosGet.mockResolvedValue(mockGithubResponse);
+            mockAxiosGet.mockResolvedValue(mockGithubResponse as any);
 
             // First call
             await fetchGithubReleases(mockChainConfig);

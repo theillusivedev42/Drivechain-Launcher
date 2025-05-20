@@ -1,30 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type FC, type MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import type { RootState } from '../store';
 import { X } from 'lucide-react';
 import styles from './QuotesModal.module.css';
 import quotes from '../data/quotes.json';
 import { hideQuotesModal } from '../store/quotesModalSlice';
 
-const QuotesModal = () => {
+// Quote type from data
+interface Quote { quote: string; author: string; }
+
+const QuotesModal: FC = () => {
   const dispatch = useDispatch();
-  const { isVisible } = useSelector(state => state.quotesModal);
-  const { showQuotes } = useSelector(state => state.settings);
-  const [currentQuote, setCurrentQuote] = useState(null);
+  const { isVisible } = useSelector((state: RootState) => state.quotesModal);
+  const { showQuotes } = useSelector((state: RootState) => state.settings);
+  const [currentQuote, setCurrentQuote] = useState<Quote | null>(null);
 
   useEffect(() => {
     if (isVisible) {
       const randomIndex = Math.floor(Math.random() * quotes.length);
-      setCurrentQuote(quotes[randomIndex]);
+      setCurrentQuote(quotes[randomIndex] as Quote);
     }
   }, [isVisible]);
 
   if (!showQuotes || !isVisible || !currentQuote) return null;
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     dispatch(hideQuotesModal());
   };
 
-  const handleOverlayClick = e => {
+  const handleOverlayClick = (e: MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       handleClose();
     }

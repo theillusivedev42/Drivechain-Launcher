@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import styles from './ErrorPopup.module.css';
 
-const ErrorPopup = ({ message, onClose }) => {
+// Props for ErrorPopup component
+interface ErrorPopupProps {
+  message: string;
+  onClose: () => void;
+}
+
+const ErrorPopup: React.FC<ErrorPopupProps> = ({ message, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
@@ -16,7 +22,7 @@ const ErrorPopup = ({ message, onClose }) => {
     setTimeout(onClose, 300); // Match animation duration
   };
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       handleClose();
     }

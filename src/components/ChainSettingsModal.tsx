@@ -4,7 +4,16 @@ import styles from './ChainSettingsModal.module.css';
 import { X, ExternalLink, FolderOpen } from 'lucide-react';
 import ResetConfirmModal from './ResetConfirmModal';
 
-const ChainSettingsModal = ({
+// Props for ChainSettingsModal
+interface ChainSettingsModalProps {
+  chain: any;
+  onClose: () => void;
+  onOpenDataDir: (chainId: string) => Promise<void> | void;
+  onOpenWalletDir: (chainId: string) => Promise<void> | void;
+  onReset: (chainId: string) => Promise<void> | void;
+}
+
+const ChainSettingsModal: React.FC<ChainSettingsModalProps> = ({
   chain,
   onClose,
   onOpenDataDir,
@@ -22,11 +31,11 @@ const ChainSettingsModal = ({
   }, [chain]);
 
   // Debug function to log chain data
-  const logChainData = (chainData, label) => {
+  const logChainData = (chainData: any, label: string): void => {
     console.log(`${label} Chain Data:`, chainData);
   };
 
-  const handleResetConfirm = () => {
+  const handleResetConfirm = (): void => {
     onReset(currentChain.id);
     setShowResetConfirm(false);
     onClose();
@@ -36,12 +45,12 @@ const ChainSettingsModal = ({
     setShowResetConfirm(true);
   };
 
-  const handleOpenRepo = e => {
+  const handleOpenRepo = (e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault();
     window.open(currentChain.repo_url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleOverlayClick = e => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -76,14 +85,14 @@ const ChainSettingsModal = ({
                         // Get Bitcoin chain data using Electron API
                         try {
                           let bitcoinChain = null;
-                          if (window.cardData) {
-                            bitcoinChain = window.cardData.find(c => c.id === 'bitcoin');
+                          if ((window as any).cardData) {
+                            bitcoinChain = (window as any).cardData.find((c: any) => c.id === 'bitcoin');
                           }
                           
                           if (bitcoinChain) {
-                            const fullDataDir = await window.electronAPI.getFullDataDir('bitcoin');
-                            const walletDir = await window.electronAPI.getWalletDir('bitcoin');
-                            const binaryDir = await window.electronAPI.getBinaryDir('bitcoin');
+                            const fullDataDir = await (window as any).electronAPI.getFullDataDir('bitcoin');
+                            const walletDir = await (window as any).electronAPI.getWalletDir('bitcoin');
+                            const binaryDir = await (window as any).electronAPI.getBinaryDir('bitcoin');
                             
                             const formattedChain = {
                               ...bitcoinChain,
@@ -124,14 +133,14 @@ const ChainSettingsModal = ({
                         // Get Enforcer chain data using Electron API
                         try {
                           let enforcerChain = null;
-                          if (window.cardData) {
-                            enforcerChain = window.cardData.find(c => c.id === 'enforcer');
+                          if ((window as any).cardData) {
+                            enforcerChain = (window as any).cardData.find((c: any) => c.id === 'enforcer');
                           }
                           
                           if (enforcerChain) {
-                            const fullDataDir = await window.electronAPI.getFullDataDir('enforcer');
-                            const walletDir = await window.electronAPI.getWalletDir('enforcer');
-                            const binaryDir = await window.electronAPI.getBinaryDir('enforcer');
+                            const fullDataDir = await (window as any).electronAPI.getFullDataDir('enforcer');
+                            const walletDir = await (window as any).electronAPI.getWalletDir('enforcer');
+                            const binaryDir = await (window as any).electronAPI.getBinaryDir('enforcer');
                             
                             const formattedChain = {
                               ...enforcerChain,
@@ -214,7 +223,7 @@ const ChainSettingsModal = ({
                 <span className={styles.pathText}>{currentChain.binaryDir}</span>
                 <button
                   className={styles.dirButton}
-                  onClick={() => window.electronAPI.openBinaryDir(currentChain.id)}
+                  onClick={() => (window as any).electronAPI.openBinaryDir(currentChain.id)}
                   title="Open binary directory"
                 >
                   <FolderOpen size={14} />

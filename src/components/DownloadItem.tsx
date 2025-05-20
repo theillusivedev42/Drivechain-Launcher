@@ -1,9 +1,31 @@
 import React, { useMemo, memo, useRef, useEffect, useState } from 'react';
 import styles from './DownloadModal.module.css';
 
-const DownloadItem = memo(({ chainId, displayName, status, progress, type, details, downloadedLength, totalLength }) => {
+// Props for DownloadItem
+interface DownloadItemProps {
+  chainId: string;
+  displayName: string;
+  status: string;
+  progress: number;
+  type: 'download' | 'ibd';
+  details?: string;
+  downloadedLength: number;
+  totalLength: number;
+}
+
+// Raw component with typed props
+const DownloadItemRaw: React.FC<DownloadItemProps> = ({
+  chainId,
+  displayName,
+  status,
+  progress,
+  type,
+  details,
+  downloadedLength,
+  totalLength,
+}) => {
   const [displayProgress, setDisplayProgress] = useState(progress);
-  const animationFrameRef = useRef();
+  const animationFrameRef = useRef<number | null>(null);
   const lastUpdateRef = useRef(Date.now());
   const targetProgressRef = useRef(progress);
 
@@ -65,20 +87,18 @@ const DownloadItem = memo(({ chainId, displayName, status, progress, type, detai
   }), [displayProgress, status]);
 
   // Format file size with consistent units
-  const formatFileSize = (bytes, targetUnit = null) => {
+  const formatFileSize = (bytes: number, targetUnit: string | null = null): string => {
     if (!bytes) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
     let size = bytes;
-    
+
     if (targetUnit) {
-      // Convert to target unit
       const targetIndex = units.indexOf(targetUnit);
       for (let i = 0; i < targetIndex; i++) {
         size /= 1024;
       }
       return `${Math.round(size * 10) / 10} ${targetUnit}`;
     } else {
-      // Auto-select unit
       let unitIndex = 0;
       while (size >= 1024 && unitIndex < units.length - 1) {
         size /= 1024;
@@ -145,6 +165,9 @@ const DownloadItem = memo(({ chainId, displayName, status, progress, type, detai
       </div>
     </div>
   );
-});
+};
+
+// Memoized export
+const DownloadItem = memo(DownloadItemRaw);
 
 export default DownloadItem;

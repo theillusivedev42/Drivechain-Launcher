@@ -1,10 +1,37 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+// Add type definitions for download entries and actions
+export interface DownloadEntry {
+  chainId: string;
+  status: string;
+  progress: number;
+  type: 'download' | 'ibd';
+  displayName?: string;
+  details?: string;
+}
+
+export interface IBDStatusPayload {
+  chainId: string;
+  status: {
+    inProgress: boolean;
+    percent: number;
+    currentBlock: number;
+    totalBlocks: number;
+  };
+}
+
+export interface DownloadPayload {
+  chainId: string;
+  status: string;
+  progress: number;
+}
 
 const downloadSlice = createSlice({
   name: 'downloads',
-  initialState: {},
+  // typed initial state as mapping from chainId to DownloadEntry
+  initialState: {} as Record<string, DownloadEntry>,
   reducers: {
-    updateDownloads: (state, action) => {
+    updateDownloads: (state, action: PayloadAction<DownloadPayload[]>) => {
       // First check what needs to be updated
       const updates = action.payload.filter(download => {
         const current = state[download.chainId];
@@ -32,12 +59,12 @@ const downloadSlice = createSlice({
         }
       });
     },
-    updateIBDStatus: (state, action) => {
+    updateIBDStatus: (state, action: PayloadAction<IBDStatusPayload>) => {
       const { chainId, status } = action.payload;
       const current = state[chainId];
       
       if (status.inProgress) {
-        const newState = {
+        const newState: DownloadEntry = {
           chainId,
           type: 'ibd',
           status: 'syncing',

@@ -1,13 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent, MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideFaucetModal, setClaimStatus } from '../store/faucetSlice';
 import styles from './FaucetModal.module.css';
 import { X, AlertTriangle } from 'lucide-react';
 
-const FaucetModal = () => {
+// Type for faucet slice state
+interface FaucetState {
+  isVisible: boolean;
+  isLoading: boolean;
+  error: string | null;
+  success: string | null;
+}
+
+const FaucetModal: React.FC = () => {
   const dispatch = useDispatch();
   const { isVisible, isLoading, error, success } = useSelector(
-    state => state.faucet
+    (state: any) => (state.faucet as FaucetState)
   );
 
   const [amount, setAmount] = useState('');
@@ -23,7 +31,7 @@ const FaucetModal = () => {
     }
   }, [isVisible]);
 
-  const resetState = () => {
+  const resetState = (): void => {
     setAmount('');
     setAddress('');
     setAmountError('');
@@ -32,8 +40,8 @@ const FaucetModal = () => {
     setAddressTouched(false);
   };
 
-  const validateAmount = value => {
-    if (value === '' || isNaN(value)) return 'Please enter a valid number.';
+  const validateAmount = (value: string): string => {
+    if (value === '' || isNaN(Number(value))) return 'Please enter a valid number.';
     const numValue = parseFloat(value);
     if (numValue <= 0 || Object.is(numValue, -0))
       return 'Amount must be greater than 0.';
@@ -41,20 +49,20 @@ const FaucetModal = () => {
     return '';
   };
 
-  const validateBitcoinAddress = address => {
+  const validateBitcoinAddress = (address: string): boolean => {
     const bitcoinRegex =
       /^([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[ac-hj-np-zAC-HJ-NP-Z02-9]{11,71})$/;
     return bitcoinRegex.test(address);
   };
 
-  const validateAddress = value => {
+  const validateAddress = (value: string): string => {
     if (!value.trim()) return 'Please enter a BTC address.';
     if (!validateBitcoinAddress(value.trim()))
       return 'Please enter a valid BTC address.';
     return '';
   };
 
-  const handleAmountChange = e => {
+  const handleAmountChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setAmount(value);
     if (amountTouched) {
@@ -62,7 +70,7 @@ const FaucetModal = () => {
     }
   };
 
-  const handleAddressChange = e => {
+  const handleAddressChange = (e: ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setAddress(value);
     if (addressTouched) {
@@ -80,7 +88,7 @@ const FaucetModal = () => {
     setAddressError(validateAddress(address));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setAmountTouched(true);
     setAddressTouched(true);
@@ -96,7 +104,7 @@ const FaucetModal = () => {
 
     dispatch(setClaimStatus({ isLoading: true, error: null, success: null }));
     try {
-      const result = await window.electronAPI.submitClaim(address, amount);
+      const result = await (window as any).electronAPI.submitClaim(address, amount);
       if (result.success) {
         dispatch(
           setClaimStatus({
@@ -108,16 +116,17 @@ const FaucetModal = () => {
       } else {
         dispatch(setClaimStatus({ isLoading: false, error: result.error }));
       }
-    } catch (error) {
-      dispatch(setClaimStatus({ isLoading: false, error: error.message }));
+    } catch (error: unknown) {
+      const err = error as Error;
+      dispatch(setClaimStatus({ isLoading: false, error: err.message }));
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     dispatch(hideFaucetModal());
   };
 
-  const handleOverlayClick = e => {
+  const handleOverlayClick = (e: MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       handleClose();
     }

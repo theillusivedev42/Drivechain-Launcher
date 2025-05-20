@@ -1,14 +1,11 @@
-const axios = require('axios');
-const path = require('path');
-
-/**
- * Utility functions for checking updates via releases.drivechain.info
- */
+export {};
+import axios, { AxiosError } from 'axios';
+import path from 'path';
 
 // Cache the last fetch time and result to avoid hitting rate limits
 let lastFetchTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-let cachedResult = null;
+let cachedResult: Record<string, any> | null = null;
 
 /**
  * Compares version strings (e.g., v1.9.1 vs v1.9.2)
@@ -16,11 +13,9 @@ let cachedResult = null;
  * @param {string} version2 Second version string
  * @returns {number} -1 if version1 < version2, 0 if equal, 1 if version1 > version2
  */
-function compareVersions(version1, version2) {
-    // Remove 'v' prefix if present
+function compareVersions(version1: string, version2: string): number {
     const v1 = version1.replace(/^v/, '').split('.').map(Number);
     const v2 = version2.replace(/^v/, '').split('.').map(Number);
-
     for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
         const num1 = v1[i] || 0;
         const num2 = v2[i] || 0;
@@ -35,18 +30,15 @@ function compareVersions(version1, version2) {
  * @param {string} url The download URL
  * @returns {Promise<string|null>} The latest version or null if not found
  */
-async function getLatestVersion(url) {
+async function getLatestVersion(url: string): Promise<string | null> {
     try {
-        // Make a HEAD request to check if the URL exists and get any version info
         const response = await axios.head(url);
         
-        // Check if the server provides a version header
         const version = response.headers['x-latest-version'];
         if (version) {
             return version;
         }
 
-        // If no version header, try to extract from URL
         const versionMatch = url.match(/v?(\d+\.\d+\.\d+)/);
         if (versionMatch) {
             return versionMatch[1];
@@ -66,7 +58,7 @@ async function getLatestVersion(url) {
  * @returns {Promise<Object>} Update information for all components
  * @throws {Error} If the fetch fails
  */
-async function fetchGithubReleases(chainConfig, force = false) {
+async function fetchGithubReleases(chainConfig: any, force = false): Promise<Record<string, any>> {
     try {
         // Check cache unless force refresh is requested
         const now = Date.now();
@@ -74,13 +66,14 @@ async function fetchGithubReleases(chainConfig, force = false) {
             return cachedResult;
         }
 
-        const updates = {};
+        const updates: Record<string, any> = {};
 
         // Get status of all chains
-        const chainStatuses = {};
-        for (const chain of chainConfig.chains) {
+        const chainStatuses: Record<string, any> = {};
+        const electronAPI = (window as any).electronAPI;
+        for (const chain of chainConfig.chains as any[]) {
             try {
-                const status = await window.electronAPI.getChainStatus(chain.id);
+                const status = await electronAPI.getChainStatus(chain.id);
                 chainStatuses[chain.id] = status;
             } catch (error) {
                 console.error(`Failed to get status for ${chain.id}:`, error);
@@ -89,7 +82,7 @@ async function fetchGithubReleases(chainConfig, force = false) {
         }
 
         // Only check enabled chains that are downloaded
-        const downloadedChains = chainConfig.chains.filter(chain => 
+        const downloadedChains = (chainConfig.chains as any[]).filter((chain: any) => 
             chain.enabled && 
             chainStatuses[chain.id] && 
             chainStatuses[chain.id] !== 'not_downloaded'
@@ -162,18 +155,16 @@ async function fetchGithubReleases(chainConfig, force = false) {
         cachedResult = updates;
 
         return updates;
-    } catch (error) {
-        if (error.code === 'ECONNABORTED') {
+    } catch (error: unknown) {
+        const err = error as AxiosError;
+        if (err.code === 'ECONNABORTED') {
             throw new Error('Connection timed out while checking for updates');
         }
-        if (error.response) {
-            throw new Error(`Failed to check for updates: ${error.response.status} ${error.response.statusText}`);
+        if (err.response) {
+            throw new Error(`Failed to check for updates: ${err.response.status} ${err.response.statusText}`);
         }
-        throw new Error(`Failed to check for updates: ${error.message}`);
+        throw new Error(`Failed to check for updates: ${err.message}`);
     }
 }
 
-module.exports = {
-    fetchGithubReleases,
-    compareVersions
-};
+export { fetchGithubReleases, compareVersions };

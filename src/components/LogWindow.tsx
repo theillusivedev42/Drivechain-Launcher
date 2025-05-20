@@ -1,9 +1,14 @@
-import React, { useRef, useEffect, memo } from 'react';
+import React, { useRef, useEffect, memo, type FC } from 'react';
 import { Trash2 } from 'lucide-react';
 import styles from './LogWindow.module.css';
 
-const LogWindow = memo(({ logs, title, onClear }) => {
-  const logContentRef = useRef(null);
+// Define log entry interface
+interface LogEntry { timestamp: string; message: string; }
+// Props for LogWindow component
+interface LogWindowProps { logs: LogEntry[]; title: string; onClear: () => void; }
+
+const LogWindow: FC<LogWindowProps> = memo(({ logs, title, onClear }) => {
+  const logContentRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {

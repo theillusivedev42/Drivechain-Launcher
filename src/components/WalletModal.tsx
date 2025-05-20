@@ -1,59 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type FC, type MouseEvent, type WheelEvent } from 'react';
 import { useSelector } from 'react-redux';
+import type { RootState } from '../store';
 import styles from './WalletModal.module.css';
 import { Eye, EyeOff, Info, X } from 'lucide-react';
 
-const WalletModal = () => {
-  const { isLoading, error } = useSelector(state => state.walletModal);
-  const [copiedStates, setCopiedStates] = useState({});
-  const [revealedPaths, setRevealedPaths] = useState({ master: false });
-  const [, setConfig] = useState(null);
-  const [derivationPaths, setDerivationPaths] = useState({});
-  const [mnemonics, setMnemonics] = useState({ master: '••••••••••••' });
-  const [chainsList, setChainsList] = useState([]);
-  const [showInfoModal, setShowInfoModal] = useState(false);
+// Type for configuration chain info
+interface ConfigChain { id: string; chain_layer?: number; slot?: number; [key: string]: any; }
+
+const WalletModal: FC = () => {
+  const { isLoading, error } = useSelector((state: RootState) => state.walletModal);
+  const [copiedStates, setCopiedStates] = useState<Record<string, {copied: boolean; x: number; y: number}>>({});
+  const [revealedPaths, setRevealedPaths] = useState<Record<string, boolean>>({ master: false });
+  const [, setConfig] = useState<any>(null);
+  const [derivationPaths, setDerivationPaths] = useState<Record<string, string>>({});
+  const [mnemonics, setMnemonics] = useState<Record<string, string>>({ master: '••••••••••••' });
+  const [chainsList, setChainsList] = useState<any[]>([]);
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
 
   // Load config on component mount
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const result = await window.electronAPI.getConfig();
+        const result = await (window as any).electronAPI.getConfig() as { chains: ConfigChain[] };
         setConfig(result);
         
         if (result && result.chains) {
           // Find the L1 chain (enforcer)
-          const enforcerChain = result.chains.find(chain => chain.id === 'enforcer');
+          const enforcerChain = result.chains.find((chain: ConfigChain) => chain.id === 'enforcer');
           
           // Setup initial paths object with L1 (hardcoded path as specified)
-          const paths = {};
+          const paths: Record<string, string> = {};
           if (enforcerChain) {
-            paths['enforcer'] = "m/44'/0'/256'";
+            paths[enforcerChain.id] = "m/44'/0'/256'";
           }
           
           // Find all L2 chains and compute their paths based on slot
-          const l2Chains = result.chains.filter(chain => chain.chain_layer === 2 && chain.slot);
+          const l2Chains = result.chains.filter((chain: ConfigChain) => chain.chain_layer === 2 && chain.slot);
           
           // Process L2 chains
-          l2Chains.forEach(chain => {
+          l2Chains.forEach((chain: ConfigChain) => {
             paths[chain.id] = `m/44'/0'/${chain.slot}'`;
           });
           
           setDerivationPaths(paths);
           
           // Initialize revealed state for all chains
-          const initialRevealState = { master: false };
+          const initialRevealState: Record<string, boolean> = { master: false };
           if (enforcerChain) {
-            initialRevealState['enforcer'] = false;
+            initialRevealState[enforcerChain.id] = false;
           }
           
-          l2Chains.forEach(chain => {
+          l2Chains.forEach((chain: ConfigChain) => {
             initialRevealState[chain.id] = false;
           });
           
           setRevealedPaths(initialRevealState);
           
           // Setup the chains list for rendering
-          const chains = [];
+          const chains = [] as any[];
           
           // Add L1 chain
           if (enforcerChain) {
@@ -65,7 +69,7 @@ const WalletModal = () => {
           }
           
           // Add L2 chains
-          l2Chains.forEach(chain => {
+          l2Chains.forEach((chain: ConfigChain) => {
             chains.push({
               ...chain,
               type: 'L2'
@@ -81,10 +85,10 @@ const WalletModal = () => {
     fetchConfig();
   }, []);
 
-  const handleCopy = async (text, type, event) => {
+  const handleCopy = async (text: string, type: string, event: MouseEvent<HTMLSpanElement>) => {
     try {
       await navigator.clipboard.writeText(text);
-      const rect = event.target.getBoundingClientRect();
+      const rect = (event.target as HTMLElement).getBoundingClientRect();
       const tooltipX = rect.left + (rect.width / 2);
       const tooltipY = rect.top;
       setCopiedStates(prev => ({ 
@@ -96,16 +100,16 @@ const WalletModal = () => {
         }
       }));
       setTimeout(() => {
-        setCopiedStates(prev => ({ ...prev, [type]: false }));
+        setCopiedStates(prev => { const { [type]: _, ...rest } = prev; return rest; });
       }, 2000);
     } catch (error) {
       console.error('Failed to copy:', error);
     }
   };
 
-  const handleWheel = (event) => {
+  const handleWheel = (event: WheelEvent<HTMLSpanElement>) => {
     // Get the parent mnemonicCol div
-    const mnemonicCol = event.target.closest(`.${styles.mnemonicCol}`);
+    const mnemonicCol = (event.target as Element).closest(`.${styles.mnemonicCol}`);
     if (mnemonicCol) {
       // Prevent the default vertical scroll
       event.preventDefault();
@@ -114,7 +118,7 @@ const WalletModal = () => {
     }
   };
   
-  const toggleReveal = async (key) => {
+  const toggleReveal = async (key: string) => {
     // Toggle the current path's reveal state
     setRevealedPaths(prev => ({
       ...prev,
@@ -124,7 +128,7 @@ const WalletModal = () => {
     // For master key, we need to fetch the actual mnemonic
     if (key === 'master' && !revealedPaths[key] && mnemonics[key] === '••••••••••••') {
       try {
-        const result = await window.electronAPI.getWalletStarter('master');
+        const result = await (window as any).electronAPI.getWalletStarter('master');
         if (result.success) {
           setMnemonics(prev => ({
             ...prev,
@@ -139,7 +143,7 @@ const WalletModal = () => {
     // For chain wallets, we don't need to fetch actual mnemonics, just reveal their paths
   };
 
-  const getChainType = (chain) => {
+  const getChainType = (chain: any) => {
     if (chain.type === 'L1') {
       return styles.l1Badge;
     } else if (chain.type === 'L2') {
@@ -149,7 +153,7 @@ const WalletModal = () => {
     }
   };
 
-  const getChainTypeText = (chain) => {
+  const getChainTypeText = (chain: any) => {
     return chain.type;
   };
 

@@ -1,14 +1,23 @@
 import React from 'react';
+import type { DownloadEntry } from '../store/downloadSlice';
 import { X } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChainSettingsModal.module.css';
 
-const DownloadInProgressModal = ({ downloads, onClose, onForceQuit, isOpen }) => {
+// Props for DownloadInProgressModal
+interface DownloadInProgressModalProps {
+  downloads: DownloadEntry[];
+  onClose: () => void;
+  onForceQuit: () => void;
+  isOpen: boolean;
+}
+
+const DownloadInProgressModal: React.FC<DownloadInProgressModalProps> = ({ downloads, onClose, onForceQuit, isOpen }) => {
   const { isDarkMode } = useTheme();
   
   if (!isOpen) return null;
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     if (e.target === e.currentTarget) {
       onClose();
     }

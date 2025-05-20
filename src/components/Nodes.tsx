@@ -1,50 +1,55 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, type FC } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Card from './Card';
 import styles from './Nodes.module.css';
 import UnreleasedCard from './UnreleasedCard';
 import DownloadModal from './DownloadModal';
 import WalletMessageModal from './WalletMessageModal';
-import { updateDownloads, updateIBDStatus } from '../store/downloadSlice';
+import { updateDownloads, updateIBDStatus, DownloadEntry } from '../store/downloadSlice';
 import { showDownloadModal } from '../store/downloadModalSlice';
-import { setChains, updateChainStatus } from '../store/chainsSlice';
+import { setChains, updateChainStatus, Chain } from '../store/chainsSlice';
+import type { RootState, AppDispatch } from '../store';
 
-function Nodes() {
-  const chains = useSelector(state => state.chains);
-  const showQuotes = useSelector(state => state.settings.showQuotes);
-  const [walletMessage, setWalletMessage] = useState(null);
-  const [bitcoinSync, setBitcoinSync] = useState(null);
-  const [runningNodes, setRunningNodes] = useState([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const dispatch = useDispatch();
+// Interface for wallet message modal data
+interface WalletMessage { error?: string; path?: string; chainName: string; }
+
+// Type for config chains
+interface ConfigChain { id: string; enabled: boolean; released: string; dependencies?: string[]; [key: string]: any; }
+
+const Nodes: FC = () => {
+  const chains = useSelector((state: RootState) => state.chains);
+  const showQuotes = useSelector((state: RootState) => state.settings.showQuotes);
+  const [walletMessage, setWalletMessage] = useState<WalletMessage | null>(null);
+  const [bitcoinSync, setBitcoinSync] = useState<string | null>(null);
+  const [runningNodes, setRunningNodes] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const dispatch = useDispatch<AppDispatch>();
 
   const fetchChains = useCallback(async () => {
     try {
       setIsLoading(true);
-      const config = await window.electronAPI.getConfig();
+      const config = await (window as any).electronAPI.getConfig() as { chains: ConfigChain[] };
       const dependencyData = await import('../CardData.json');
       
       const chainsWithStatus = await Promise.all(
         config.chains
-          .filter(chain => chain.enabled)
-          .map(async chain => {
+          .filter((chain: ConfigChain) => chain.enabled)
+          .map(async (chain: ConfigChain) => {
             const dependencyInfo = dependencyData.default.find(d => d.id === chain.id);
-            console.log('Loading chain:', chain.id, 'Released status:', chain.released);
             return {
               ...chain,
-              dependencies: dependencyInfo?.dependencies || [],
-              status: await window.electronAPI.getChainStatus(chain.id),
+              status: await (window as any).electronAPI.getChainStatus(chain.id),
               progress: 0,
               released: chain.released,
             };
           })
       );
-      dispatch(setChains(chainsWithStatus));
+      dispatch(setChains(chainsWithStatus as Chain[]));
       
       const initialRunning = chainsWithStatus
-        .filter(chain => chain.status === 'running' || chain.status === 'ready')
-        .map(chain => chain.id);
+        .filter((chain: Chain) => chain.status === 'running' || chain.status === 'ready')
+        .map((chain: Chain) => chain.id);
       setRunningNodes(initialRunning);
       setIsInitialized(true);
     } catch (error) {
@@ -56,7 +61,7 @@ function Nodes() {
   }, [dispatch]);
 
   const downloadsUpdateHandler = useCallback(
-    downloads => {
+    (downloads: DownloadEntry[]) => {
       console.log('Received downloads update:', downloads);
       
       // Create a copy of downloads to modify
@@ -125,7 +130,8 @@ function Nodes() {
             chainId: 'bitwindow',
             progress: Math.round(cumulativeProgress),
             status: 'downloading',
-            displayName: 'BitWindow'
+            displayName: 'BitWindow',
+            type: 'download'
           });
         }
       }
@@ -172,7 +178,8 @@ function Nodes() {
     [dispatch]
   );
 
-  const chainStatusUpdateHandler = useCallback(({ chainId, status }) => {
+  const chainStatusUpdateHandler = useCallback(
+    ({ chainId, status }: { chainId: string; status: string }) => {
     dispatch(updateChainStatus({ chainId, status }));
     
     if (status === 'running' || status === 'ready') {
@@ -182,7 +189,8 @@ function Nodes() {
     }
   }, [dispatch]);
 
-  const downloadCompleteHandler = useCallback(({ chainId }) => {
+  const downloadCompleteHandler = useCallback(
+    ({ chainId }: { chainId: string }) => {
     console.log(`Download completed for chain: ${chainId}`);
     
     // Special handling for BitWindow and its dependencies
@@ -190,9 +198,9 @@ function Nodes() {
       // Check if all three components are downloaded
       const checkAllComponentsDownloaded = async () => {
         try {
-          const bitcoinStatus = await window.electronAPI.getChainStatus('bitcoin');
-          const enforcerStatus = await window.electronAPI.getChainStatus('enforcer');
-          const bitwindowStatus = await window.electronAPI.getChainStatus('bitwindow');
+          const bitcoinStatus = await (window as any).electronAPI.getChainStatus('bitcoin');
+          const enforcerStatus = await (window as any).electronAPI.getChainStatus('enforcer');
+          const bitwindowStatus = await (window as any).electronAPI.getChainStatus('bitwindow');
           
           console.log(`Component statuses - Bitcoin: ${bitcoinStatus}, Enforcer: ${enforcerStatus}, BitWindow: ${bitwindowStatus}`);
           
@@ -253,23 +261,20 @@ function Nodes() {
   useEffect(() => {
     fetchChains();
 
-    const unsubscribeDownloadsUpdate = window.electronAPI.onDownloadsUpdate(
-      downloadsUpdateHandler
+    const unsubscribeDownloadsUpdate = (window as any).electronAPI.onDownloadsUpdate(
+      (downloads: DownloadEntry[]) => downloadsUpdateHandler(downloads)
     );
-    const unsubscribeStatus = window.electronAPI.onChainStatusUpdate(
-      chainStatusUpdateHandler
+    const unsubscribeStatus = (window as any).electronAPI.onChainStatusUpdate(
+      (update: { chainId: string; status: string }) => chainStatusUpdateHandler(update)
     );
-    const unsubscribeDownloadComplete = window.electronAPI.onDownloadComplete(
-      downloadCompleteHandler
+    const unsubscribeDownloadComplete = (window as any).electronAPI.onDownloadComplete(
+      (info: { chainId: string }) => downloadCompleteHandler(info)
     );
-    const unsubscribeBitcoinSync = window.electronAPI.onBitcoinSyncStatus(
-      (status) => {
-        setBitcoinSync(status);
-        dispatch(updateIBDStatus({ chainId: 'bitcoin', status }));
-      }
+    const unsubscribeBitcoinSync = (window as any).electronAPI.onBitcoinSyncStatus(
+      (status: string) => setBitcoinSync(status)
     );
 
-    window.electronAPI.getDownloads().then(downloadsUpdateHandler);
+    (window as any).electronAPI.getDownloads().then(downloadsUpdateHandler);
 
     return () => {
       if (typeof unsubscribeDownloadsUpdate === 'function')
@@ -287,9 +292,9 @@ function Nodes() {
     downloadCompleteHandler,
   ]);
 
-  const handleOpenWalletDir = useCallback(async chainId => {
+  const handleOpenWalletDir = useCallback(async (chainId: string) => {
     try {
-      const result = await window.electronAPI.openWalletDir(chainId);
+      const result = await (window as any).electronAPI.openWalletDir(chainId);
       if (!result.success) {
         setWalletMessage({
           error: result.error,
@@ -297,7 +302,7 @@ function Nodes() {
           chainName: result.chainName,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         `Failed to open wallet directory for chain ${chainId}:`,
         error
@@ -310,16 +315,16 @@ function Nodes() {
     }
   }, []);
 
-  const handleUpdateChain = useCallback((chainId, updates) => {
+  const handleUpdateChain = useCallback((chainId: string, updates: Partial<Chain>) => {
     dispatch(updateChainStatus({ chainId, ...updates }));
   }, [dispatch]);
 
   // Helper function to wait for a download to complete
-  const waitForDownloadComplete = useCallback(async (chainId) => {
+  const waitForDownloadComplete = useCallback(async (chainId: string) => {
     return new Promise((resolve) => {
       const checkStatus = async () => {
         try {
-          const status = await window.electronAPI.getChainStatus(chainId);
+          const status = await (window as any).electronAPI.getChainStatus(chainId);
           console.log(`Checking download status for ${chainId}: ${status}`);
           
           if (status === 'downloaded' || status === 'stopped' || status === 'running' || status === 'ready') {
@@ -342,15 +347,15 @@ function Nodes() {
   }, []);
 
   const handleDownloadChain = useCallback(
-    async chainId => {
+    async (chainId: string) => {
       try {
         console.log(`Attempting to download chain ${chainId}`);
         
         // If BitWindow is being downloaded, download all three chains in sequence
         if (chainId === 'bitwindow') {
           // First check if Bitcoin and Enforcer are already downloaded
-          const bitcoinStatus = await window.electronAPI.getChainStatus('bitcoin');
-          const enforcerStatus = await window.electronAPI.getChainStatus('enforcer');
+          const bitcoinStatus = await (window as any).electronAPI.getChainStatus('bitcoin');
+          const enforcerStatus = await (window as any).electronAPI.getChainStatus('enforcer');
           
           console.log(`BitWindow download - Bitcoin status: ${bitcoinStatus}, Enforcer status: ${enforcerStatus}`);
           
@@ -358,7 +363,7 @@ function Nodes() {
           if (bitcoinStatus === 'not_downloaded') {
             console.log('BitWindow depends on Bitcoin Core - downloading Bitcoin Core first');
             try {
-              await window.electronAPI.downloadChain('bitcoin');
+              await (window as any).electronAPI.downloadChain('bitcoin');
               console.log('Bitcoin download initiated successfully');
               
               // Wait for Bitcoin download to complete before proceeding
@@ -376,7 +381,7 @@ function Nodes() {
           if (enforcerStatus === 'not_downloaded') {
             console.log('BitWindow depends on Enforcer - downloading Enforcer');
             try {
-              await window.electronAPI.downloadChain('enforcer');
+              await (window as any).electronAPI.downloadChain('enforcer');
               console.log('Enforcer download initiated successfully');
               
               // Wait for Enforcer download to complete before proceeding
@@ -393,7 +398,7 @@ function Nodes() {
           // Step 3: Finally download BitWindow (only after both Bitcoin and Enforcer are done)
           console.log('Starting BitWindow download');
           try {
-            await window.electronAPI.downloadChain(chainId);
+            await (window as any).electronAPI.downloadChain(chainId);
             console.log('BitWindow download initiated successfully');
           } catch (err) {
             console.error('Failed to initiate BitWindow download:', err);
@@ -401,7 +406,7 @@ function Nodes() {
           }
         } else {
           // For other chains, just download the requested chain
-          await window.electronAPI.downloadChain(chainId);
+          await (window as any).electronAPI.downloadChain(chainId);
           console.log(`Download initiated for chain ${chainId}`);
         }
         
@@ -413,7 +418,7 @@ function Nodes() {
     [dispatch, waitForDownloadComplete]
   );
 
-  const handleStartChain = useCallback(async chainId => {
+  const handleStartChain = useCallback(async (chainId: string) => {
     try {
       const chain = chains.find(c => c.id === chainId);
       if (!chain) {
@@ -429,16 +434,16 @@ function Nodes() {
         }
       }
 
-      await window.electronAPI.startChain(chainId);
+      await (window as any).electronAPI.startChain(chainId);
       dispatch(updateChainStatus({ chainId, status: 'running' }));
     } catch (error) {
       console.error(`Failed to start chain ${chainId}:`, error);
     }
   }, [chains, runningNodes, dispatch]);
 
-  const handleStopChain = useCallback(async chainId => {
+  const handleStopChain = useCallback(async (chainId: string) => {
     try {
-      await window.electronAPI.stopChain(chainId);
+      await (window as any).electronAPI.stopChain(chainId);
       dispatch(updateChainStatus({ chainId, status: 'stopped' }));
     } catch (error) {
       console.error(`Failed to stop chain ${chainId}:`, error);
@@ -446,8 +451,9 @@ function Nodes() {
   }, [dispatch]);
 
   const handleResetChain = useCallback(
-    async chainId => {
+    async (chainId: string) => {
       const chain = chains.find(c => c.id === chainId);
+      if (!chain) return;
       if (chain.status === 'running') {
         try {
           await handleStopChain(chainId);
@@ -458,7 +464,7 @@ function Nodes() {
       }
 
       try {
-        await window.electronAPI.resetChain(chainId);
+        await (window as any).electronAPI.resetChain(chainId);
       } catch (error) {
         console.error(`Failed to reset chain ${chainId}:`, error);
       }
@@ -541,6 +547,7 @@ function Nodes() {
         <WalletMessageModal
           error={walletMessage.error}
           path={walletMessage.path}
+          chainName={walletMessage.chainName}
           onClose={() => setWalletMessage(null)}
         />
       )}

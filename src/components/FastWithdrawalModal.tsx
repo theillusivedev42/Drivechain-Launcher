@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent, type Dispatch, type SetStateAction } from 'react';
 import { Clipboard } from 'lucide-react';
 import styles from './FastWithdrawalModal.module.css';
 import WithdrawalSuccessPopup from './WithdrawalSuccessPopup';
@@ -19,18 +19,21 @@ const FAST_WITHDRAWAL_SERVERS = [
 
 const defaultFastWithdrawalServer = FAST_WITHDRAWAL_SERVERS[0].url;
 
+// Interface for payment instruction
+interface PaymentInfo { amount: string; address: string; }
+
 const FastWithdrawalModal = () => {
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState<string>('');
   const [address, setAddress] = useState('');
   const [selectedServer, setSelectedServer] = useState(defaultFastWithdrawalServer);
   const [layer2Chain, setLayer2Chain] = useState('Thunder');
-  const [withdrawalHash, setWithdrawalHash] = useState(null);
-  const [paymentTxid, setPaymentTxid] = useState('');
-  const [paymentMessage, setPaymentMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [copiedStates, setCopiedStates] = useState({});
+  const [withdrawalHash, setWithdrawalHash] = useState<string | null>(null);
+  const [paymentTxid, setPaymentTxid] = useState<string>('');
+  const [paymentMessage, setPaymentMessage] = useState<PaymentInfo | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
 
   const resetState = () => {
     setAmount('');
@@ -39,14 +42,14 @@ const FastWithdrawalModal = () => {
     setLayer2Chain('Thunder');
     setWithdrawalHash(null);
     setPaymentTxid('');
-    setPaymentMessage('');
+    setPaymentMessage(null);
     setSuccessMessage('');
     setErrorMessage('');
     setIsCompleted(false);
     setCopiedStates({});
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setErrorMessage('');
     try {
@@ -57,25 +60,22 @@ const FastWithdrawalModal = () => {
         throw new Error('Please enter a valid withdrawal address');
       }
 
-      const result = await window.electronAPI.requestWithdrawal(address, parseFloat(amount), layer2Chain);
+      const result = await (window as any).electronAPI.requestWithdrawal(address, parseFloat(amount), layer2Chain);
       if (!result.server_l2_address?.info) {
         console.error("HMMM", result)
         const errorMessage = result.error || JSON.stringify(result) ;
         throw new Error(`Withdrawal request failed: ${errorMessage}`);
       }
       const totalAmount = (parseFloat(amount) + result.server_fee_sats/100000000).toString();
-      setPaymentMessage({
-        amount: totalAmount,
-        address: result.server_l2_address.info
-      });
+      setPaymentMessage({ amount: totalAmount, address: result.server_l2_address.info });
       setWithdrawalHash(result.hash);
-    } catch (error) {
+    } catch (error: any) {
       setErrorMessage(error.message || 'Withdrawal request failed. Please try again.');
       console.error('Withdrawal request failed:', error);
     }
   };
 
-  const handleCopy = async (text, type) => {
+  const handleCopy = async (text: string, type: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedStates(prev => ({ ...prev, [type]: true }));
@@ -87,7 +87,7 @@ const FastWithdrawalModal = () => {
     }
   };
 
-  const handlePaste = async (setter) => {
+  const handlePaste = async (setter: Dispatch<SetStateAction<string>>): Promise<void> => {
     try {
       const text = await navigator.clipboard.readText();
       setter(text);
@@ -96,7 +96,7 @@ const FastWithdrawalModal = () => {
     }
   };
 
-  const handleComplete = async (e) => {
+  const handleComplete = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setErrorMessage('');
     try {
@@ -104,10 +104,10 @@ const FastWithdrawalModal = () => {
         throw new Error('Please enter your L2 payment transaction ID');
       }
 
-      const result = await window.electronAPI.notifyPaymentComplete(withdrawalHash, paymentTxid);
+      const result = await (window as any).electronAPI.notifyPaymentComplete(withdrawalHash, paymentTxid);
       setSuccessMessage(result.message.info);
       setIsCompleted(true);
-    } catch (error) {
+    } catch (error: any) {
       setErrorMessage(error.message || 'Failed to complete withdrawal. Please try again.');
       console.error('Payment completion failed:', error);
     }
@@ -181,7 +181,7 @@ const FastWithdrawalModal = () => {
                       value={selectedServer}
                       onChange={(e) => {
                         setSelectedServer(e.target.value);
-                        window.electronAPI.setFastWithdrawalServer(e.target.value);
+                        (window as any).electronAPI.setFastWithdrawalServer(e.target.value);
                       }}
                       className={styles.input}
                     >

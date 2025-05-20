@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type FC } from 'react';
 
-function Other() {
-  const [chainInfo, setChainInfo] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Other: FC = () => {
+  const [chainInfo, setChainInfo] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function fetchConfig() {
       try {
-        const config = await window.electronAPI.getConfig();
+        const config = await (window as any).electronAPI.getConfig();
         if (config && config.chains && config.chains.length > 0) {
           setChainInfo(config.chains[0]);
         } else {
@@ -35,6 +35,6 @@ function Other() {
       <p>This is a placeholder for the Other component.</p>
     </div>
   );
-}
+};
 
 export default Other;

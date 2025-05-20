@@ -1,6 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, type FC } from 'react';
 
-const QuickStartStop = ({ chains, onStart, onStop }) => {
+// Props for QuickStartStop
+interface QuickStartStopProps {
+  chains: { id: string; status: string }[];
+  onStart: (chainId: string) => Promise<void>;
+  onStop: (chainId: string) => Promise<void>;
+}
+
+const QuickStartStop: FC<QuickStartStopProps> = ({ chains, onStart, onStop }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStoppingSequence, setIsStoppingSequence] = useState(false);
 

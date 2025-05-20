@@ -1,8 +1,17 @@
 import React from 'react';
+import type { FC } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ForceStopModal.module.css';
 
-const ForceStopModal = ({ chainName, onConfirm, onClose, dependentChains = [] }) => {
+// Props for ForceStopModal
+interface ForceStopModalProps {
+  chainName: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  dependentChains?: string[];
+}
+
+const ForceStopModal: FC<ForceStopModalProps> = ({ chainName, onConfirm, onClose, dependentChains = [] }) => {
   const { isDarkMode } = useTheme();
 
   return (

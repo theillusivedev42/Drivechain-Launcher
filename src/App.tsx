@@ -17,18 +17,20 @@ import QuoteWidget from './components/QuoteWidget';
 import ShutdownModal from './components/ShutdownModal';
 import DownloadInProgressModal from './components/DownloadInProgressModal';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import type { DownloadEntry } from './store/downloadSlice';
 
-function AppContent() {
+// AppContent can return null before initialization
+function AppContent(): JSX.Element | null {
   const { isDarkMode } = useTheme();
   const dispatch = useDispatch();
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [activeDownloads, setActiveDownloads] = useState([]);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+  const [activeDownloads, setActiveDownloads] = useState<DownloadEntry[]>([]);
+  const [showDownloadModal, setShowDownloadModal] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   // Make cardData globally available
   useEffect(() => {
-    window.cardData = cardData;
+    (window as any).cardData = cardData;
   }, []);
 
   useEffect(() => {
@@ -37,22 +39,22 @@ function AppContent() {
 
   // Listen for downloads-in-progress event
   useEffect(() => {
-    const unsubscribe = window.electronAPI.onDownloadsInProgress((downloads) => {
+    const unsubscribe = (window as any).electronAPI.onDownloadsInProgress((downloads: DownloadEntry[]) => {
       setActiveDownloads(downloads);
       setShowDownloadModal(true);
     });
     return () => unsubscribe();
   }, []);
 
-  const handleForceQuit = () => {
-    window.electronAPI.forceQuitWithDownloads();
+  const handleForceQuit = (): void => {
+    (window as any).electronAPI.forceQuitWithDownloads();
   };
 
   // Check for updates and master wallet on startup
   useEffect(() => {
-    const initializeApp = async () => {
+    const initializeApp = async (): Promise<void> => {
       try {
-        const result = await window.electronAPI.getMasterWallet();
+        const result = await (window as any).electronAPI.getMasterWallet();
         if (!result.success || !result.data) {
           setShowWelcomeModal(true);
         }
@@ -62,7 +64,7 @@ function AppContent() {
       } finally {
         setIsInitialized(true);
         // Signal that app is fully initialized
-        window.electronAPI.notifyReady();
+        (window as any).electronAPI.notifyReady();
       }
     };
 
@@ -70,7 +72,7 @@ function AppContent() {
   }, [dispatch]);
 
   if (!isInitialized) {
-    return null; // Show nothing until initialization is complete
+    return null; // nothing until initialized
   }
 
   return (
@@ -102,7 +104,8 @@ function AppContent() {
   );
 }
 
-function App() {
+// Main App component
+function App(): JSX.Element {
   return (
     <ThemeProvider>
       <AppContent />
